@@ -11,7 +11,7 @@ htmldir = ../www-$(PACKAGE)
 
 release:
 	if cvs upd -p -r $(tag) NEWS > /dev/null; then false else true; fi
-	cvs rtag $(tag) gnutls
+	cvs rtag -r gnutls_1_0_0_patches $(tag) gnutls
 	rm -f ChangeLog
 	make ChangeLog
 	cvs commit -m "" ChangeLog
