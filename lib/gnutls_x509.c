@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2002,2003 Nikos Mavroyanopoulos
  *  Copyright (C) 2004 Free Software Foundation
+ *  Copyright (C) 2002,2003 Nikos Mavroyanopoulos
  *
  *  This file is part of GNUTLS.
  *
@@ -1264,7 +1264,8 @@ int gnutls_certificate_set_x509_trust(gnutls_certificate_credentials res,
 	}
 
 	for (i=0;i<ca_list_size;i++) {
-		ret = _gnutls_x509_crt_cpy( res->x509_ca_list[i+res->x509_ncas], 
+		gnutls_x509_crt_init(&res->x509_ca_list[i + res->x509_ncas]);
+		ret = _gnutls_x509_crt_cpy( res->x509_ca_list[i+res->x509_ncas],
 			ca_list[i]);
 		if ( ret < 0) {
 			gnutls_assert();
