@@ -337,7 +337,7 @@ _cdk_log_debug (const char *fmt, ...)
 }
 
 
-#ifndef HAVE_PWD_H
+#ifndef HAVE_GETPASS
 char *
 getpass (const char * prompt)
 {
