@@ -1381,6 +1381,7 @@ int gnutls_x509_crt_check_revocation(gnutls_x509_crt cert,
 		ret =
 		    _gnutls_x509_crt_get_raw_issuer_dn(cert, &dn2);
 		if (ret < 0) {
+			_gnutls_free_datum(&dn1);
 			gnutls_assert();
 			return ret;
 		}
