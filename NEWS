@@ -1,6 +1,8 @@
 Version 1.0.22
  - Print DN of certificates with unknown characters in them, but in hexform
    only.
+- Corrected bug in _gnutls_x509_get_dn_oid(), and returns the
+  actual OID.
 
 Version 1.0.21 (07/10/2004)
 - Fix memory leak in gnutls_certificate_verify_peers and
