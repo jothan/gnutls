@@ -1,4 +1,4 @@
-Version 1.0.21
+Version 1.0.21 (07/10/2004)
 - Fix memory leak in gnutls_certificate_verify_peers and
   gnutls_certificate_free_credentials, report and patch by Simon
   Posnjak <simon.posnjak@cetrtapot.si>.
@@ -6,7 +6,7 @@ Version 1.0.21
   a key and no certificate to PKCS#12.
 - Fix objdir != srcdir builds, reported by "Gerrit P. Haase"
   <gp@familiehaase.de>.
-- Avoid redefining getpass if system already has it, reported by 
+- Avoid redefining getpass if system already has it, reported by
   Yoann Vandoorselaere <yoann@prelude-ids.org>.
 - Add new example "ex-rfc2818" for certificate verification, from Nikos.
 - Known bug: the library require snprintf.
