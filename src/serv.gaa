@@ -11,7 +11,7 @@ option (http) { $http = 1 } "Act as an HTTP Server."
 option (echo) { $http = 0 } "Act as an Echo Server."
 
 #int quit;
-option (quit) { $quit = 1 } "Quit after serving the first connection."
+option (quit) INT "integer" { $quit = $1 } "Quit after serving the Nth connection."
 
 #int fmtder;
 option (x509fmtder) { $fmtder = 1 } "Use DER format for certificates"

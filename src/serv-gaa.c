@@ -113,7 +113,7 @@ void gaa_help(void)
 	__gaa_helpsingle('p', "port", """integer"" ", "The port to connect to.");
 	__gaa_helpsingle(0, "http", "", "Act as an HTTP Server.");
 	__gaa_helpsingle(0, "echo", "", "Act as an Echo Server.");
-	__gaa_helpsingle(0, "quit", "", "Quit after serving the first connection.");
+	__gaa_helpsingle(0, "quit", """integer"" ", "Quit after serving the Nth connection.");
 	__gaa_helpsingle(0, "x509fmtder", "", "Use DER format for certificates");
 	__gaa_helpsingle(0, "x509cafile", """FILE"" ", "Certificate file to use.");
 	__gaa_helpsingle(0, "pgpkeyring", """FILE"" ", "PGP Key ring file to use.");
@@ -562,6 +562,12 @@ struct GAAOPTION_x509cafile
 	int size1;
 };
 
+struct GAAOPTION_quit 
+{
+	int arg1;
+	int size1;
+};
+
 struct GAAOPTION_port 
 {
 	int arg1;
@@ -613,13 +619,13 @@ int gaa_get_option_num(char *str, int status)
 			GAA_CHECK1STR("", GAAOPTID_pgptrustdb);
 			GAA_CHECK1STR("", GAAOPTID_pgpkeyring);
 			GAA_CHECK1STR("", GAAOPTID_x509cafile);
+			GAA_CHECK1STR("", GAAOPTID_quit);
 			GAA_CHECK1STR("p", GAAOPTID_port);
         case GAA_MULTIPLE_OPTION:
 #line 375 "gaa.skel"
 			GAA_CHECK1STR("h", GAAOPTID_help);
 			GAA_CHECK1STR("l", GAAOPTID_list);
 			GAA_CHECK1STR("", GAAOPTID_x509fmtder);
-			GAA_CHECK1STR("", GAAOPTID_quit);
 			GAA_CHECK1STR("", GAAOPTID_echo);
 			GAA_CHECK1STR("", GAAOPTID_http);
 			GAA_CHECK1STR("g", GAAOPTID_generate);
@@ -679,6 +685,7 @@ int gaa_try(int gaa_num, int gaa_index, gaainfo *gaaval, char *opt_list)
 	struct GAAOPTION_pgptrustdb GAATMP_pgptrustdb;
 	struct GAAOPTION_pgpkeyring GAATMP_pgpkeyring;
 	struct GAAOPTION_x509cafile GAATMP_x509cafile;
+	struct GAAOPTION_quit GAATMP_quit;
 	struct GAAOPTION_port GAATMP_port;
 
 #line 393 "gaa.skel"
@@ -871,8 +878,11 @@ int gaa_try(int gaa_num, int gaa_index, gaainfo *gaaval, char *opt_list)
 		break;
 	case GAAOPTID_quit:
 	OK = 0;
+		GAA_TESTMOREARGS;
+		GAA_FILL(GAATMP_quit.arg1, gaa_getint, GAATMP_quit.size1);
+		gaa_index++;
 #line 14 "serv.gaa"
-{ gaaval->quit = 1 ;};
+{ gaaval->quit = GAATMP_quit.arg1 ;};
 
 		return GAA_OK;
 		break;

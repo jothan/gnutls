@@ -310,7 +310,7 @@ static void gaa_parser(int argc, char **argv);
 int main(int argc, char **argv)
 {
    int err, listen_sd, i;
-   int sd, ret;
+   int sd, ret, cnt;
    struct sockaddr_in sa_serv;
    struct sockaddr_in sa_cli;
    int client_len;
@@ -421,7 +421,7 @@ int main(int argc, char **argv)
    printf("%s ready. Listening to port '%d'.\n\n", name, port);
 
    client_len = sizeof(sa_cli);
-
+   cnt = 0;
    for (;;) {
       state = initialize_state();
 
@@ -524,8 +524,9 @@ int main(int argc, char **argv)
        */
       close(sd);
       gnutls_deinit(state);
-      if (quit!=0) goto finish;
 
+      cnt++;
+      if (cnt==quit&&quit!=0) goto finish;
    }
    
    finish:
@@ -571,7 +572,7 @@ void gaa_parser(int argc, char **argv)
    }
 
    quit = info.quit;
-   
+
    if (info.http == 0)
       http = 0;
    else
