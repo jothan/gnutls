@@ -4,7 +4,8 @@ EXTRA_DIST = ChangeLog NEWS INSTALL README THANKS COPYING COPYING.LIB
 SUBDIRS = includes lib libextra src doc tests
 
 ChangeLog:
-	cvs2cl --utc -U .cvsusers --fsf -t -S -I ChangeLog -I .cvs
+	cvs2cl --tags --utc --fsf --FSF --usermap .cvsusers -I ChangeLog -I .cvs
+	cat .cvscopying >> ChangeLog
 
 tag = $(PACKAGE)_`echo $(VERSION) | sed 's/\./_/g'`
 htmldir = ../www-$(PACKAGE)
