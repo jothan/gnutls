@@ -6,6 +6,8 @@ Version 1.0.21
   a key and no certificate to PKCS#12.
 - Fix objdir != srcdir builds, reported by "Gerrit P. Haase"
   <gp@familiehaase.de>.
+- Avoid redefining getpass if system already has it, reported by 
+  Yoann Vandoorselaere <yoann@prelude-ids.org>.
 
 Version 1.0.20 (18/08/2004)
 - Bug fix of padding string in RSA PKCS#1 v1.5 type 2 encryption,
