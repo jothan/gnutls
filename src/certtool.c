@@ -2059,161 +2059,186 @@ gnutls_x509_crt issuer;
 #include <gnutls/pkcs12.h>
 #include <unistd.h>
 
-void generate_pkcs12( void)
+void generate_pkcs12(void)
 {
-	gnutls_pkcs12 pkcs12;
-	gnutls_pkcs12_bag bag, kbag;
-	gnutls_x509_crt crt;
-	gnutls_x509_privkey key;
-	int result;
-	size_t size;
-	gnutls_datum data;
-	const char* password;
-	const char* name;
-	unsigned int flags;
-	gnutls_datum key_id;
-	unsigned char _key_id[20];
-	int index;
+    gnutls_pkcs12 pkcs12;
+    gnutls_pkcs12_bag bag, kbag;
+    gnutls_x509_crt crt;
+    gnutls_x509_privkey key;
+    int result;
+    size_t size;
+    gnutls_datum data;
+    const char *password;
+    const char *name;
+    unsigned int flags;
+    gnutls_datum key_id;
+    unsigned char _key_id[20];
+    int index;
 
-	fprintf(stderr, "Generating a PKCS #12 structure...\n");
-	
-	key = load_private_key(1);
-	crt = load_cert(0);
-	
-	name = get_pkcs12_key_name();
+    fprintf(stderr, "Generating a PKCS #12 structure...\n");
 
-	if (info.pass)
-	  password = info.pass;
-	else
-	  password = get_pass();
+    key = load_private_key(0);
+    crt = load_cert(0);
 
-	result = gnutls_pkcs12_bag_init( &bag);
+    name = get_pkcs12_key_name();
+
+    if (info.pass)
+	password = info.pass;
+    else
+	password = get_pass();
+
+    result = gnutls_pkcs12_bag_init(&bag);
+    if (result < 0) {
+	fprintf(stderr, "bag_init: %s\n", gnutls_strerror(result));
+	exit(1);
+    }
+
+    if (crt) {			/* add the certificate only if it was specified.
+				 */
+	result = gnutls_pkcs12_bag_set_crt(bag, crt);
 	if (result < 0) {
-		fprintf(stderr, "bag_init: %s\n", gnutls_strerror(result));
-		exit(1);
-	}
-
-	size = sizeof(_key_id);
-	result = gnutls_x509_privkey_get_key_id( key, 0, _key_id, &size);
-	if (result < 0) {
-		fprintf(stderr, "key_id: %s\n", gnutls_strerror(result));
-		exit(1);
-	}
-	
-	key_id.data = _key_id;
-	key_id.size = size;
-		
-	if (crt) { /* add the certificate only if it was specified.
-		    */
-		result = gnutls_pkcs12_bag_set_crt( bag, crt);
-		if (result < 0) {
-			fprintf(stderr, "set_crt: %s\n", gnutls_strerror(result));
-			exit(1);
-		}
-
-		index = result;
-
-		result = gnutls_pkcs12_bag_set_friendly_name( bag, index, name);
-		if (result < 0) {
-			fprintf(stderr, "bag_set_key_id: %s\n", gnutls_strerror(result));
-			exit(1);
-		}
-	
-
-		result = gnutls_pkcs12_bag_set_key_id( bag, index, &key_id);
-		if (result < 0) {
-			fprintf(stderr, "bag_set_key_id: %s\n", gnutls_strerror(result));
-			exit(1);
-		}
-
-		if (info.export) flags = GNUTLS_PKCS_USE_PKCS12_RC2_40;
-		else flags = GNUTLS_PKCS8_USE_PKCS12_3DES;
-
-		result = gnutls_pkcs12_bag_encrypt( bag, password, flags);
-		if (result < 0) {
-			fprintf(stderr, "bag_encrypt: %s\n", gnutls_strerror(result));
-			exit(1);
-		}
-	}
-	
-	/* Key BAG */
-
-	result = gnutls_pkcs12_bag_init( &kbag);
-	if (result < 0) {
-		fprintf(stderr, "bag_init: %s\n", gnutls_strerror(result));
-		exit(1);
-	}
-
-	if (info.export) flags = GNUTLS_PKCS_USE_PKCS12_RC2_40;
-	else flags = GNUTLS_PKCS_USE_PKCS12_3DES;
-
-	size = sizeof(buffer);
-	result = gnutls_x509_privkey_export_pkcs8( key, GNUTLS_X509_FMT_DER, password,
-		flags, buffer, &size);
-	if (result < 0) {
-		fprintf(stderr, "key_export: %s\n", gnutls_strerror(result));
-		exit(1);
-	}
-
-	data.data = buffer;
-	data.size = size;
-	result = gnutls_pkcs12_bag_set_data( kbag, GNUTLS_BAG_PKCS8_ENCRYPTED_KEY, &data);
-	if (result < 0) {
-		fprintf(stderr, "bag_set_data: %s\n", gnutls_strerror(result));
-		exit(1);
+	    fprintf(stderr, "set_crt: %s\n", gnutls_strerror(result));
+	    exit(1);
 	}
 
 	index = result;
 
-	result = gnutls_pkcs12_bag_set_friendly_name( kbag, index, name);
+	result = gnutls_pkcs12_bag_set_friendly_name(bag, index, name);
 	if (result < 0) {
-		fprintf(stderr, "bag_set_key_id: %s\n", gnutls_strerror(result));
-		exit(1);
+	    fprintf(stderr, "bag_set_friendly_name: %s\n",
+		    gnutls_strerror(result));
+	    exit(1);
 	}
 
-	result = gnutls_pkcs12_bag_set_key_id( kbag, result, &key_id);
+	size = sizeof(_key_id);
+	result = gnutls_x509_crt_get_key_id(crt, 0, _key_id, &size);
 	if (result < 0) {
-		fprintf(stderr, "bag_set_key_id: %s\n", gnutls_strerror(result));
-		exit(1);
+	    fprintf(stderr, "key_id: %s\n", gnutls_strerror(result));
+	    exit(1);
 	}
 
-	/* write the PKCS #12 structure.
-	 */
-	result = gnutls_pkcs12_init(&pkcs12);
+	key_id.data = _key_id;
+	key_id.size = size;
+
+	result = gnutls_pkcs12_bag_set_key_id(bag, index, &key_id);
 	if (result < 0) {
-		fprintf(stderr, "crt_sign: %s\n", gnutls_strerror(result));
-		exit(1);
+	    fprintf(stderr, "bag_set_key_id: %s\n",
+		    gnutls_strerror(result));
+	    exit(1);
 	}
 
-	if (crt) {
-		result = gnutls_pkcs12_set_bag( pkcs12, bag);
-		if (result < 0) {
-			fprintf(stderr, "set_bag: %s\n", gnutls_strerror(result));
-			exit(1);
-		}
+	if (info.export)
+	    flags = GNUTLS_PKCS_USE_PKCS12_RC2_40;
+	else
+	    flags = GNUTLS_PKCS8_USE_PKCS12_3DES;
+
+	result = gnutls_pkcs12_bag_encrypt(bag, password, flags);
+	if (result < 0) {
+	    fprintf(stderr, "bag_encrypt: %s\n", gnutls_strerror(result));
+	    exit(1);
+	}
+    }
+
+    if (key) {			/* add the key only if it was specified.
+				 */
+	result = gnutls_pkcs12_bag_init(&kbag);
+	if (result < 0) {
+	    fprintf(stderr, "bag_init: %s\n", gnutls_strerror(result));
+	    exit(1);
 	}
 
-	result = gnutls_pkcs12_set_bag( pkcs12, kbag);
-	if (result < 0) {
-		fprintf(stderr, "set_bag: %s\n", gnutls_strerror(result));
-		exit(1);
-	}
-
-	result = gnutls_pkcs12_generate_mac( pkcs12, password);
-	if (result < 0) {
-		fprintf(stderr, "generate_mac: %s\n", gnutls_strerror(result));
-		exit(1);
-	}
+	if (info.export)
+	    flags = GNUTLS_PKCS_USE_PKCS12_RC2_40;
+	else
+	    flags = GNUTLS_PKCS_USE_PKCS12_3DES;
 
 	size = sizeof(buffer);
-	result = gnutls_pkcs12_export( pkcs12, out_cert_format, buffer, &size);
+	result =
+	    gnutls_x509_privkey_export_pkcs8(key, GNUTLS_X509_FMT_DER,
+					     password, flags, buffer,
+					     &size);
 	if (result < 0) {
-		fprintf(stderr, "pkcs12_export: %s\n", gnutls_strerror(result));
-		exit(1);
+	    fprintf(stderr, "key_export: %s\n", gnutls_strerror(result));
+	    exit(1);
 	}
-	
-	fwrite( buffer, 1, size, outfile);
-	
+
+	data.data = buffer;
+	data.size = size;
+	result =
+	    gnutls_pkcs12_bag_set_data(kbag,
+				       GNUTLS_BAG_PKCS8_ENCRYPTED_KEY,
+				       &data);
+	if (result < 0) {
+	    fprintf(stderr, "bag_set_data: %s\n", gnutls_strerror(result));
+	    exit(1);
+	}
+
+	index = result;
+
+	result = gnutls_pkcs12_bag_set_friendly_name(kbag, index, name);
+	if (result < 0) {
+	    fprintf(stderr, "bag_set_friendly_name: %s\n",
+		    gnutls_strerror(result));
+	    exit(1);
+	}
+
+	size = sizeof(_key_id);
+	result = gnutls_x509_privkey_get_key_id(key, 0, _key_id, &size);
+	if (result < 0) {
+	    fprintf(stderr, "key_id: %s\n", gnutls_strerror(result));
+	    exit(1);
+	}
+
+	key_id.data = _key_id;
+	key_id.size = size;
+
+	result = gnutls_pkcs12_bag_set_key_id(kbag, result, &key_id);
+	if (result < 0) {
+	    fprintf(stderr, "bag_set_key_id: %s\n",
+		    gnutls_strerror(result));
+	    exit(1);
+	}
+    }
+
+    /* write the PKCS #12 structure.
+     */
+    result = gnutls_pkcs12_init(&pkcs12);
+    if (result < 0) {
+	fprintf(stderr, "crt_sign: %s\n", gnutls_strerror(result));
+	exit(1);
+    }
+
+    if (crt) {
+	result = gnutls_pkcs12_set_bag(pkcs12, bag);
+	if (result < 0) {
+	    fprintf(stderr, "set_bag: %s\n", gnutls_strerror(result));
+	    exit(1);
+	}
+    }
+
+    if (key) {
+	result = gnutls_pkcs12_set_bag(pkcs12, kbag);
+	if (result < 0) {
+	    fprintf(stderr, "set_bag: %s\n", gnutls_strerror(result));
+	    exit(1);
+	}
+    }
+
+    result = gnutls_pkcs12_generate_mac(pkcs12, password);
+    if (result < 0) {
+	fprintf(stderr, "generate_mac: %s\n", gnutls_strerror(result));
+	exit(1);
+    }
+
+    size = sizeof(buffer);
+    result = gnutls_pkcs12_export(pkcs12, out_cert_format, buffer, &size);
+    if (result < 0) {
+	fprintf(stderr, "pkcs12_export: %s\n", gnutls_strerror(result));
+	exit(1);
+    }
+
+    fwrite(buffer, 1, size, outfile);
+
 }
 
 const char* BAGTYPE( gnutls_pkcs12_bag_type x)
