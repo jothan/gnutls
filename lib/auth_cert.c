@@ -374,6 +374,8 @@ static int _gnutls_find_acceptable_client_cert(GNUTLS_STATE state,
 			data_size = _data_size;
 
 			issuers_dn = gnutls_alloca( issuers_dn_len * sizeof(gnutls_datum));
+			if (issuers_dn == NULL)
+				goto clear;
 
 			for (i=0;i<issuers_dn_len;i++) {
 				/* The checks here for the buffer boundaries
@@ -406,6 +408,10 @@ static int _gnutls_find_acceptable_client_cert(GNUTLS_STATE state,
 		}
 
 		/* put our certificate's issuer and dn into cdn, idn
+		 * Note that the certificates we provide to the callback
+		 * are not all the certificates we have. Only the certificates
+		 * that are requested by the server (CA matches - and sign
+		 * algorithm matches), are provided.
 		 */
 		for (j = i = 0; i < cred->ncerts; i++) {
 			if ((cred->cert_list[i][0].cert_type ==
