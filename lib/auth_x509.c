@@ -1328,7 +1328,7 @@ int _gnutls_server_find_x509_cert_list_index(GNUTLS_STATE state,
 	if (cred->ncerts > 0)
 		index = 0;	/* default is use the first certificate */
 
-	if (state->gnutls_internals.client_cert_callback != NULL && cred->ncerts > 0) {	/* use the callback to get certificate */
+	if (state->gnutls_internals.server_cert_callback != NULL && cred->ncerts > 0) {	/* use the callback to get certificate */
 		gnutls_datum *my_certs = NULL;
 
 		my_certs =
