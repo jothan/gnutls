@@ -46,7 +46,7 @@ serv-gaa.c: serv.gaa
 	-gaa serv.gaa -o serv-gaa.c -i serv-gaa.h
 
 install-exec-hook:
-	-$(RM) -f $(DESTDIR)$(bindir)/gnutls-srpcrypt
+	rm -f $(DESTDIR)$(bindir)/gnutls-srpcrypt
 	$(LN_S) srptool $(DESTDIR)$(bindir)/gnutls-srpcrypt
 uninstall-local:
-	-$(RM) -f $(DESTDIR)$(bindir)/gnutls-srpcrypt
+	rm -f $(DESTDIR)$(bindir)/gnutls-srpcrypt
