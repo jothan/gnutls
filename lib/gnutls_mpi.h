@@ -1,9 +1,9 @@
 #ifndef GNUTLS_MPI_H
 # define GNUTLS_MPI_H
 
+# include <gnutls_int.h>
 # include <gcrypt.h>
 # include <libtasn1.h>
-# include <gnutls_int.h>
 
 #define GNUTLS_MPI gcry_mpi_t
 
