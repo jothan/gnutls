@@ -48,11 +48,7 @@
  */
 int _gnutls_dh_get_secret_bits(int prime_bits) 
 {
-	if (prime_bits <= 2048)
-		return 512;
-	if (prime_bits <= 4096)
-		return 768;
-	return 1024;
+	return (prime_bits-2);
 }
 
 
@@ -72,8 +68,6 @@ GNUTLS_MPI gnutls_calc_dh_secret(GNUTLS_MPI * ret_x, GNUTLS_MPI g, GNUTLS_MPI pr
 	}
 
 	_gnutls_mpi_randomize(x, secret_bits, GCRY_STRONG_RANDOM);
-
-	/* fixme: set high bit of x and select a larger one */
 
 	e = _gnutls_mpi_alloc_like(prime);
 	if (e == NULL) {
