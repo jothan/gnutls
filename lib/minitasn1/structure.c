@@ -342,7 +342,7 @@ node_asn *
 _asn1_copy_structure3(node_asn *source_node)
 {
   node_asn *dest_node,*p_s,*p_d,*p_d_prev;
-  int len,len2,move;
+  int len,len2,move, tlen;
 
   if(source_node==NULL) return NULL;
 
@@ -365,7 +365,10 @@ _asn1_copy_structure3(node_asn *source_node)
 	  _asn1_set_value(p_d,p_s->value,len+len2);
 	  break;
 	default:
-	  _asn1_set_value(p_d,p_s->value,strlen(p_s->value)+1);
+	  tlen = strlen(p_s->value);
+	  
+	  if (tlen > 0)
+	      _asn1_set_value(p_d,p_s->value,tlen+1);
 	}
       }
       move=DOWN;
@@ -419,7 +422,7 @@ asn1_retCode
 _asn1_type_choice_config(node_asn *node)
 {
   node_asn *p,*p2,*p3,*p4;
-  int move;
+  int move,tlen;
  
   if(node==NULL) return ASN1_ELEMENT_NOT_FOUND;
 
@@ -438,7 +441,9 @@ _asn1_type_choice_config(node_asn *node)
 	    while(p3){
 	      if(type_field(p3->type)==TYPE_TAG){
 		p4=_asn1_add_node_only(p3->type);
-		_asn1_set_value(p4,p3->value,strlen(p3->value)+1);
+		tlen = strlen(p3->value);
+		if (tlen > 0)
+		    _asn1_set_value(p4,p3->value,tlen+1);
 		_asn1_set_right(p4,p2->down);
 		_asn1_set_down(p2,p4);
 	      }
@@ -571,7 +576,7 @@ _asn1_expand_identifier(node_asn **node,node_asn *root)
   *  ASN1_ELEMENT_NOT_FOUND\: SOURCE_NAME isn't known
   * 
   * Example: using "pkix.asn"
-  *  result=asn1_create_structure(cert_def,"PKIX1.Certificate",&cert);
+  *  result=asn1_create_structure(cert_def,"PKIX1.Certificate",certptr);
   **/
 asn1_retCode
 asn1_create_element(ASN1_TYPE definitions,const char *source_name,
@@ -600,6 +605,9 @@ asn1_create_element(ASN1_TYPE definitions,const char *source_name,
   * @out: pointer to the output file (e.g. stdout).
   * @structure: pointer to the structure that you want to visit.
   * @name: an element of the structure
+  * @mode: specify how much of the structure to print, can be
+  *   ASN1_PRINT_NAME, ASN1_PRINT_NAME_TYPE,
+  *   ASN1_PRINT_NAME_TYPE_VALUE, or ASN1_PRINT_ALL.
   * 
   * Prints on the standard output the structure's tree starting from the NAME element inside
   * the structure *POINTER. 
@@ -894,8 +902,7 @@ asn1_number_of_elements(ASN1_TYPE element,const char *name,int *num)
 
 
 /**
-  * asn1_find_structure_from_oid - Search the structure that is defined just
-  * after an OID definition.
+  * asn1_find_structure_from_oid - Locate structure defined by a specific OID.
   * @definitions: ASN1 definitions
   * @oidValue: value of the OID to search (e.g. "1.2.3.4").
   * Description:

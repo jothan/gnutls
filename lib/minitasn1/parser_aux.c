@@ -519,7 +519,7 @@ _asn1_expand_object_id(ASN1_TYPE node)
 {
   node_asn *p,*p2,*p3,*p4,*p5;
   char name_root[MAX_NAME_SIZE],name2[2*MAX_NAME_SIZE+1];
-  int move;
+  int move, tlen;
  
   if(node==NULL) return ASN1_ELEMENT_NOT_FOUND;
 
@@ -548,7 +548,9 @@ _asn1_expand_object_id(ASN1_TYPE node)
 	      if(type_field(p4->type)==TYPE_CONSTANT){
 		p5=_asn1_add_node_only(TYPE_CONSTANT);
 		_asn1_set_name(p5,p4->name);
-		_asn1_set_value(p5,p4->value,strlen(p4->value)+1);
+		tlen = strlen( p4->value);
+		if (tlen > 0)
+		    _asn1_set_value(p5,p4->value,tlen+1);
 		if(p2==p){
 		  _asn1_set_right(p5,p->down);
 		  _asn1_set_down(p,p5);
@@ -612,7 +614,9 @@ _asn1_expand_object_id(ASN1_TYPE node)
 	    }
 	    p4=p4->right;
 	  }
-	  _asn1_set_value(p2,name2,strlen(name2)+1);
+	  tlen = strlen(name2);
+	  if (tlen > 0)
+	      _asn1_set_value(p2,name2,tlen+1);
 	}
       }
       move=DOWN;
@@ -871,11 +875,13 @@ parse_version_string( const char *s, int *major, int *minor, int *micro )
   * asn1_check_version - This function checks the library's version
   * @req_version: the version to check
   *
-  * Check that the version of the library is at minimum the requested one
-  * and return the version string; return NULL if the condition is not
-  * satisfied.  If a NULL is passed to this function, no check is done,
-  * but the version string is simply returned.
+  * Check library version.
   *
+  * Return value: Check that the the version of the library is at
+  *   minimum the one given as a string in @req_version and return the
+  *   actual version string of the library; return NULL if the
+  *   condition is not met.  If %NULL is passed to this function no
+  *   check is done and only the version string is returned.
   **/
 const char *
 asn1_check_version( const char *req_version )

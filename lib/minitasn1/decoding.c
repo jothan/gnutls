@@ -492,7 +492,7 @@ _asn1_get_indefinite_length_string(const unsigned char* der,int* len)
   * @element: pointer to an ASN1 structure
   * @ider: vector that contains the DER encoding. 
   * @len: number of bytes of *der: der[0]..der[len-1]
-  * Description:
+  * @errorDescription: null-terminated string contains details when an error occurred.
   *
   * Fill the structure *ELEMENT with values of a DER encoding string. The sructure must just be
   * created with function 'create_stucture'.
@@ -514,7 +514,7 @@ asn1_der_decoding(ASN1_TYPE *element,const void *ider,int len,
 {
   node_asn *node,*p,*p2,*p3;
   char temp[128];
-  int counter,len2,len3,len4,move,ris;
+  int counter,len2,len3,len4,move,ris,tlen;
   unsigned char class,*temp2;
   unsigned int tag;
   int indefinite, result;
@@ -686,7 +686,9 @@ asn1_der_decoding(ASN1_TYPE *element,const void *ider,int len,
 	break;
       case TYPE_OBJECT_ID:
 	_asn1_get_objectid_der(der+counter,&len2, temp, sizeof(temp));
-	_asn1_set_value(p,temp,strlen(temp)+1);
+	tlen = strlen(temp);
+	if( tlen > 0)
+	   _asn1_set_value(p,temp,tlen+1);
 	counter+=len2;
 	move=RIGHT;
       break;
@@ -696,7 +698,9 @@ asn1_der_decoding(ASN1_TYPE *element,const void *ider,int len,
 		asn1_delete_structure(element);
 	        return result;
 	}
-	_asn1_set_value(p,temp,strlen(temp)+1);
+	tlen = strlen(temp);
+	if (tlen > 0)
+	   _asn1_set_value(p,temp,tlen+1);
 	counter+=len2;
 	move=RIGHT;
 	break;
@@ -743,7 +747,9 @@ asn1_der_decoding(ASN1_TYPE *element,const void *ider,int len,
 	  counter+=len2;
 	  if(len3>0){
 	    _asn1_ltostr(counter+len3,temp);
-	    _asn1_set_value(p,temp,strlen(temp)+1);
+	    tlen = strlen(temp);
+	    if (tlen > 0)
+	       _asn1_set_value(p,temp,tlen+1);
 	    move=DOWN; 
 	  }
 	  else if(len3==0){
@@ -801,7 +807,10 @@ asn1_der_decoding(ASN1_TYPE *element,const void *ider,int len,
 	  if(len3){
 	    if(len3>0){ /* definite length method */
 	    _asn1_ltostr(counter+len3,temp);
-	    _asn1_set_value(p,temp,strlen(temp)+1);
+	    tlen = strlen(temp);
+	    
+	    if (tlen > 0)
+	       _asn1_set_value(p,temp,tlen+1);
 	    }
 	    else { /* indefinite length method */
 	      _asn1_set_value(p,"-1",3);	      
@@ -938,7 +947,7 @@ asn1_der_decoding_element(ASN1_TYPE *structure,const char *elementName,
   node_asn *node,*p,*p2,*p3,*nodeFound=ASN1_TYPE_EMPTY;
   char temp[128],currentName[MAX_NAME_SIZE*10],*dot_p,*char_p;
   int nameLen=MAX_NAME_SIZE*10-1,state;
-  int counter,len2,len3,len4,move,ris;
+  int counter,len2,len3,len4,move,ris, tlen;
   unsigned char class,*temp2;
   unsigned int tag;
   int indefinite, result;
@@ -1153,7 +1162,10 @@ asn1_der_decoding_element(ASN1_TYPE *structure,const char *elementName,
       case TYPE_OBJECT_ID:
 	if(state==FOUND){
 	  _asn1_get_objectid_der(der+counter,&len2, temp, sizeof(temp));
-	  _asn1_set_value(p,temp,strlen(temp)+1);
+	  tlen = strlen(temp);
+	  
+	  if (tlen > 0)
+	     _asn1_set_value(p,temp,tlen+1);
 	  
 	  if(p==nodeFound) state=EXIT;
 	}
@@ -1173,7 +1185,9 @@ asn1_der_decoding_element(ASN1_TYPE *structure,const char *elementName,
 	        return result;
 	  }
 
-	  _asn1_set_value(p,temp,strlen(temp)+1);
+	  tlen = strlen(temp);
+	  if (tlen > 0)
+  	     _asn1_set_value(p,temp,tlen+1);
 	  
 	  if(p==nodeFound) state=EXIT;
 	}
@@ -1249,7 +1263,10 @@ asn1_der_decoding_element(ASN1_TYPE *structure,const char *elementName,
 	    counter+=len2;
 	    if(len3>0){
 	      _asn1_ltostr(counter+len3,temp);
-	      _asn1_set_value(p,temp,strlen(temp)+1);
+	      tlen = strlen(temp);
+	      
+	      if(tlen > 0)
+	          _asn1_set_value(p,temp,tlen+1);
 	      move=DOWN;
 	    }
 	    else if(len3==0){
@@ -1301,7 +1318,10 @@ asn1_der_decoding_element(ASN1_TYPE *structure,const char *elementName,
 	    counter+=len2;
 	    if(len3){
 	      _asn1_ltostr(counter+len3,temp);
-	      _asn1_set_value(p,temp,strlen(temp)+1);
+	      tlen = strlen(temp);
+	      
+	      if (tlen > 0)
+	          _asn1_set_value(p,temp,tlen+1);
 	      p2=p->down;
 	      while((type_field(p2->type)==TYPE_TAG) || (type_field(p2->type)==TYPE_SIZE)) p2=p2->right;
 	      if(p2->right==NULL) _asn1_append_sequence_set(p);
@@ -1742,8 +1762,7 @@ asn1_der_decoding_startEnd(ASN1_TYPE element,const void *ider,int len,
 
 
 /**
-  * asn1_expand_any_defined_by - Expand every "ANY DEFINED BY" fields of 
-  *    structure *ELEMENT with the corresponding type.
+  * asn1_expand_any_defined_by - Expand "ANY DEFINED BY" fields in structure.
   * @definitions: ASN1 definitions
   * @element: pointer to an ASN1 structure
   * Description:
@@ -1938,8 +1957,7 @@ asn1_expand_any_defined_by(ASN1_TYPE definitions,ASN1_TYPE *element)
 
 
 /**
-  * asn1_expand_octet_string - Expand an "OCTET STRING" fields of 
-  *    structure *ELEMENT with the corresponding type.
+  * asn1_expand_octet_string - Expand "OCTET STRING" fields in structure.
   * @definitions: ASN1 definitions
   * @element: pointer to an ASN1 structure
   * @octetName: name of the OCTECT STRING field to expand.
