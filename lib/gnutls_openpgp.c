@@ -43,15 +43,14 @@
 #define OPENPGP_NAME_SIZE GNUTLS_X509_CN_SIZE
 
 static void
-release_mpi_array(MPI *arr, size_t n)
+release_mpi_array(GNUTLS_MPI *arr, size_t n)
 {
-  MPI x;
+  GNUTLS_MPI x;
   
   while (arr && n--)
     {
       x = *arr;
-      /*_gnutls_mpi_release(&x);*/
-      gcry_mpi_release(x);
+      _gnutls_mpi_release(&x);
       *arr = NULL; arr++;
     }
 }
@@ -380,7 +379,7 @@ openpgp_pk_to_gnutls_cert(gnutls_cert *cert, PKT_public_key *pk)
   for (i=0; i<cert->params_size; i++)
     {      
       nbytes = pk->mpi[i].bytes+2;
-      rc = gcry_mpi_scan(&cert->params[i], GCRYMPI_FMT_PGP,
+      rc = _gnutls_mpi_scan_pgp(&cert->params[i], 
                          pk->mpi[i].data, &nbytes);
       if (rc)
         {
@@ -484,7 +483,7 @@ _gnutls_openpgp_key2gnutls_key( gnutls_private_key *pkey,
   for (i=0; i<pkey->params_size; i++)
     {
       nbytes = sk->pk->mpi[i].bytes+2;
-      rc = gcry_mpi_scan(&pkey->params[i], GCRYMPI_FMT_PGP,
+      rc = _gnutls_mpi_scan_pgp(&pkey->params[i],
                          sk->pk->mpi[i].data, &nbytes);
       if (rc)
         {
@@ -497,7 +496,7 @@ _gnutls_openpgp_key2gnutls_key( gnutls_private_key *pkey,
   for (j=0; j<cdk_pk_get_nskey( pke_algo ); j++, i++)
     {
       nbytes = sk->mpi[j]->bytes+2;
-      rc = gcry_mpi_scan(&pkey->params[i], GCRYMPI_FMT_PGP,
+      rc = _gnutls_mpi_scan_pgp(&pkey->params[i],
                          sk->mpi[j]->data, &nbytes);
       if (rc)
         {
