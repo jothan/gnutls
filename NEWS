@@ -8,6 +8,8 @@ Version 1.0.22
   tiny patch contributed by Joe Orton <joe@manyfish.co.uk>.
 - Add pkg-config meta files, suggested by Stéphane LOEUILLET
   <stephane.loeuillet@tiscali.fr>.
+- Fix memory initializaion bug in gnutls_certificate_set_x509_trust,
+  tiny patch by Aleix Conchillo Flaque <aleix@member.fsf.org>.
 
 Version 1.0.21 (07/10/2004)
 - Fix memory leak in gnutls_certificate_verify_peers and
