@@ -323,8 +323,6 @@ void print_openpgp_info(gnutls_session session, const char* hostname)
 			}
 
 		}
-		
-		gnutls_openpgp_key_deinit( crt);
 
 	}
 }
