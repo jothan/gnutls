@@ -29,6 +29,7 @@
 #include <gnutls_random.h>
 #include <gnutls_datum.h>
 #include <gnutls_global.h>
+#include <x509_der.h>
 #include "debug.h"
 
 static int _gnutls_pk_encrypt(int algo, GNUTLS_MPI * resarr, GNUTLS_MPI data, GNUTLS_MPI * pkey, int pkey_len);
@@ -131,7 +132,6 @@ int _gnutls_pkcs1_rsa_encrypt(gnutls_datum * ciphertext,
 	}
 
 	_gnutls_mpi_print(NULL, &psize, res);
-
 	if (psize < k) {
 		/* padding psize */
 		pad = k - psize;
@@ -139,7 +139,6 @@ int _gnutls_pkcs1_rsa_encrypt(gnutls_datum * ciphertext,
 	} else if (psize==k) {
 		pad = 0;
 	} else { /* psize > k !!! */
-		/* This is an impossible situation */
 		gnutls_assert();
 		return GNUTLS_E_INTERNAL_ERROR;
 	}
@@ -308,46 +307,46 @@ int _gnutls_rsa_verify( const gnutls_datum* vdata, const gnutls_datum *ciphertex
 /* encodes the Dss-Sig-Value structure
  */
 static int encode_ber_rs( gnutls_datum* sig_value, GNUTLS_MPI r, GNUTLS_MPI s) {
-ASN1_TYPE sig;
+node_asn* sig;
 int result;
 opaque str[MAX_PARAMETER_SIZE];
 size_t len = sizeof(str);
 size_t tot_len = 0;
 
-	if ((result=_gnutls_asn1_create_element( _gnutls_get_gnutls_asn(), "GNUTLS.DSASignatureValue", 
-		&sig, "sig"))!=ASN1_SUCCESS) {
+	if ((result=asn1_create_structure( _gnutls_get_gnutls_asn(), "GNUTLS.DSASignatureValue", 
+		&sig, "sig"))!=ASN_OK) {
 		gnutls_assert();
 		return _gnutls_asn2err(result);
 	}
 
 	if ( _gnutls_mpi_print_lz( str, &len, r) < 0) {
 		gnutls_assert();
-		asn1_delete_structure(&sig);
+		asn1_delete_structure(sig);
 		return GNUTLS_E_MPI_PRINT_FAILED;
 	}
 	tot_len += len;
 	
 	result = asn1_write_value( sig, "sig.r", str, len);
 
-	if (result != ASN1_SUCCESS) {
+	if (result != ASN_OK) {
 		gnutls_assert();
-		asn1_delete_structure(&sig);
+		asn1_delete_structure(sig);
 		return _gnutls_asn2err(result);
 	}
 
 	len = sizeof(str) - 1;
 	if ( _gnutls_mpi_print_lz( str, &len, s) < 0) {
 		gnutls_assert();
-		asn1_delete_structure(&sig);
+		asn1_delete_structure(sig);
 		return GNUTLS_E_MPI_PRINT_FAILED;
 	}
 	tot_len += len;
 
 	result = asn1_write_value( sig, "sig.s", str, len);
 
-	if (result != ASN1_SUCCESS) {
+	if (result != ASN_OK) {
 		gnutls_assert();
-		asn1_delete_structure(&sig);
+		asn1_delete_structure(sig);
 		return _gnutls_asn2err(result);
 	}
 
@@ -355,17 +354,17 @@ size_t tot_len = 0;
 	sig_value->data = gnutls_malloc( sig_value->size);
 	if (sig_value->data==NULL) {
 		gnutls_assert();
-		asn1_delete_structure(&sig);
+		asn1_delete_structure(sig);
 	}
 
-	result = asn1_der_coding( sig, "sig", sig_value->data, &sig_value->size, NULL);
-	if (result != ASN1_SUCCESS) {
+	result = asn1_create_der( sig, "sig", sig_value->data, &sig_value->size);
+	if (result != ASN_OK) {
 		gnutls_assert();
-		asn1_delete_structure(&sig);
+		asn1_delete_structure(sig);
 		return _gnutls_asn2err(result);
 	}
 
-	asn1_delete_structure(&sig);
+	asn1_delete_structure(sig);
 		
 	return 0;
 }
@@ -417,20 +416,20 @@ int _gnutls_dsa_sign(gnutls_datum * signature, const gnutls_datum *hash,
 /* decodes the Dss-Sig-Value structure
  */
 static int decode_ber_rs( const gnutls_datum* sig_value, GNUTLS_MPI* r, GNUTLS_MPI* s) {
-ASN1_TYPE sig;
+node_asn* sig;
 int result;
 opaque str[MAX_PARAMETER_SIZE];
 
 
-	if ((result=_gnutls_asn1_create_element( _gnutls_get_gnutls_asn(), "GNUTLS.DSASignatureValue", &sig, "sig"))!=ASN1_SUCCESS) {
+	if ((result=asn1_create_structure( _gnutls_get_gnutls_asn(), "GNUTLS.DSASignatureValue", &sig, "sig"))!=ASN_OK) {
 		gnutls_assert();
 		return _gnutls_asn2err(result);
 	}
 
-	result = asn1_der_decoding( &sig, sig_value->data, sig_value->size, NULL);
-	if (result != ASN1_SUCCESS) {
+	result = asn1_get_der( sig, sig_value->data, sig_value->size);
+	if (result != ASN_OK) {
 		gnutls_assert();
-		asn1_delete_structure(&sig);
+		asn1_delete_structure(sig);
 		return _gnutls_asn2err(result);
 	}
 	
@@ -438,7 +437,7 @@ opaque str[MAX_PARAMETER_SIZE];
 	    _gnutls_x509_read_int( sig, "sig.r", str, sizeof(str)-1, r);
 	if (result < 0) {
 		gnutls_assert();
-		asn1_delete_structure(&sig);
+		asn1_delete_structure(sig);
 		return result;
 	}
 
@@ -447,11 +446,11 @@ opaque str[MAX_PARAMETER_SIZE];
 	if (result < 0) {
 		gnutls_assert();
 		_gnutls_mpi_release( s);
-		asn1_delete_structure(&sig);
+		asn1_delete_structure(sig);
 		return result;
 	}
 
-	asn1_delete_structure(&sig);
+	asn1_delete_structure(sig);
 		
 	return 0;
 }

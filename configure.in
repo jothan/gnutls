@@ -11,8 +11,8 @@ AC_DEFINE_UNQUOTED(T_OS, "$target_os")
 
 dnl Gnutls Version
 GNUTLS_MAJOR_VERSION=0
-GNUTLS_MINOR_VERSION=5
-GNUTLS_MICRO_VERSION=0
+GNUTLS_MINOR_VERSION=4
+GNUTLS_MICRO_VERSION=4
 GNUTLS_VERSION=$GNUTLS_MAJOR_VERSION.$GNUTLS_MINOR_VERSION.$GNUTLS_MICRO_VERSION
 
 AC_DEFINE_UNQUOTED(GNUTLS_VERSION, "$GNUTLS_VERSION")
@@ -23,7 +23,7 @@ AM_CONFIG_HEADER(config.h)
 dnl This is the library version
 GNUTLS_MOST_RECENT_INTERFACE=5
 GNUTLS_CURRENT_INTERFACE_IMPLEMENTATION_NUMBER=$GNUTLS_MICRO_VERSION
-GNUTLS_OLDEST_INTERFACE=5
+GNUTLS_OLDEST_INTERFACE=4
 
 
 AC_SUBST(GNUTLS_MAJOR_VERSION)
@@ -95,21 +95,6 @@ AC_MSG_RESULT([***
 AC_C_CONST
 AC_C_INLINE
 
-AC_MSG_CHECKING([whether C99 macros are supported])
-AC_TRY_COMPILE(,[ 
-#define test_mac(...) 
-int z,y,x;
-test_mac(x,y,z);
-return 0;
-], 
-dnl ***** OK
-AC_DEFINE(C99_MACROS)
-AC_MSG_RESULT(yes),
-dnl ***** NOT FOUND
-AC_MSG_RESULT(no)
-AC_MSG_WARN([C99 macros are not supported by your compiler. This may
-affect performance.])
-)
 
 if test $ac_cv_c_compiler_gnu != no; then
 
@@ -165,10 +150,6 @@ AC_CHECK_SIZEOF(unsigned long int, 4)
 AC_CHECK_SIZEOF(unsigned int, 4)
 AC_CHECK_SIZEOF(unsigned short int, 2)
 AC_CHECK_SIZEOF(unsigned char, 1)
-
-AC_CHECK_TYPES(ptrdiff_t,,, [
-# include <sys/types.h>
-])
 
 AC_CHECK_TYPE(size_t,
 DEFINE_SIZE_T="#include <sys/types.h>"
@@ -252,11 +233,9 @@ AC_ARG_WITH( ext-libraries, [  --without-ext-libraries disable external librarie
 
 if test x$ac_ext_libraries != xno; then
  AC_MSG_RESULT(yes)
- AC_CHECK_LIB(gdbm, gdbm_open, 
-AC_DEFINE(HAVE_LIBGDBM)
-SERV_LIBS="-lgdbm", AC_MSG_WARN(
+ AC_CHECK_LIB(gdbm, gdbm_open,, AC_MSG_WARN(
 *** 
-*** GDBM was not found. This is only needed for the gnutls-serv application.))
+*** GDBM was not found. You will not be able to use the default gdbm session resumption backend.))
  AC_CHECK_LIB(z, compress,,AC_MSG_WARN(
 *** 
 *** ZLIB was not found. You will not be able to use ZLIB compression.))
@@ -293,32 +272,17 @@ AC_ARG_ENABLE( openpgp-authentication, [  --disable-openpgp-authentication disab
 )
 if test x$ac_enable_openpgp != xno; then
  AC_MSG_RESULT(no)
- AM_PATH_LIBOPENCDK( 0.2.0, AC_DEFINE(HAVE_LIBOPENCDK),
+ AM_PATH_LIBOPENCDK( 0.1.0, AC_DEFINE(HAVE_LIBOPENCDK),
  AC_MSG_WARN([[
 ***
-*** libopencdk 0.2.0 was not found. You will not be able to use OpenPGP keys with gnutls.
+*** libopencdk was not found. You will not be able to use OpenPGP keys with gnutls.
 ]]))
 else
  AC_MSG_RESULT(yes)
 fi
 
-AC_ARG_WITH(included-libtasn1,
-	[  --with-included-libtasn1 Use the included libtasn1],
-libtasn1_enabled=yes, libtasn1_enabled=no)
-
-dnl In maintainer mode we always use the included library
-if test x$opt_maintainer_mode = xyes; then
- libtasn1_enabled=yes
-else
- libtasn1_enabled=no
-fi
 
 
-AC_CHECK_LIB( tasn1, asn1_array2tree,:, 
- libtasn1_enabled=yes
- AC_MSG_WARN(
-*** 
-*** LibtASN1 was not found. Will use the included one.))
 
 
 AC_MSG_RESULT([***
@@ -326,14 +290,12 @@ AC_MSG_RESULT([***
 ])
 AM_PROG_LIBTOOL
 
-LIBGNUTLS_LIBS="$LIBS -L${libdir} -lgnutls -ltasn1 $LIBGCRYPT_LIBS"
+LIBGNUTLS_LIBS="$LIBS -L${libdir} -lgnutls $LIBGCRYPT_LIBS"
 LIBGNUTLS_CFLAGS="$LIBGCRYPT_CFLAGS -I${includedir}"
 
 AC_SUBST(LIBGNUTLS_LIBS)
 AC_SUBST(LIBGNUTLS_CFLAGS)
 
-SERV_LIBS="$LIBS $SERV_LIBS"
-AC_SUBST(SERV_LIBS)
 
 LIBGNUTLS_EXTRA_LIBS="-L${libdir} -lgnutls-extra -lgnutls $LIBOPENCDK_LIBS"
 LIBGNUTLS_EXTRA_CFLAGS="$LIBOPENCDK_CFLAGS -I${includedir}"
@@ -356,32 +318,22 @@ AC_MSG_WARN(***
 	fi
 fi
 
-
-if test x"$libtasn1_enabled" = xyes; then
- AC_CONFIG_SUBDIRS(libtasn1)
- LIBASN1_DIR=libtasn1
- AC_SUBST(LIBASN1_DIR)
- LIBASN1_LINK=../libtasn1/lib/libtasn1.la
-else
- LIBASN1_LINK=-ltasn1
-fi
-
-AC_SUBST(LIBASN1_LINK)
-
 AC_CONFIG_FILES(lib/gnutls.h.in)
 
-AC_CONFIG_COMMANDS([includes/gnutls/gnutls.h],[[
- test -f lib/gnutls.h.in || (echo "Could not generate includes/gnutls/gnutls.h" && exit 1)
- cat lib/gnutls.h.in > includes/gnutls/gnutls.h
- cat lib/gnutls_ui.h >> includes/gnutls/gnutls.h
- echo "" >> includes/gnutls/gnutls.h
- cat lib/gnutls_errors_int.h | grep -v _INT_ >> includes/gnutls/gnutls.h
- echo "" >> includes/gnutls/gnutls.h
- echo "#ifdef __cplusplus" >> includes/gnutls/gnutls.h
- echo "}" >> includes/gnutls/gnutls.h
- echo "#endif" >> includes/gnutls/gnutls.h
- echo "#endif /* GNUTLS_H */" >> includes/gnutls/gnutls.h
- echo "" >> includes/gnutls/gnutls.h
+AC_CONFIG_COMMANDS([lib/gnutls.h],[[
+ test -f lib/gnutls.h.in || (echo "Could not generate lib/gnutls.h" && exit 1)
+ cat lib/gnutls.h.in > lib/gnutls.h
+ cat lib/gnutls_ui.h >> lib/gnutls.h
+ echo "" >> lib/gnutls.h
+ cat lib/gnutls_errors_int.h | grep -v _INT_ >> lib/gnutls.h
+ echo "" >> lib/gnutls.h
+ cat lib/x509_asn1.h >> lib/gnutls.h
+ echo "" >> lib/gnutls.h
+ echo "#ifdef __cplusplus" >> lib/gnutls.h
+ echo "}" >> lib/gnutls.h
+ echo "#endif" >> lib/gnutls.h
+ echo "#endif /* GNUTLS_H */" >> lib/gnutls.h
+ echo "" >> lib/gnutls.h
  chmod +x lib/libgnutls-config
  chmod +x libextra/libgnutls-extra-config
 ]],[[]])
@@ -389,7 +341,8 @@ AC_CONFIG_COMMANDS([includes/gnutls/gnutls.h],[[
 AC_CONFIG_FILES([Makefile src/Makefile libextra/Makefile lib/Makefile \
 lib/libgnutls-config libextra/libgnutls-extra-config \
 doc/Makefile src/x509/Makefile src/srp/Makefile src/openpgp/Makefile \
-doc/tex/Makefile doc/tex/cover.tex doc/scripts/Makefile \
-tests/Makefile includes/Makefile includes/gnutls/Makefile])
+doc/tex/Makefile doc/tex/cover.tex doc/scripts/Makefile ])
+
 
 AC_OUTPUT
+

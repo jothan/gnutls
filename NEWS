@@ -1,18 +1,6 @@
-Version ?.?.?
-- Added X.509 certificate tests in tests/ directory
-- Removed stubs for SRP and Anonymous authentication. They served
-  no purpose since they are always included, unless it was requested
-  not to do so.
-- Added gnutls_handshake_set_private_extensions() function. This
-  function can be used to enable private (gnutls specific) cipher suites
-  and compression algorithms.
-- Added check for C99 macro support by the compiler.
-- Added functions gnutls_b64_encode_fmt2() and gnutls_b64_decode_fmt2()
-- Added the new libtasn1 library.
-- Removed the gdbm backend. Applications are now responsible for the
-  session resuming backend. The gnutls-serv application contains an
-  simple example on how to use gdbm for resuming.
-- Headers for the gnutls library are now installed in $(includedir)/gnutls
+Version 0.4.4 (24/06/2002)
+- Corrected bug in PKCS-1 RSA encryption which prevented gnutls to encrypt
+  using keys of some specific size.
 
 Version 0.4.3 (23/05/2002)
 - The gnutls-extra library now compiles fine, if the opencdk library is
