@@ -2082,7 +2082,10 @@ void generate_pkcs12( void)
 	
 	name = get_pkcs12_key_name();
 
-	password = get_pass();
+	if (info.pass)
+	  password = info.pass;
+	else
+	  password = get_pass();
 
 	result = gnutls_pkcs12_bag_init( &bag);
 	if (result < 0) {
@@ -2309,8 +2312,11 @@ void pkcs12_info( void)
 	data.data = buffer;
 	data.size = size;
 
-	password = get_pass();
-	
+	if (info.pass)
+	  password = info.pass;
+	else
+	  password = get_pass();
+
 	result = gnutls_pkcs12_init(&pkcs12);
 	if (result < 0) {
 		fprintf(stderr, "p12_init: %s\n", gnutls_strerror(result));
