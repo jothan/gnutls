@@ -30,6 +30,7 @@
 #include <gnutls/extra.h>
 #include <gnutls/x509.h>
 #include <sys/time.h>
+#include <pthread.h>
 #include "common.h"
 #include "cli-gaa.h"
 
@@ -45,8 +46,11 @@
 #define ERR(err,s) do { if (err==-1) {perror(s);return(1);} } while (0)
 #define MAX_BUF 4096
 
+// needed for threading:
+GCRY_THREAD_OPTION_PTHREAD_IMPL;
+
 /* global stuff here */
-int resume, starttls;
+int starttls;
 char *hostname = NULL;
 int port;
 int record_max_size;
@@ -56,40 +60,17 @@ int quiet = 0;
 extern int xml;
 extern int print_cert;
 
-char *srp_passwd = NULL;
-char *srp_username;
-char *pgp_keyfile;
-char *pgp_certfile;
-char *pgp_keyring;
-char *pgp_trustdb;
 char *x509_keyfile;
 char *x509_certfile;
 char *x509_cafile;
 char *x509_crlfile = NULL;
 static int x509ctype;
-static int disable_extensions;
 static int debug;
 
-static gnutls_srp_client_credentials srp_cred;
-static gnutls_anon_client_credentials anon_cred;
 static gnutls_certificate_credentials xcred;
 
-int protocol_priority[PRI_MAX] = { GNUTLS_TLS1_1, GNUTLS_TLS1_0, GNUTLS_SSL3, 0 };
-int kx_priority[PRI_MAX] =
-    { GNUTLS_KX_DHE_RSA, GNUTLS_KX_DHE_DSS, GNUTLS_KX_RSA,
-    GNUTLS_KX_SRP_RSA, GNUTLS_KX_SRP_DSS, GNUTLS_KX_SRP,
-    /* Do not use anonymous authentication, unless you know what that means */
-    GNUTLS_KX_RSA_EXPORT, GNUTLS_KX_ANON_DH, 0
-};
-int cipher_priority[PRI_MAX] =
-    { GNUTLS_CIPHER_AES_256_CBC, GNUTLS_CIPHER_AES_128_CBC,
-	GNUTLS_CIPHER_3DES_CBC, GNUTLS_CIPHER_ARCFOUR_128,
-	GNUTLS_CIPHER_ARCFOUR_40, 0
-};
-int comp_priority[PRI_MAX] = { GNUTLS_COMP_ZLIB, GNUTLS_COMP_NULL, 0 };
-int mac_priority[PRI_MAX] = 
-	{ GNUTLS_MAC_SHA, GNUTLS_MAC_MD5, GNUTLS_MAC_RMD160, 0 };
-int cert_type_priority[PRI_MAX] = { GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0 };
+struct hostent *server_host;
+extern pthread_mutex_t aMutex;
 
 /* end of global stuff */
 
@@ -157,48 +138,11 @@ static gnutls_session init_tls_session(const char *hostname)
 
 	gnutls_init(&session, GNUTLS_CLIENT);
 
-	/* allow the use of private ciphersuites.
-	 */
-	if (disable_extensions == 0) {
-		gnutls_handshake_set_private_extensions(session, 1);
-		gnutls_server_name_set(session, GNUTLS_NAME_DNS, hostname,
-				       strlen(hostname));
-		gnutls_certificate_type_set_priority(session, cert_type_priority);
-	}
-
-	gnutls_cipher_set_priority(session, cipher_priority);
-	gnutls_compression_set_priority(session, comp_priority);
-	gnutls_kx_set_priority(session, kx_priority);
-	gnutls_protocol_set_priority(session, protocol_priority);
-	gnutls_mac_set_priority(session, mac_priority);
-
+	gnutls_set_default_priority (session);
 
 	gnutls_dh_set_prime_bits(session, 512);
 
-	gnutls_credentials_set(session, GNUTLS_CRD_ANON, anon_cred);
-	gnutls_credentials_set(session, GNUTLS_CRD_SRP, srp_cred);
 	gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, xcred);
-
-	gnutls_certificate_client_set_select_function(session,
-						      cert_callback);
-
-	/* send the fingerprint */
-	if (fingerprint != 0)
-		gnutls_openpgp_send_key(session,
-					GNUTLS_OPENPGP_KEY_FINGERPRINT);
-
-	/* use the max record size extension */
-	if (record_max_size > 0 && disable_extensions == 0) {
-		if (gnutls_record_set_max_size(session, record_max_size) <
-		    0) {
-			fprintf(stderr,
-				"Cannot set the maximum record size to %d.\n",
-				record_max_size);
-			fprintf(stderr,
-				"Possible values: 512, 1024, 2048, 4096.\n");
-			exit(1);
-		}
-	}
 
 	return session;
 }
@@ -253,7 +197,7 @@ void starttls_alarm (int signum)
   starttls_alarmed = 1;
 }
 
-int main(int argc, char **argv)
+int run()
 {
 	int err, ret;
 	int sd, ii, i;
@@ -267,31 +211,7 @@ int main(int argc, char **argv)
 	int maxfd;
 	struct timeval tv;
 	int user_term = 0;
-	struct hostent *server_host;
 	socket_st hd;
-
-	gaa_parser(argc, argv);
-	if (hostname == NULL) {
-		fprintf(stderr, "No hostname given\n");
-		exit(1);
-	}
-	
-	sockets_init();
-
-#ifndef _WIN32
-	signal(SIGPIPE, SIG_IGN);
-#endif
-
-	init_global_tls_stuff();
-
-
-	printf("Resolving '%s'...\n", hostname);
-	/* get server name */
-	server_host = gethostbyname(hostname);
-	if (server_host == NULL) {
-		fprintf(stderr, "Cannot resolve %s\n", hostname);
-		exit(1);
-	}
 
 	sd = socket(AF_INET, SOCK_STREAM, 0);
 	ERR(sd, "socket");
@@ -338,52 +258,19 @@ int main(int argc, char **argv)
 			return 1;
 		} else {
 			printf("- Handshake was completed\n");
-			if (gnutls_session_is_resumed(hd.session) != 0)
-				printf("*** This is a resumed session\n");
 		}
 
 
-
-		if (resume != 0 && i == 0) {
-
-			gnutls_session_get_data(hd.session, NULL,
-						&session_data_size);
-			session_data = malloc(session_data_size);
-
-			gnutls_session_get_data(hd.session, session_data,
-						&session_data_size);
-
-			gnutls_session_get_id(hd.session, NULL,
-					      &session_id_size);
-			session_id = malloc(session_id_size);
-			gnutls_session_get_id(hd.session, session_id,
-					      &session_id_size);
-
-			/* print some information */
-			print_info(hd.session, hostname);
-
-			printf("- Disconnecting\n");
-			socket_bye(&hd);
-
-			printf
-			    ("\n\n- Connecting again- trying to resume previous session\n");
-			sd = socket(AF_INET, SOCK_STREAM, 0);
-			ERR(sd, "socket");
-
-			err = connect(sd, (SA *) & sa, sizeof(sa));
-			ERR(err, "connect");
-
-			hd.fd = sd;
-			hd.secure = 0;
-		} else {
-			break;
-		}
+		break;
 	}
 
 
       after_handshake:
 
-	printf("\n- Simple Client Mode:\n\n");
+	{
+		char* request = "GET / HTTP/1.0\r\n\r\n";
+		ret = socket_send(hd, request, strlen(request));
+	}
 
 #ifndef _WIN32
 	signal (SIGALRM, &starttls_alarm);
@@ -448,59 +335,62 @@ int main(int argc, char **argv)
 			if (user_term != 0)
 				break;
 		}
-
-		if (FD_ISSET(fileno(stdin), &rset)) {
-			if (fgets(buffer, MAX_BUF, stdin) == NULL) {
-				if (hd.secure == 0) {
-					fprintf(stderr,
-						"*** Starting TLS handshake\n");
-					ret = do_handshake(&hd);
-					if (ret < 0) {
-						fprintf(stderr,
-							"*** Handshake has failed\n");
-						socket_bye(&hd);
-						user_term = 1;
-					}
-				} else {
-					user_term = 1;
-				}
-				continue;
-			}
-
-			if (crlf != 0) {
-				char *b = strchr(buffer, '\n');
-				if (b != NULL)
-					strcpy(b, "\r\n");
-			}
-
-			ret = socket_send(hd, buffer, strlen(buffer));
-
-			if (ret > 0) {
-				if (quiet != 0)
-					printf("- Sent: %d bytes\n", ret);
-			} else
-				handle_error(hd, ret);
-
-		}
 	}
 
 	if (user_term != 0)
 		socket_bye(&hd);
 
 
-#ifdef ENABLE_SRP
-	gnutls_srp_free_client_credentials(srp_cred);
+	return 0;
+}
+
+int main(int argc, char** argv)
+{
+
+	gaa_parser(argc, argv);
+	if (hostname == NULL) {
+		fprintf(stderr, "No hostname given\n");
+		exit(1);
+	}
+	
+	sockets_init();
+
+#ifndef _WIN32
+	signal(SIGPIPE, SIG_IGN);
 #endif
+
+	init_global_tls_stuff();
+
+
+	printf("Resolving '%s'...\n", hostname);
+	/* get server name */
+	server_host = gethostbyname(hostname);
+	if (server_host == NULL) {
+		fprintf(stderr, "Cannot resolve %s\n", hostname);
+		exit(1);
+	}	
+
+	pthread_mutex_init(&aMutex, NULL);
+
+	// create and run threads
+	const int NUM_THREADS = 4;
+	pthread_t threads[NUM_THREADS];
+	int result[NUM_THREADS];
+	int i;
+	for(i = 0; i < NUM_THREADS; ++i) {
+		pthread_create(&threads[i], NULL, run, (void*) &result[i]);
+	}
+
+	// wait for all threads
+	for(i = 0; i < NUM_THREADS; ++i) {
+		pthread_join(threads[i], NULL);
+	}
+
+	fprintf(stderr, "all done\n");
 
 	gnutls_certificate_free_credentials(xcred);
 
-#ifdef ENABLE_ANON
-	gnutls_anon_free_client_credentials(anon_cred);
-#endif
-
 	gnutls_global_deinit();
-
-	return 0;
 }
 
 static gaainfo info;
@@ -513,11 +403,9 @@ void gaa_parser(int argc, char **argv)
 	}
 
 	debug = info.debug;
-	disable_extensions = info.disable_extensions;
 	xml = info.xml;
 	print_cert = info.print_cert;
 	starttls = info.starttls;
-	resume = info.resume;
 	port = info.port;
 	record_max_size = info.record_size;
 	fingerprint = info.fingerprint;
@@ -527,17 +415,10 @@ void gaa_parser(int argc, char **argv)
 	else
 		x509ctype = GNUTLS_X509_FMT_DER;
 
-	srp_username = info.srp_username;
-	srp_passwd = info.srp_passwd;
 	x509_cafile = info.x509_cafile;
 	x509_crlfile = info.x509_crlfile;
 	x509_keyfile = info.x509_keyfile;
 	x509_certfile = info.x509_certfile;
-	pgp_keyfile = info.pgp_keyfile;
-	pgp_certfile = info.pgp_certfile;
-
-	pgp_keyring = info.pgp_keyring;
-	pgp_trustdb = info.pgp_trustdb;
 
 	crlf = info.crlf;
 
@@ -545,15 +426,6 @@ void gaa_parser(int argc, char **argv)
 		hostname = "localhost";
 	else
 		hostname = info.rest_args;
-
-	parse_protocols(info.proto, info.nproto, protocol_priority);
-	parse_ciphers(info.ciphers, info.nciphers, cipher_priority);
-	parse_macs(info.macs, info.nmacs, mac_priority);
-	parse_ctypes(info.ctype, info.nctype, cert_type_priority);
-	parse_kx(info.kx, info.nkx, kx_priority);
-	parse_comp(info.comp, info.ncomp, comp_priority);
-
-
 }
 
 void cli_version(void)
@@ -675,38 +547,6 @@ static int do_handshake(socket_st * socket)
 	return ret;
 }
 
-static int srp_username_callback( gnutls_session session, unsigned int times,
-	char** username, char** password)
-{
-	if (srp_username == NULL || srp_passwd ==NULL) {
-		return -1;
-	}
-
-	/* We should ask here the user for his SRP username
-	 * and password.
-	 */
-	if (times == 1) {
-		*username = gnutls_strdup( srp_username);
-		*password = gnutls_strdup( srp_passwd);
-		
-		return 0;
-	} else
-		/* At the first time return username and password, if
-		 * the kx_priority[0] is an SRP method.
-		 */
-		if (times == 0 && (kx_priority[0] == GNUTLS_KX_SRP ||
-			kx_priority[0] == GNUTLS_KX_SRP_RSA ||
-			kx_priority[0] == GNUTLS_KX_SRP_DSS)) {
-
-			*username = gnutls_strdup( srp_username);
-			*password = gnutls_strdup( srp_passwd);
-		
-			return 0;
-		}
-	
-	return -1;
-}
-
 static void tls_log_func(int level, const char *str)
 {
 	fprintf(stderr, "|<%d>| %s", level, str);
@@ -753,20 +593,6 @@ static void init_global_tls_stuff(void)
 			printf("Processed %d CA certificate(s).\n", ret);
 		}
 	}
-#ifdef ENABLE_PKI
-	if (x509_crlfile != NULL) {
-		ret =
-		    gnutls_certificate_set_x509_crl_file(xcred,
-							 x509_crlfile,
-							 x509ctype);
-		if (ret < 0) {
-			fprintf(stderr,
-				"Error setting the x509 CRL file\n");
-		} else {
-			printf("Processed %d CRL(s).\n", ret);
-		}
-	}
-#endif
 
 	if (x509_certfile != NULL) {
 		ret =
@@ -780,58 +606,4 @@ static void init_global_tls_stuff(void)
 				x509_certfile, x509_keyfile);
 		}
 	}
-
-#ifdef USE_OPENPGP
-	if (pgp_certfile != NULL) {
-		ret =
-		    gnutls_certificate_set_openpgp_key_file(xcred,
-							    pgp_certfile,
-							    pgp_keyfile);
-		if (ret < 0) {
-			fprintf(stderr,
-				"Error setting the x509 key files ('%s', '%s')\n",
-				pgp_certfile, pgp_keyfile);
-		}
-	}
-
-	if (pgp_keyring != NULL) {
-		ret =
-		    gnutls_certificate_set_openpgp_keyring_file(xcred,
-								pgp_keyring);
-		if (ret < 0) {
-			fprintf(stderr,
-				"Error setting the OpenPGP keyring file\n");
-		}
-	}
-
-	if (pgp_trustdb != NULL) {
-		ret =
-		    gnutls_certificate_set_openpgp_trustdb(xcred,
-							   pgp_trustdb);
-		if (ret < 0) {
-			fprintf(stderr,
-				"Error setting the OpenPGP trustdb file\n");
-		}
-	}
-#endif
-
-#ifdef ENABLE_SRP
-	/* SRP stuff */
-	if (gnutls_srp_allocate_client_credentials(&srp_cred) < 0) {
-		fprintf(stderr, "SRP authentication error\n");
-	}
-
-
-	gnutls_srp_set_client_credentials_function(srp_cred,
-				srp_username_callback);
-#endif
-
-
-#ifdef ENABLE_ANON
-	/* ANON stuff */
-	if (gnutls_anon_allocate_client_credentials(&anon_cred) < 0) {
-		fprintf(stderr, "Anonymous authentication error\n");
-	}
-#endif
-
 }

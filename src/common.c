@@ -29,6 +29,7 @@
 #include <gnutls/openpgp.h>
 #include <time.h>
 #include <common.h>
+#include <pthread.h>
 
 #define TEST_STRING
 
@@ -41,6 +42,8 @@ static char buffer[5*1024];
 #define PRINT_PGP_NAME(X) PRINTX( "NAME:", name)
 
 const char str_unknown[] = "(unknown)";
+
+pthread_mutex_t aMutex;
 
 static const char *my_ctime(const time_t * tv)
 {
@@ -344,11 +347,18 @@ void print_openpgp_info(gnutls_session session, const char* hostname)
 
 void print_cert_vrfy(gnutls_session session)
 {
+//#define USE_THE_LOCK_LUKE
+#ifdef USE_THE_LOCK_LUKE
+	pthread_mutex_lock(&aMutex);
+#endif
 
 	int status;
 	status = gnutls_certificate_verify_peers(session);
 	printf("\n");
 
+#ifdef USE_THE_LOCK_LUKE
+	pthread_mutex_unlock(&aMutex);
+#endif
 	if (status == GNUTLS_E_NO_CERTIFICATE_FOUND) {
 		printf("- Peer did not send any certificate.\n");
 		return;

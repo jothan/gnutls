@@ -1707,7 +1707,6 @@ int _verify_x509_mem( const void* cert, int cert_size)
 	int siz, i;
 	const char *ptr;
 	int ret;
-	unsigned int output;
 	char name[256];
 	char issuer_name[256];
 	size_t name_size;
@@ -1909,7 +1908,7 @@ int _verify_x509_mem( const void* cert, int cert_size)
 		exit(1);
 	}
 
-	return output;
+	return 0;
 }
 
 static void print_verification_res( gnutls_x509_crt crt, gnutls_x509_crt issuer,

@@ -312,6 +312,7 @@ int SSL_connect(SSL *ssl)
     int x_priority[GNUTLS_MAX_ALGORITHM_NUM];
     /* take options into account before connecting */
 
+    memset(x_priority, 0, sizeof(x_priority));
     if (ssl->options & SSL_OP_NO_TLSv1)
     {
         for (i=0, j=0;
@@ -366,6 +367,7 @@ int SSL_accept(SSL *ssl)
     int x_priority[GNUTLS_MAX_ALGORITHM_NUM];
     /* take options into account before accepting */
 
+    memset(x_priority, 0, sizeof(x_priority));
     if (ssl->options & SSL_OP_NO_TLSv1)
     {
         for (i=0, j=0;
