@@ -9,11 +9,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = gnutls.pc
 DISTCLEANFILES = $(pkgconfig_DATA)
 
-if HAVE_LD_VERSION_SCRIPT
-  libgnutls_version_script_cmd = -Wl,--version-script=$(srcdir)/libgnutls.vers
-else
-  libgnutls_version_script_cmd =
-endif
+LIBGNUTLS_EXPORTS = -export-symbols-regex '^(_gnutls|gnutls|_E_).*'
 
 DIST_SUBDIRS = minitasn1 x509
 if ENABLE_MINITASN1
@@ -71,7 +67,7 @@ COBJECTS = gnutls_record.c gnutls_compress.c debug.c \
 libgnutls_la_SOURCES = $(COBJECTS) $(X509_COBJECTS) $(MINITASN1_COBJECTS)
 
 libgnutls_la_LDFLAGS = $(LIBTASN1_LIBS) $(LIBGCRYPT_LIBS) \
-	$(libgnutls_version_script_cmd) \
+	$(LIBGNUTLS_EXPORTS) \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 
 pkix_asn1_tab.c: pkix.asn
