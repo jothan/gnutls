@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2003 Nikos Mavroyanopoulos
  * Copyright (C) 2004 Free Software Foundation
+ * Copyright (C) 2003 Nikos Mavroyanopoulos
  *
  * This file is part of GNUTLS.
  *
@@ -1548,7 +1548,7 @@ int size;
 
 	crt = load_cert_list( mand, &size);
 
-	return crt[0];
+	return crt ? crt[0] : NULL;
 }
 
 #define MAX_CERTS 256
