@@ -1638,6 +1638,7 @@ static int _gnutls_send_server_hello(gnutls_session session, int again)
 
 	datalen = 0;
 
+#ifdef ENABLE_SRP
 	if (IS_SRP_KX(
 		_gnutls_cipher_suite_get_kx_algo(
 			session->security_parameters.current_cipher_suite)))
@@ -1660,6 +1661,7 @@ static int _gnutls_send_server_hello(gnutls_session session, int again)
 			return GNUTLS_E_INT_HANDSHAKE_AGAIN;
 		}
 	}
+#endif
 
 	if (again == 0) {
 		datalen = 2 + session_id_len + 1 + TLS_RANDOM_SIZE + 3;
