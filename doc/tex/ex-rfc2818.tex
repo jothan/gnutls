@@ -30,7 +30,7 @@ void verify_certificate( gnutls_session session, const char* hostname)
    if (status & GNUTLS_CERT_INVALID)
       printf("The certificate is not trusted.\n");
 
-   if (status & GNUTLS_CERT_ISSUER_NOT_FOUND)
+   if (status & GNUTLS_CERT_SIGNER_NOT_FOUND)
       printf("The certificate hasn't got a known issuer.\n");
 
    if (status & GNUTLS_CERT_REVOKED)
