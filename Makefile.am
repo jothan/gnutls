@@ -20,7 +20,7 @@ release:
 	gpg -b $(distdir).tar.gz
 	gpg --verify $(distdir).tar.gz.sig
 	scp $(distdir).tar.gz{,.sig} igloo.linux.gr:~ftp/pub/gnutls
-	ssh igloo.linux.gr 'cd /ftp/pub/gnutls && md5sum *.tar.gz *.tar.bz2 > CHECKSUMS || true'
+	ssh igloo.linux.gr 'cd ~ftp/pub/gnutls && md5sum *.tar.gz *.tar.bz2 > CHECKSUMS'
 	cp -v $(distdir).tar.gz{,.sig} $(htmldir)/releases/
 	cd $(htmldir) && cvs add -kb releases/$(distdir).tar.gz{,.sig} && \
 		cvs commit -m "Update." releases/
