@@ -8,6 +8,7 @@ Version 1.0.21
   <gp@familiehaase.de>.
 - Avoid redefining getpass if system already has it, reported by 
   Yoann Vandoorselaere <yoann@prelude-ids.org>.
+- Add new example "ex-rfc2818" for certificate verification, from Nikos.
 - Known bug: the library require snprintf.
 
 Version 1.0.20 (18/08/2004)
