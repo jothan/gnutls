@@ -10,6 +10,7 @@ Version 1.0.22
   <stephane.loeuillet@tiscali.fr>.
 - Fix memory initializaion bug in gnutls_certificate_set_x509_trust,
   tiny patch by Aleix Conchillo Flaque <aleix@member.fsf.org>.
+- Fix certtool --password for PKCS #12, back ported from 1.1.x branch.
 
 Version 1.0.21 (07/10/2004)
 - Fix memory leak in gnutls_certificate_verify_peers and
