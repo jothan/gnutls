@@ -3,6 +3,9 @@ Version 1.0.23
   from Joe Orton <joe@manyfish.co.uk>.
 - Copy libtasn1 has been updated to version 0.2.11.
 - Corrected the write of CRL distribution points.
+- It is now possible to generate PKCS#12 structures without private
+  keys using "certtool --to-p12", suggested by Fabian Fagerholm
+  <fabbe@paniq.net>.
 
 Version 1.0.22 (28/10/2004)
 - Print DN of certificates with unknown characters in them, but in hexform
