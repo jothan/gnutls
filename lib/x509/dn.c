@@ -466,6 +466,8 @@ int _gnutls_x509_parse_dn_oid(ASN1_TYPE asn1_struct,
 
 				if (result != ASN1_SUCCESS) {
 					gnutls_assert();
+					if (result==ASN1_MEM_ERROR)
+					    *sizeof_buf = len;
 					result = _gnutls_asn2err(result);
 					goto cleanup;
 				}
