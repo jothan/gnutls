@@ -214,6 +214,17 @@ ASN1_TYPE tmpasn = ASN1_TYPE_EMPTY;
 		
 	} else {	/* CHOICE */
 		str[len] = 0;
+		
+		/* Note that we do not support strings other than
+		 * UTF-8 (thus ASCII as well).
+		 */
+		if ( strcmp( str, "printableString")!=0 &&
+		    strcmp( str, "utf8String")!=0 ) {
+		    gnutls_assert();
+		    asn1_delete_structure(&tmpasn);
+		    return GNUTLS_E_UNSUPPORTED_CERTIFICATE_TYPE;
+		}
+
 		_gnutls_str_cpy( tmpname, sizeof(tmpname), str); 
 
 		len = sizeof(str) - 1;
