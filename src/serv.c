@@ -40,6 +40,7 @@
 static char http_buffer[16 * 1024];
 static int generate = 0;
 static int http = 0;
+static int quit = 0;
 static int port = 0;
 static int x509ctype;
 
@@ -523,8 +524,12 @@ int main(int argc, char **argv)
        */
       close(sd);
       gnutls_deinit(state);
+      if (quit!=0) goto finish;
 
    }
+   
+   finish:
+   
    close(listen_sd);
 
    gnutls_certificate_free_sc(cert_cred);
@@ -565,6 +570,8 @@ void gaa_parser(int argc, char **argv)
       exit(1);
    }
 
+   quit = info.quit;
+   
    if (info.http == 0)
       http = 0;
    else

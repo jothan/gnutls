@@ -334,7 +334,7 @@ static int _gnutls_find_acceptable_client_cert(GNUTLS_STATE state,
 		int count;
 
 		my_certs =
-		    gnutls_malloc(cred->ncerts * sizeof(gnutls_datum));
+		    gnutls_alloca(cred->ncerts * sizeof(gnutls_datum));
 		if (my_certs == NULL)
 			goto clear;
 
@@ -383,7 +383,11 @@ static int _gnutls_find_acceptable_client_cert(GNUTLS_STATE state,
 		}
 
 		/* maps j -> i */
-		ij_map = gnutls_malloc(sizeof(int) * cred->ncerts);
+		ij_map = gnutls_alloca(sizeof(int) * cred->ncerts);
+		if (ij_map==NULL) {
+			gnutls_assert();
+			goto clear;
+		}
 
 		/* put our certificate's issuer and dn into cdn, idn
 		 */
@@ -418,9 +422,9 @@ static int _gnutls_find_acceptable_client_cert(GNUTLS_STATE state,
 		indx = ij_map[indx];
 
 	      clear:
-		gnutls_free(my_certs);
+		gnutls_afree(my_certs);
+		gnutls_afree(ij_map);
 		gnutls_free(issuers_dn);
-		gnutls_free(ij_map);
 	}
 
 	*ind = indx;
@@ -691,13 +695,15 @@ int _gnutls_proc_x509_server_certificate(GNUTLS_STATE state, opaque * data,
 	 */
 
 	peer_certificate_list =
-	    gnutls_calloc(1, sizeof(gnutls_cert) *
+	    gnutls_alloca( sizeof(gnutls_cert) *
 			  (peer_certificate_list_size));
 
 	if (peer_certificate_list == NULL) {
 		gnutls_assert();
 		return GNUTLS_E_MEMORY_ERROR;
 	}
+	memset( peer_certificate_list, 0, sizeof(gnutls_cert)*
+					peer_certificate_list_size);
 
 	p = data + 3;
 
@@ -718,7 +724,7 @@ int _gnutls_proc_x509_server_certificate(GNUTLS_STATE state, opaque * data,
 						   [j], tmp)) < 0) {
 			gnutls_assert();
 			CLEAR_CERTS;
-			gnutls_free(peer_certificate_list);
+			gnutls_afree(peer_certificate_list);
 			return ret;
 		}
 
@@ -733,7 +739,7 @@ int _gnutls_proc_x509_server_certificate(GNUTLS_STATE state, opaque * data,
 	    < 0) {
 		gnutls_assert();
 		CLEAR_CERTS;
-		gnutls_free(peer_certificate_list);
+		gnutls_afree(peer_certificate_list);
 		return ret;
 	}
 
@@ -743,12 +749,12 @@ int _gnutls_proc_x509_server_certificate(GNUTLS_STATE state, opaque * data,
 	    < 0) {
 		gnutls_assert();
 		CLEAR_CERTS;
-		gnutls_free(peer_certificate_list);
+		gnutls_afree(peer_certificate_list);
 		return ret;
 	}
 
 	CLEAR_CERTS;
-	gnutls_free(peer_certificate_list);
+	gnutls_afree(peer_certificate_list);
 
 	return 0;
 }
@@ -862,12 +868,14 @@ int _gnutls_proc_openpgp_server_certificate(GNUTLS_STATE state,
 	}
 
 	peer_certificate_list =
-	    gnutls_calloc(1, sizeof(gnutls_cert) *
+	    gnutls_alloca( sizeof(gnutls_cert) *
 			  (peer_certificate_list_size));
 		if (peer_certificate_list == NULL) {
 		gnutls_assert();
 		return GNUTLS_E_MEMORY_ERROR;
 	}
+	memset( peer_certificate_list, 0, sizeof(gnutls_cert)*
+			peer_certificate_list_size);
 
 
 	if ((ret =
@@ -876,7 +884,7 @@ int _gnutls_proc_openpgp_server_certificate(GNUTLS_STATE state,
 		gnutls_assert();
 		gnutls_free_datum( &akey);
 		CLEAR_CERTS;
-		gnutls_free(peer_certificate_list);
+		gnutls_afree(peer_certificate_list);
 		return ret;
 	}
 	gnutls_free_datum( &akey);
@@ -888,7 +896,7 @@ int _gnutls_proc_openpgp_server_certificate(GNUTLS_STATE state,
 	    < 0) {
 		gnutls_assert();
 		CLEAR_CERTS;
-		gnutls_free(peer_certificate_list);
+		gnutls_afree(peer_certificate_list);
 		return ret;
 	}
 
@@ -898,12 +906,12 @@ int _gnutls_proc_openpgp_server_certificate(GNUTLS_STATE state,
 	    < 0) {
 		gnutls_assert();
 		CLEAR_CERTS;
-		gnutls_free(peer_certificate_list);
+		gnutls_afree(peer_certificate_list);
 		return ret;
 	}
 
 	CLEAR_CERTS;
-	gnutls_free(peer_certificate_list);
+	gnutls_afree(peer_certificate_list);
 
 	return 0;
 }
