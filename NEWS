@@ -1,3 +1,5 @@
+Version 1.0.23
+
 Version 1.0.22 (28/10/2004)
 - Print DN of certificates with unknown characters in them, but in hexform
   only.
