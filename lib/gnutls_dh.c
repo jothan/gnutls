@@ -48,8 +48,6 @@
  */
 int _gnutls_dh_get_secret_bits(int prime_bits) 
 {
-	if (prime_bits <= 1024)
-		return 256;
 	if (prime_bits <= 2048)
 		return 512;
 	if (prime_bits <= 4096)
