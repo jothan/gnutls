@@ -30,9 +30,11 @@ It must be considered secure, only after the peer's certificate and identity hav
 verified. That is, you have to verify the signature in peer's 
 certificate, the hostname in the certificate, and expiration dates.
 Just after this step you should treat the connection as being a secure one.
-The following function is an example on how to verify the peer's certificate chain.
-This is an advanced case. Things in a TLS session may be simplified by using
-\printfunc{gnutls_certificate_verify_peers2}{gnutls\_certificate\_verify\_peers2}.
+
+\input{ex-rfc2818}
+
+An other example is listed below which provides a more detailed verification
+output. 
 
 \input{ex-verify}
 
