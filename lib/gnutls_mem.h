@@ -17,7 +17,7 @@ typedef void svoid; /* for functions that allocate using gnutls_secure_free */
 #else
 # define gnutls_alloca gnutls_malloc
 # define gnutls_afree gnutls_free
-#endif
+#endif /* HAVE_ALLOCA */
 
 #ifdef USE_LIBCALLOC
 # define gnutls_malloc malloc
