@@ -11,6 +11,9 @@ Version 1.0.22
 - Fix memory initializaion bug in gnutls_certificate_set_x509_trust,
   tiny patch by Aleix Conchillo Flaque <aleix@member.fsf.org>.
 - Fix certtool --password for PKCS #12, back ported from 1.1.x branch.
+- Fix library order in libgnutls*-config --libs output, to permit
+  static linking, reported by Yoann Vandoorselaere
+  <yoann@prelude-ids.org>.
 
 Version 1.0.21 (07/10/2004)
 - Fix memory leak in gnutls_certificate_verify_peers and
