@@ -1,6 +1,6 @@
 Version 1.0.22
- - Print DN of certificates with unknown characters in them, but in hexform
-   only.
+- Print DN of certificates with unknown characters in them, but in hexform
+  only.
 - Corrected bug in _gnutls_x509_get_dn_oid(), and returns the
   actual OID.
 - Added second precision to the X.509 parsing functions.
