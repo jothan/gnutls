@@ -764,7 +764,6 @@ int _gnutls_x509_ext_gen_crl_dist_points(gnutls_x509_subject_alt_name type,
 		goto cleanup;
 	}
 
-#if 0
 	/* When used as type CHOICE.
 	 */
 	result = asn1_write_value( ext, "?LAST.distributionPoint", "fullName", 1);
@@ -773,10 +772,11 @@ int _gnutls_x509_ext_gen_crl_dist_points(gnutls_x509_subject_alt_name type,
 		result = _gnutls_asn2err(result);
 		goto cleanup;
 	}
-#endif
 
+#if 0
+	/* when used as type SEQUENCE OF */
 	asn1_write_value( ext, "?LAST.distributionPoint.nameRelativeToCRLIssuer", NULL, 0);
-
+#endif
 	result = write_new_general_name(ext, "?LAST.distributionPoint.fullName", type, data_string);
 	if (result < 0) {
 		gnutls_assert();

@@ -2,6 +2,7 @@ Version 1.0.23
 - Replace GNU LD version script with Libtool -export-symbols-regex,
   from Joe Orton <joe@manyfish.co.uk>.
 - Copy libtasn1 has been updated to version 0.2.11.
+- Corrected the write of CRL distribution points.
 
 Version 1.0.22 (28/10/2004)
 - Print DN of certificates with unknown characters in them, but in hexform
