@@ -568,6 +568,7 @@ src/cfg/Makefile src/cfg/platon/Makefile src/cfg/platon/str/Makefile \
 doc/tex/Makefile doc/tex/cover.tex doc/scripts/Makefile \
 doc/examples/Makefile lib/minitasn1/Makefile lib/x509/Makefile \
 includes/Makefile includes/gnutls/Makefile doc/manpages/Makefile \
-tests/Makefile])
+tests/Makefile \
+lib/gnutls.pc libextra/gnutls-extra.pc])
 
 AC_OUTPUT
