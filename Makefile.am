@@ -4,7 +4,8 @@ EXTRA_DIST = ChangeLog NEWS INSTALL README THANKS COPYING COPYING.LIB
 SUBDIRS = includes lib libextra src doc tests
 
 ChangeLog:
-	cvs2cl --tags --utc --fsf --FSF --usermap .cvsusers -I ChangeLog -I .cvs
+	cvs2cl --follow-only gnutls_1_0_0_patches --utc --fsf --FSF \
+		--usermap .cvsusers -I ChangeLog -I .cvs
 	cat .cvscopying >> ChangeLog
 
 tag = $(PACKAGE)_`echo $(VERSION) | sed 's/\./_/g'`
