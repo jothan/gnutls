@@ -521,7 +521,12 @@ time_t _gnutls_x509_time2gtime(const char *ttime, int year)
 	etime.tm_min = atoi(xx);
 	ttime += 2;
 
-	etime.tm_sec = 0;
+	if (strlen(ttime) >= 2) {
+		memcpy(xx, ttime, 2);
+		etime.tm_sec = atoi(xx);
+		ttime += 2;
+	} else
+		etime.tm_sec = 0;
 
 	ret = mktime_utc(&etime);
 

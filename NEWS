@@ -3,6 +3,7 @@ Version 1.0.22
    only.
 - Corrected bug in _gnutls_x509_get_dn_oid(), and returns the
   actual OID.
+- Added second precision to the X.509 parsing functions.
 
 Version 1.0.21 (07/10/2004)
 - Fix memory leak in gnutls_certificate_verify_peers and
