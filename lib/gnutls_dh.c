@@ -57,13 +57,11 @@ static int get_x_size(int bits)
 
 /* returns the public value (X), and the secret (ret_x).
  */
-GNUTLS_MPI gnutls_calc_dh_secret(GNUTLS_MPI * ret_x, GNUTLS_MPI g, GNUTLS_MPI prime)
+GNUTLS_MPI gnutls_calc_dh_secret(GNUTLS_MPI * ret_x, GNUTLS_MPI g, GNUTLS_MPI prime, int qbits)
 {
 	GNUTLS_MPI e, x;
-	int x_size = get_x_size(_gnutls_mpi_get_nbits(prime));
 
-
-	x = _gnutls_mpi_new(x_size);	/* FIXME: allocate in secure memory */
+	x = _gnutls_mpi_new(qbits);
 	if (x == NULL) {
 		gnutls_assert();
 		if (ret_x)
@@ -72,7 +70,9 @@ GNUTLS_MPI gnutls_calc_dh_secret(GNUTLS_MPI * ret_x, GNUTLS_MPI g, GNUTLS_MPI pr
 		return NULL;
 	}
 
-	_gnutls_mpi_randomize(x, x_size, GCRY_STRONG_RANDOM);
+#warning this puts more byts than it should
+	_gnutls_mpi_randomize(x, qbits, GCRY_STRONG_RANDOM);
+
 	/* fixme: set high bit of x and select a larger one */
 
 	e = _gnutls_mpi_alloc_like(prime);

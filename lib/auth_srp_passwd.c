@@ -388,7 +388,7 @@ int _gnutls_srp_generate_prime(opaque ** ret_g, opaque ** ret_n, int bits)
 	int siz;
 	char *tmp;
 
-	if ( _gnutls_dh_generate_prime(&g, &prime, bits) < 0) {
+	if ( _gnutls_dh_generate_prime(&g, &prime, bits, NULL) < 0) {
 		gnutls_assert();
 		return GNUTLS_E_MEMORY_ERROR;
 	}

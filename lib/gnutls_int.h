@@ -580,6 +580,7 @@ typedef struct {
         int local;              /* indicates if it is 
                                  * not malloced, !=0 indicates malloced
                                  */
+        int qbits;
 } _GNUTLS_DH_PARAMS;
 
 #define GNUTLS_DH_PARAMS _GNUTLS_DH_PARAMS*

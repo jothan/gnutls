@@ -92,6 +92,7 @@ static int gen_dhe_server_kx(GNUTLS_STATE state, opaque ** data)
 	int apr_cert_list_length;
 	gnutls_datum signature, ddata;
 	CERTIFICATE_AUTH_INFO info;
+	int qbits;
 	const GNUTLS_CERTIFICATE_CREDENTIALS cred;
 
 	cred = _gnutls_get_cred(state->gnutls_key, GNUTLS_CRD_CERTIFICATE, NULL);
@@ -111,7 +112,7 @@ static int gen_dhe_server_kx(GNUTLS_STATE state, opaque ** data)
 		return ret;
 	}
 
-	g = gnutls_get_dh_params( cred->dh_params, &p, bits);
+	g = gnutls_get_dh_params( cred->dh_params, &p, bits, &qbits);
 	if (g == NULL) {
 		gnutls_assert();
 		return GNUTLS_E_MEMORY_ERROR;
@@ -129,7 +130,7 @@ static int gen_dhe_server_kx(GNUTLS_STATE state, opaque ** data)
 		return ret;
 	}
 
-	X = gnutls_calc_dh_secret(&x, g, p);
+	X = gnutls_calc_dh_secret(&x, g, p, qbits);
 	if (X == NULL) {
 		_gnutls_mpi_release(&g);
 		_gnutls_mpi_release(&p);
@@ -217,7 +218,8 @@ static int gen_dhe_client_kx(GNUTLS_STATE state, opaque ** data)
 	int ret;
 
 	X = gnutls_calc_dh_secret(&x, state->gnutls_key->client_g,
-				  state->gnutls_key->client_p);
+		  state->gnutls_key->client_p, 
+			  _gnutls_mpi_get_nbits(state->gnutls_key->client_p));
 	if (X == NULL || x == NULL) {
 		gnutls_assert();
 		_gnutls_mpi_release(&x);
@@ -455,7 +457,7 @@ static int proc_dhe_client_kx(GNUTLS_STATE state, opaque * data,
 		return ret;
 	}
 
-	g = gnutls_get_dh_params( cred->dh_params, &p, bits);
+	g = gnutls_get_dh_params( cred->dh_params, &p, bits, NULL);
 	if (g == NULL || p == NULL) {
 		gnutls_assert();
 		_gnutls_mpi_release(&g);

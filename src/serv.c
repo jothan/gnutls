@@ -96,7 +96,7 @@ GNUTLS_DH_PARAMS dh_params;
 static int generate_dh_primes(void)
 {
    gnutls_datum prime, generator;
-   int i = 0;
+   int i = 0, qbits;
 
    if (gnutls_dh_params_init(&dh_params) < 0) {
       fprintf(stderr, "Error in dh parameter initialization\n");
@@ -114,13 +114,13 @@ static int generate_dh_primes(void)
 	   prime_nums[i]);
       fflush(stdout);
 
-      if (gnutls_dh_params_generate(&prime, &generator, prime_nums[i]) < 0) {
+      if (gnutls_dh_params_generate(&prime, &generator, prime_nums[i], &qbits) < 0) {
 	 fprintf(stderr, "Error in prime generation\n");
 	 exit(1);
       }
 
       if (gnutls_dh_params_set
-	  (dh_params, prime, generator, prime_nums[i]) < 0) {
+	  (dh_params, prime, generator, prime_nums[i], qbits) < 0) {
 	 fprintf(stderr, "Error in prime replacement\n");
 	 exit(1);
       }

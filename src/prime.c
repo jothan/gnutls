@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 	tmp = malloc(size);
    	gcry_mpi_print(GCRYMPI_FMT_USG, tmp, &size, prime);
 
-	printf( "/* prime - %d bits */\n",  gcry_mpi_get_nbits(prime)); 
+	printf( "/* prime - %d bits (qbits: %d) */\n",  gcry_mpi_get_nbits(prime), qbits); 
 	printf( "\nconst uint8 prime[%d] = { ", size);
 	
 	for (i=0;i<size;i++) {

@@ -65,7 +65,8 @@ int gen_anon_server_kx( GNUTLS_STATE state, opaque** data) {
 	uint8 *data_X;
 	ANON_SERVER_AUTH_INFO info;
 	const GNUTLS_ANON_SERVER_CREDENTIALS cred;
-	
+	int qbits;
+
 	cred = _gnutls_get_cred(state->gnutls_key, GNUTLS_CRD_ANON, NULL);
 	if (cred == NULL) {
 		gnutls_assert();
@@ -74,7 +75,7 @@ int gen_anon_server_kx( GNUTLS_STATE state, opaque** data) {
 
 	bits = _gnutls_dh_get_prime_bits( state);
 
-	g = gnutls_get_dh_params( cred->dh_params, &p, bits);
+	g = gnutls_get_dh_params( cred->dh_params, &p, bits, &qbits);
 	if (g==NULL || p==NULL) {
 		gnutls_assert();
 		return GNUTLS_E_MEMORY_ERROR;
@@ -91,7 +92,7 @@ int gen_anon_server_kx( GNUTLS_STATE state, opaque** data) {
 		return ret;
 	}
 	
-	X = gnutls_calc_dh_secret(&x, g, p);
+	X = gnutls_calc_dh_secret(&x, g, p, qbits);
 	if (X==NULL || x==NULL) {
 		gnutls_assert();
 		_gnutls_mpi_release( &g);
@@ -144,7 +145,8 @@ size_t n_X;
 int ret;
 
 	X =  gnutls_calc_dh_secret(&x, state->gnutls_key->client_g,
-		   state->gnutls_key->client_p);
+		   state->gnutls_key->client_p, 
+		   	_gnutls_mpi_get_nbits(state->gnutls_key->client_p));
 
 	if (X==NULL) {
 		gnutls_assert();
@@ -299,7 +301,7 @@ int proc_anon_client_kx( GNUTLS_STATE state, opaque* data, int data_size) {
 		return GNUTLS_E_MPI_SCAN_FAILED;
 	}
 
-	g = gnutls_get_dh_params( cred->dh_params, &p, bits);
+	g = gnutls_get_dh_params( cred->dh_params, &p, bits, NULL);
 	if (g==NULL) {
 		gnutls_assert();
 		return GNUTLS_E_MEMORY_ERROR;
