@@ -220,7 +220,7 @@ int _gnutls_x509_oid_data2string(const char *oid, void *value,
 		*res_size = len;
 	} else {		/* CHOICE */
 		str[len] = 0;
-		int non_printable = 0;
+		int non_printable = 0, teletex = 0;
 
 		/* Note that we do not support strings other than
 		 * UTF-8 (thus ASCII as well).
@@ -229,6 +229,8 @@ int _gnutls_x509_oid_data2string(const char *oid, void *value,
 		    strcmp(str, "utf8String") != 0) {
 			non_printable = 1;
 		}
+                if (strcmp( str, "teletexString")==0)
+                	teletex = 1;
 
 		_gnutls_str_cpy(tmpname, sizeof(tmpname), str);
 
@@ -241,6 +243,17 @@ int _gnutls_x509_oid_data2string(const char *oid, void *value,
 		}
 
 		asn1_delete_structure(&tmpasn);
+
+	        if (teletex != 0) {
+        	  int ascii = 0, i;
+        	  /* HACK: if the teletex string contains only ascii
+        	   * characters then treat it as printable.
+        	   */
+	          for(i=0;i<len;i++)
+        	    if(!isascii(str[i])) ascii=1;
+            
+	          if (ascii==0) non_printable = 0;
+	        }
 
 		if (res) {
 			if (non_printable == 0) {
