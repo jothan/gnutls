@@ -130,7 +130,7 @@ static int gen_dhe_server_kx(GNUTLS_STATE state, opaque ** data)
 		return ret;
 	}
 
-	X = gnutls_calc_dh_secret(&x, g, p, qbits);
+	X = gnutls_calc_dh_secret(&x, g, p, qbits-1);
 	if (X == NULL) {
 		_gnutls_mpi_release(&g);
 		_gnutls_mpi_release(&p);
@@ -219,7 +219,8 @@ static int gen_dhe_client_kx(GNUTLS_STATE state, opaque ** data)
 
 	X = gnutls_calc_dh_secret(&x, state->gnutls_key->client_g,
 		  state->gnutls_key->client_p, 
-			  _gnutls_mpi_get_nbits(state->gnutls_key->client_p));
+		   	_gnutls_dh_get_secret_bits(
+		   	_gnutls_mpi_get_nbits(state->gnutls_key->client_p)));
 	if (X == NULL || x == NULL) {
 		gnutls_assert();
 		_gnutls_mpi_release(&x);

@@ -46,22 +46,25 @@
  * the modulus.
  * FIXME: This function is not correct
  */
-static int get_x_size(int bits)
+int _gnutls_dh_get_secret_bits(int prime_bits) 
 {
-	if (bits <= 2048)
+	if (prime_bits <= 1024)
+		return 256;
+	if (prime_bits <= 2048)
 		return 512;
-	if (bits <= 4096)
+	if (prime_bits <= 4096)
 		return 768;
 	return 1024;
 }
 
+
 /* returns the public value (X), and the secret (ret_x).
  */
-GNUTLS_MPI gnutls_calc_dh_secret(GNUTLS_MPI * ret_x, GNUTLS_MPI g, GNUTLS_MPI prime, int qbits)
+GNUTLS_MPI gnutls_calc_dh_secret(GNUTLS_MPI * ret_x, GNUTLS_MPI g, GNUTLS_MPI prime, int secret_bits)
 {
 	GNUTLS_MPI e, x;
 
-	x = _gnutls_mpi_new(qbits);
+	x = _gnutls_mpi_new(secret_bits);
 	if (x == NULL) {
 		gnutls_assert();
 		if (ret_x)
@@ -70,8 +73,7 @@ GNUTLS_MPI gnutls_calc_dh_secret(GNUTLS_MPI * ret_x, GNUTLS_MPI g, GNUTLS_MPI pr
 		return NULL;
 	}
 
-#warning this puts more byts than it should
-	_gnutls_mpi_randomize(x, qbits, GCRY_STRONG_RANDOM);
+	_gnutls_mpi_randomize(x, secret_bits, GCRY_STRONG_RANDOM);
 
 	/* fixme: set high bit of x and select a larger one */
 
