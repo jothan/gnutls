@@ -188,7 +188,6 @@ ASN1_TYPE _gnutls_privkey_decode_pkcs1_rsa_key( const gnutls_datum *raw_key,
 		goto error;
 	}
 
-#if 1
 	/* Calculate the coefficient. This is because the gcrypt
 	 * library is uses the p,q in the reverse order.
 	 */
@@ -202,13 +201,7 @@ ASN1_TYPE _gnutls_privkey_decode_pkcs1_rsa_key( const gnutls_datum *raw_key,
 
 	_gnutls_mpi_invm(pkey->params[5], pkey->params[3], pkey->params[4]);
 	/*				p, q */
-#else
-	if ( (result=_gnutls_x509_read_int( pkey_asn, "coefficient",
-		&pkey->params[5])) < 0) {
-		gnutls_assert();
-		goto error;
-	}
-#endif
+
 	pkey->params_size = 6;
 
 	return pkey_asn;
@@ -471,12 +464,16 @@ int gnutls_x509_privkey_import_rsa_raw(gnutls_x509_privkey key,
 		return GNUTLS_E_MPI_SCAN_FAILED;
 	}
 
-	siz = u->size;
-	if (_gnutls_mpi_scan(&key->params[5], u->data, &siz)) {
+	key->params[5] =
+		_gnutls_mpi_snew(_gnutls_mpi_get_nbits(key->params[0]));
+
+	if (key->params[5] == NULL) {
 		gnutls_assert();
 		FREE_RSA_PRIVATE_PARAMS;
-		return GNUTLS_E_MPI_SCAN_FAILED;
+		return GNUTLS_E_MEMORY_ERROR;
 	}
+
+	_gnutls_mpi_invm(key->params[5], key->params[3], key->params[4]);
 
 	ret = _encode_rsa( &key->key, key->params);
 	if (ret < 0) {
@@ -652,6 +649,8 @@ int gnutls_x509_privkey_export_rsa_raw(gnutls_x509_privkey key,
 	gnutls_datum* u)
 {
 	size_t siz;
+	int result;
+	GNUTLS_MPI coeff;
 
 	if (key == NULL) {
 		gnutls_assert();
@@ -728,22 +727,34 @@ int gnutls_x509_privkey_export_rsa_raw(gnutls_x509_privkey key,
 	_gnutls_mpi_print(q->data, &siz, key->params[4]);
 
 	/* U */
-	siz = 0;
-	_gnutls_mpi_print(NULL, &siz, key->params[5]);
+	coeff =
+		_gnutls_mpi_snew(_gnutls_mpi_get_nbits(key->params[0]));
 
-	u->data = gnutls_malloc(siz);
-	if (u->data == NULL) {
+	if (coeff == NULL) {
+		gnutls_assert();
 		_gnutls_free_datum( m);
+		_gnutls_free_datum( q);
 		_gnutls_free_datum( e);
 		_gnutls_free_datum( d);
 		_gnutls_free_datum( p);
-		_gnutls_free_datum( q);
 		return GNUTLS_E_MEMORY_ERROR;
 	}
 
-	u->size = siz;
-	_gnutls_mpi_print(u->data, &siz, key->params[5]);
-	
+	_gnutls_mpi_invm(coeff, key->params[4], key->params[3]);
+
+	result = _gnutls_mpi_dprint(u, coeff);
+	_gnutls_mpi_release( &coeff);
+
+	if (result < 0) {
+		gnutls_assert();
+		_gnutls_free_datum( m);
+		_gnutls_free_datum( q);
+		_gnutls_free_datum( e);
+		_gnutls_free_datum( d);
+		_gnutls_free_datum( p);
+		return result;
+	}
+
 	return 0;
 
 }
@@ -857,12 +868,12 @@ static int _encode_rsa( ASN1_TYPE* c2, GNUTLS_MPI* params)
 	opaque * m_data, *pube_data, *prie_data;
 	opaque* p1_data, *p2_data, *u_data, *exp1_data, *exp2_data;
 	opaque * all_data = NULL, *p;
-	GNUTLS_MPI exp1 = NULL, exp2 = NULL, q1 = NULL, p1 = NULL;
+	GNUTLS_MPI exp1 = NULL, exp2 = NULL, q1 = NULL, p1 = NULL, u=NULL;
 	opaque null = '\0';
 
 	/* Read all the sizes */
 	total = 0;
-	for (i=0;i<6;i++) {
+	for (i=0;i<5;i++) {
 		_gnutls_mpi_print_lz( NULL, &size[i], params[i]);
 		total += size[i];
 	}
@@ -896,9 +907,21 @@ static int _encode_rsa( ASN1_TYPE* c2, GNUTLS_MPI* params)
 		result = GNUTLS_E_MEMORY_ERROR;
 		goto cleanup;
 	}
+
+	/* U */
+	u = _gnutls_mpi_salloc_like(params[3]);
+	if (u == NULL) {
+		gnutls_assert();
+		result = GNUTLS_E_MEMORY_ERROR;
+		goto cleanup;
+	}
+	_gnutls_mpi_invm(u, params[4], params[3]);
+	/* inverse of q mod p */
+	_gnutls_mpi_print_lz(NULL, &size[5], u);
+	total += size[5];
 	
-	_gnutls_mpi_add_ui( p1, params[3], -1);
-	_gnutls_mpi_add_ui( q1, params[4], -1);
+	_gnutls_mpi_sub_ui( p1, params[3], 1);
+	_gnutls_mpi_sub_ui( q1, params[4], 1);
 
 	_gnutls_mpi_mod( exp1, params[2], p1);
 	_gnutls_mpi_mod( exp2, params[2], q1);
