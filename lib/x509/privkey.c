@@ -959,7 +959,7 @@ static int _encode_rsa( ASN1_TYPE* c2, GNUTLS_MPI* params)
 	_gnutls_mpi_print_lz( prie_data, &size[2], params[2]);
 	_gnutls_mpi_print_lz( p1_data, &size[3], params[3]);
 	_gnutls_mpi_print_lz( p2_data, &size[4], params[4]);
-	_gnutls_mpi_print_lz( u_data, &size[5], params[5]);
+	_gnutls_mpi_print_lz( u_data, &size[5], u);
 	_gnutls_mpi_print_lz( exp1_data, &size[6], exp1);
 	_gnutls_mpi_print_lz( exp2_data, &size[7], exp2);
 
