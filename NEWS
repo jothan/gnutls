@@ -1,4 +1,4 @@
-Version 1.0.25
+Version 1.0.25 (27/04/2005)
 - Corrected bug in record packet parsing that could lead
   to a denial of service attack.
 - Corrected bug in RSA key export.
