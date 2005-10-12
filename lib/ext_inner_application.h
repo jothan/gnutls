@@ -27,7 +27,3 @@ int _gnutls_inner_application_recv_params(gnutls_session_t session,
 					  size_t data_size);
 int _gnutls_inner_application_send_params(gnutls_session_t session,
 					  opaque * data, size_t);
-
-int gnutls_get_app_phase_on_resumption(gnutls_session_t session, int *yes);
-
-int gnutls_set_app_phase_on_resumption(gnutls_session_t session, int yes);
