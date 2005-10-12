@@ -82,7 +82,8 @@ HFILES = debug.h gnutls_compress.h defines.h gnutls_cipher.h		\
 	gnutls_mem.h io_debug.h ext_max_record.h gnutls_session_pack.h	\
 	gnutls_str.h gnutls_state.h gnutls_x509.h ext_cert_type.h	\
 	gnutls_rsa_export.h ext_server_name.h auth_dh_common.h		\
-	ext_srp.h gnutls_srp.h auth_srp.h auth_srp_passwd.h
+	ext_srp.h gnutls_srp.h auth_srp.h auth_srp_passwd.h \
+	ext_inner_application.h
 
 # Separate so we can create the documentation
 
