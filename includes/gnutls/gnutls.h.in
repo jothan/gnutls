@@ -289,10 +289,12 @@ typedef enum {
   GNUTLS_APP_PHASE_ON_RESUMPTION_YES = 2
 } gnutls_app_phase_on_resumption_t;
 
-int gnutls_app_phase_on_resumption_get(gnutls_session_t session,
-				       gnutls_app_phase_on_resumption_t *state);
-int gnutls_app_phase_on_resumption_set(gnutls_session_t session,
-				       gnutls_app_phase_on_resumption_t state);
+extern void
+gnutls_app_phase_on_resumption_get(gnutls_session_t session,
+				   gnutls_app_phase_on_resumption_t *state);
+extern void
+gnutls_app_phase_on_resumption_set(gnutls_session_t session,
+				   gnutls_app_phase_on_resumption_t state);
 
 /* functions to set priority of cipher suites 
  */
