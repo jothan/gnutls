@@ -209,11 +209,12 @@ static void _gnutls_extension_list_add(gnutls_session_t session,
 int _gnutls_gen_extensions(gnutls_session_t session, opaque * data,
 			   size_t data_size)
 {
-    int next, size;
+    int size;
     uint16 pos = 0;
     opaque *sdata;
     int sdata_size;
     ext_send_func ext_send;
+    gnutls_extension_entry *p;
 
 
     if (data_size < 2) {
@@ -231,10 +232,8 @@ int _gnutls_gen_extensions(gnutls_session_t session, opaque * data,
     }
 
     pos += 2;
-    next = MAX_EXT_TYPES;	/* maximum supported extensions */
-    do {
-	next--;
-	ext_send = _gnutls_ext_func_send(next);
+    for(p = _gnutls_extensions; p->name != NULL; p++) {
+	ext_send = _gnutls_ext_func_send(p->type);
 	if (ext_send == NULL)
 	    continue;
 	size = ext_send(session, sdata, sdata_size);
@@ -246,7 +245,7 @@ int _gnutls_gen_extensions(gnutls_session_t session, opaque * data,
 	    }
 
 	    /* write extension type */
-	    _gnutls_write_uint16(next, &data[pos]);
+	    _gnutls_write_uint16(p->type, &data[pos]);
 	    pos += 2;
 
 	    /* write size */
@@ -258,17 +257,17 @@ int _gnutls_gen_extensions(gnutls_session_t session, opaque * data,
 
 	    /* add this extension to the extension list
 	     */
-	    _gnutls_extension_list_add(session, next);
+	    _gnutls_extension_list_add(session, p->type);
 
 	    _gnutls_debug_log("EXT[%x]: Sending extension %s\n", session,
-			      _gnutls_extension_get_name(next));
+			      _gnutls_extension_get_name(p->type));
 	} else if (size < 0) {
 	    gnutls_assert();
 	    gnutls_free(sdata);
 	    return size;
 	}
 
-    } while (next >= 0);
+    }
 
     size = pos;
     pos -= 2;			/* remove the size of the size header! */
