@@ -131,9 +131,11 @@ typedef enum handshake_state_t { STATE0 = 0, STATE1, STATE2,
 
 #define MAX_CIPHERSUITES 256
 
-typedef enum extensions_t { GNUTLS_EXTENSION_SERVER_NAME = 0,
-    GNUTLS_EXTENSION_MAX_RECORD_SIZE = 1, GNUTLS_EXTENSION_SRP = 6,
-    GNUTLS_EXTENSION_CERT_TYPE = 7
+typedef enum extensions_t {
+  GNUTLS_EXTENSION_SERVER_NAME = 0,
+  GNUTLS_EXTENSION_MAX_RECORD_SIZE = 1, GNUTLS_EXTENSION_SRP = 6,
+  GNUTLS_EXTENSION_CERT_TYPE = 7,
+  GNUTLS_EXTENSION_INNER_APPLICATION = 37703
 } extensions_t;
 
 typedef enum { CIPHER_STREAM, CIPHER_BLOCK } cipher_type_t;
@@ -245,6 +247,8 @@ typedef struct {
     /* limit server_name extensions */
     uint server_names_size;
     opaque srp_username[MAX_SRP_USERNAME];
+    /* 0 = tls/ia not used, 1 = no, 2 = yes */
+    gnutls_app_phase_on_resumption_t appphaseonresumption;
 } tls_ext_st;
 
 /* auth_info_t structures now MAY contain malloced 
