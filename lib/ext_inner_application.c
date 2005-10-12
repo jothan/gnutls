@@ -37,7 +37,7 @@
   **/
 void
 gnutls_app_phase_on_resumption_get(gnutls_session_t session,
-				   gnutls_app_phase_on_resumption_t *state);
+				   gnutls_app_phase_on_resumption_t *state)
 {
   *state = session->security_parameters.extensions.appphaseonresumption;
 }
@@ -51,7 +51,7 @@ gnutls_app_phase_on_resumption_get(gnutls_session_t session,
   **/
 void
 gnutls_app_phase_on_resumption_set(gnutls_session_t session,
-				   gnutls_app_phase_on_resumption_t state);
+				   gnutls_app_phase_on_resumption_t state)
 {
   session->security_parameters.extensions.appphaseonresumption = state;
 }
