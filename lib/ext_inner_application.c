@@ -28,6 +28,53 @@
 #include "gnutls_num.h"
 #include "ext_inner_application.h"
 
+
+int
+_gnutls_inner_application_recv_params(gnutls_session_t session,
+				      const opaque * data,
+				      size_t _data_size)
+{
+  size_t i;
+
+  for (i = 0; i < _data_size; i++)
+    printf ("ia %02x\n", data[i] & 0xFF);
+
+  return _data_size;
+}
+
+/* returns data_size or a negative number on failure
+ */
+int
+_gnutls_inner_application_send_params(gnutls_session_t session,
+				      opaque * data, size_t data_size)
+{
+  if (!session->security_parameters.extensions.app_phase_on_resumption)
+    return 0;
+
+  if (data_size < 1)
+    {
+      gnutls_assert ();
+      return GNUTLS_E_SHORT_MEMORY_BUFFER;
+    }
+
+  switch (session->security_parameters.extensions.app_phase_on_resumption)
+    {
+    case GNUTLS_APP_PHASE_ON_RESUMPTION_NO:
+      *data = 0;
+      break;
+
+    case GNUTLS_APP_PHASE_ON_RESUMPTION_YES:
+      *data = 1;
+      break;
+
+    default:
+      gnutls_assert();
+      return 0;
+    }
+
+  return 1;
+}
+
 /**
  * gnutls_app_phase_on_resumption_get - Used to get the TLS/IA AppPhaseOnResumption
   * @session: is a #gnutls_session_t structure.
@@ -39,7 +86,7 @@ void
 gnutls_app_phase_on_resumption_get(gnutls_session_t session,
 				   gnutls_app_phase_on_resumption_t *state)
 {
-  *state = session->security_parameters.extensions.appphaseonresumption;
+  *state = session->security_parameters.extensions.app_phase_on_resumption;
 }
 
 /**
@@ -53,5 +100,5 @@ void
 gnutls_app_phase_on_resumption_set(gnutls_session_t session,
 				   gnutls_app_phase_on_resumption_t state)
 {
-  session->security_parameters.extensions.appphaseonresumption = state;
+  session->security_parameters.extensions.app_phase_on_resumption = state;
 }
