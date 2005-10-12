@@ -283,9 +283,16 @@ int gnutls_server_name_get(gnutls_session_t session,
     void *data, size_t *data_length,
     unsigned int * type, unsigned int indx);
 
-int gnutls_app_phase_on_resumption_get(gnutls_session_t session, int *yes);
+typedef enum {
+  GNUTLS_APP_PHASE_ON_RESUMPTION_DISABLED = 0,
+  GNUTLS_APP_PHASE_ON_RESUMPTION_NO = 1,
+  GNUTLS_APP_PHASE_ON_RESUMPTION_YES = 2
+} gnutls_app_phase_on_resumption_t;
 
-int gnutls_app_phase_on_resumption_set(gnutls_session_t session, int yes);
+int gnutls_app_phase_on_resumption_get(gnutls_session_t session,
+				       gnutls_app_phase_on_resumption_t *state);
+int gnutls_app_phase_on_resumption_set(gnutls_session_t session,
+				       gnutls_app_phase_on_resumption_t state);
 
 /* functions to set priority of cipher suites 
  */
