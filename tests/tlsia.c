@@ -139,6 +139,19 @@ client (void)
 		    GNUTLS_A_INNER_APPLICATION_FAILURE);
   */
 
+  ret = gnutls_ia_handshake (session);
+
+  if (ret < 0)
+    {
+      fail ("client: TLS/IA handshake failed\n");
+      gnutls_perror (ret);
+      goto end;
+    }
+  else
+    {
+      success ("client: TLS/IA Handshake was completed\n");
+    }
+
   gnutls_record_send (session, MSG, strlen (MSG));
 
   ret = gnutls_record_recv (session, buffer, MAX_BUF);
