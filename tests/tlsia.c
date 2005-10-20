@@ -393,7 +393,7 @@ server (void)
 
   close (listen_sd);
 
-  gnutls_anon_free_client_credentials (anoncred);
+  gnutls_anon_free_server_credentials (anoncred);
 
   gnutls_global_deinit ();
 
