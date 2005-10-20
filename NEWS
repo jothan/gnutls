@@ -3,9 +3,15 @@ Copyright (C) 2004, 2005 Simon Josefsson
 Copyright (C) 2000, 2001, 2002, 2003, 2004 Nikos Mavroyanopoulos
 See the end for copying conditions.
 
-* Version 1.2.9
+* Version 1.2.8+ia (unreleased)
+- GnuTLS now support TLS Inner application (TLS/IA) as per
+  draft-funk-tls-inner-application-extension-01.
 - API and ABI modifications:
-  No changes since last version.
+  gnutls_app_phase_on_resumption_get,
+  gnutls_app_phase_on_resumption_set: Enable TLS/IA (functions).
+  gnutls_app_phase_on_resumption_t: Type of TLS/IA connection (enum type).
+  GNUTLS_A_INNER_APPLICATION_FAILURE,
+  GNUTLS_A_INNER_APPLICATION_VERIFICATION: TLS/IA alert codes (enum types).
 
 * Version 1.2.8 (2005-10-07)
 - Libgcrypt 1.2.2 is required to fix a bug for forking GnuTLS servers.
