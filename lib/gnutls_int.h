@@ -148,7 +148,8 @@ typedef enum resumable_session_t { RESUME_TRUE,
 /* Record Protocol */
 typedef enum content_type_t {
     GNUTLS_CHANGE_CIPHER_SPEC = 20, GNUTLS_ALERT,
-    GNUTLS_HANDSHAKE, GNUTLS_APPLICATION_DATA
+    GNUTLS_HANDSHAKE, GNUTLS_APPLICATION_DATA,
+    GNUTLS_INNER_APPLICATION = 24
 } content_type_t;
 
 #define GNUTLS_PK_ANY (gnutls_pk_algorithm_t)-1
