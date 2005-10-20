@@ -30,6 +30,8 @@ EXTRA_DIST = client.p12 noclient.p12 unclient.p12
 
 openssl_LDADD = $(LDADD) ../libextra/libgnutls-openssl.la
 
+tlsia_LDADD = $(LDADD) ../libextra/libgnutls-extra.la
+
 ctests = simple anonself openssl tlsia
 TESTS = pkcs12_neon $(ctests)	
 check_PROGRAMS = $(ctests)
