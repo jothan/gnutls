@@ -22,6 +22,8 @@
  *
  */
 
+#include "gnutls_int.h"
+
 int
 gnutls_ia_handshake (gnutls_session_t session)
 {
