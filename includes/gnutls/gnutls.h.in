@@ -292,11 +292,17 @@ typedef enum {
 } gnutls_app_phase_on_resumption_t;
 
 extern void
-gnutls_app_phase_on_resumption_get(gnutls_session_t session,
-				   gnutls_app_phase_on_resumption_t *state);
+gnutls_inner_application_client_get(gnutls_session_t session,
+				    gnutls_app_phase_on_resumption_t *state);
 extern void
-gnutls_app_phase_on_resumption_set(gnutls_session_t session,
-				   gnutls_app_phase_on_resumption_t state);
+gnutls_inner_application_client_set(gnutls_session_t session,
+				    gnutls_app_phase_on_resumption_t state);
+extern void
+gnutls_inner_application_server_get(gnutls_session_t session,
+				    gnutls_app_phase_on_resumption_t *state);
+extern void
+gnutls_inner_application_server_set(gnutls_session_t session,
+				    gnutls_app_phase_on_resumption_t state);
 
 /* functions to set priority of cipher suites 
  */
