@@ -291,15 +291,13 @@ typedef enum {
   GNUTLS_APP_PHASE_ON_RESUMPTION_YES = 2
 } gnutls_app_phase_on_resumption_t;
 
-extern void
-gnutls_inner_application_client_get(gnutls_session_t session,
-				    gnutls_app_phase_on_resumption_t *state);
+extern gnutls_app_phase_on_resumption_t
+gnutls_inner_application_client_get (gnutls_session_t session);
 extern void
 gnutls_inner_application_client_set(gnutls_session_t session,
 				    gnutls_app_phase_on_resumption_t state);
-extern void
-gnutls_inner_application_server_get(gnutls_session_t session,
-				    gnutls_app_phase_on_resumption_t *state);
+extern gnutls_app_phase_on_resumption_t
+gnutls_inner_application_server_get (gnutls_session_t session);
 extern void
 gnutls_inner_application_server_set(gnutls_session_t session,
 				    gnutls_app_phase_on_resumption_t state);
