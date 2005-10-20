@@ -249,7 +249,8 @@ typedef struct {
     uint server_names_size;
     opaque srp_username[MAX_SRP_USERNAME];
     /* 0 = tls/ia not used, 1 = no, 2 = yes */
-    gnutls_app_phase_on_resumption_t app_phase_on_resumption;
+  gnutls_app_phase_on_resumption_t client_app_phase_on_resumption;
+  gnutls_app_phase_on_resumption_t server_app_phase_on_resumption;
 } tls_ext_st;
 
 /* auth_info_t structures now MAY contain malloced 
