@@ -79,6 +79,12 @@ int gnutls_certificate_set_openpgp_keyring_mem(
 int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_t c,
     const char *file);
 
+/* TLS/IA stuff
+ */
+
+extern int
+gnutls_ia_handshake (gnutls_session_t session);
+
 int gnutls_global_init_extra(void);
 
 /* returns libgnutls-extra version (call it with a NULL argument) 
