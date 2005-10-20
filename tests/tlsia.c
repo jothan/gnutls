@@ -32,6 +32,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <gnutls/gnutls.h>
+#include <gnutls/extra.h>
 
 #include "utils.h"
 
