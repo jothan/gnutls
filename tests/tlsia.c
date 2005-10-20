@@ -131,6 +131,13 @@ client (void)
       success ("client: Handshake was completed\n");
     }
 
+  /*
+    To test TLS/IA alert's (the server will print that a fatal alert
+    was received):
+  gnutls_alert_send(session, GNUTLS_AL_FATAL,
+		    GNUTLS_A_INNER_APPLICATION_FAILURE);
+  */
+
   gnutls_record_send (session, MSG, strlen (MSG));
 
   ret = gnutls_record_recv (session, buffer, MAX_BUF);
@@ -303,7 +310,7 @@ server (void)
   success ("server: Handshake was completed\n");
 
   {
-    int state;
+    gnutls_app_phase_on_resumption_t state;
     gnutls_app_phase_on_resumption_get(session, &state);
 
     switch (state)
@@ -342,6 +349,16 @@ server (void)
 	}
       else if (ret < 0)
 	{
+	  if (ret == GNUTLS_E_FATAL_ALERT_RECEIVED)
+	    {
+	      gnutls_alert_description_t alert;
+	      const char *err;
+	      alert = gnutls_alert_get(session);
+	      err = gnutls_alert_get_name(alert);
+	      if (err)
+		printf ("Fatal alert: %s\n", err);
+	    }
+
 	  fail ("server: Received corrupted data(%d). Closing...\n", ret);
 	  break;
 	}
