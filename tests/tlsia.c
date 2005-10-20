@@ -91,6 +91,7 @@ client (void)
   const int kx_prio[] = { GNUTLS_KX_ANON_DH, 0 };
 
   gnutls_global_init ();
+  gnutls_global_init_extra();
 
   gnutls_anon_allocate_client_credentials (&anoncred);
 
