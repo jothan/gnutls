@@ -115,8 +115,8 @@ client (void)
   gnutls_transport_set_ptr (session, (gnutls_transport_ptr_t) sd);
 
   /* Enable TLS/IA. */
-  gnutls_app_phase_on_resumption_set(session,
-				     GNUTLS_APP_PHASE_ON_RESUMPTION_NO);
+  gnutls_inner_application_client_set (session,
+				       GNUTLS_APP_PHASE_ON_RESUMPTION_NO);
 
   /* Perform the TLS handshake
    */
@@ -140,17 +140,28 @@ client (void)
 		    GNUTLS_A_INNER_APPLICATION_FAILURE);
   */
 
-  ret = gnutls_ia_handshake (session);
-
-  if (ret < 0)
-    {
-      fail ("client: TLS/IA handshake failed\n");
-      gnutls_perror (ret);
-      goto end;
-    }
+  if (!gnutls_inner_application_handshake_p (session))
+    fail ("client: No TLS/IA negotiation (client %d, server %d)\n",
+	  gnutls_inner_application_client_get (session),
+	  gnutls_inner_application_server_get (session));
   else
     {
-      success ("client: TLS/IA Handshake was completed\n");
+      success ("client: TLS/IA handshake (client %d, server %d)\n",
+	       gnutls_inner_application_client_get (session),
+	       gnutls_inner_application_server_get (session));
+
+      ret = gnutls_ia_handshake (session);
+
+      if (ret < 0)
+	{
+	  fail ("client: TLS/IA handshake failed\n");
+	  gnutls_perror (ret);
+	  goto end;
+	}
+      else
+	{
+	  success ("client: TLS/IA Handshake was completed\n");
+	}
     }
 
   gnutls_record_send (session, MSG, strlen (MSG));
@@ -314,6 +325,11 @@ server (void)
 		      sizeof (topbuf)), ntohs (sa_cli.sin_port));
 
   gnutls_transport_set_ptr (session, (gnutls_transport_ptr_t) sd);
+
+  /* Enable TLS/IA. */
+  gnutls_inner_application_server_set (session,
+				       GNUTLS_APP_PHASE_ON_RESUMPTION_YES);
+
   ret = gnutls_handshake (session);
   if (ret < 0)
     {
@@ -324,29 +340,29 @@ server (void)
     }
   success ("server: Handshake was completed\n");
 
-  {
-    gnutls_app_phase_on_resumption_t state;
-    gnutls_app_phase_on_resumption_get(session, &state);
+  if (!gnutls_inner_application_handshake_p (session))
+    fail ("server: No TLS/IA negotiation (client %d, server %d)\n",
+	  gnutls_inner_application_client_get (session),
+	  gnutls_inner_application_server_get (session));
+  else
+    {
+      success ("server: TLS/IA handshake (client %d, server %d)\n",
+	       gnutls_inner_application_client_get (session),
+	       gnutls_inner_application_server_get (session));
 
-    switch (state)
-      {
-      case GNUTLS_APP_PHASE_ON_RESUMPTION_DISABLED:
-	puts ("TLS/IA disabled.");
-	break;
+      ret = gnutls_ia_handshake (session);
 
-      case GNUTLS_APP_PHASE_ON_RESUMPTION_NO:
-	puts ("TLS/IA enabled, no application phase on resumption.");
-	break;
-
-      case GNUTLS_APP_PHASE_ON_RESUMPTION_YES:
-	puts ("TLS/IA enabled, application phase on resumption.");
-	break;
-
-      default:
-	puts ("Unknown TLA/IS status");
-	break;
-      }
-  }
+      if (ret < 0)
+	{
+	  fail ("client: TLS/IA handshake failed\n");
+	  gnutls_perror (ret);
+	  return;
+	}
+      else
+	{
+	  success ("client: TLS/IA Handshake was completed\n");
+	}
+    }
 
   /* see the Getting peer's information example */
   /* print_info(session); */
