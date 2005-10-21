@@ -256,6 +256,7 @@ int gnutls_init(gnutls_session_t * session,
     _gnutls_buffer_init(&(*session)->internals.application_data_buffer);
     _gnutls_buffer_init(&(*session)->internals.handshake_data_buffer);
     _gnutls_buffer_init(&(*session)->internals.handshake_hash_buffer);
+    _gnutls_buffer_init(&(*session)->internals.ia_data_buffer);
 
     _gnutls_buffer_init(&(*session)->internals.record_send_buffer);
     _gnutls_buffer_init(&(*session)->internals.record_recv_buffer);
@@ -346,6 +347,7 @@ void gnutls_deinit(gnutls_session_t session)
     _gnutls_free_datum(&session->connection_state.read_mac_secret);
     _gnutls_free_datum(&session->connection_state.write_mac_secret);
 
+    _gnutls_buffer_clear(&session->internals.ia_data_buffer);
     _gnutls_buffer_clear(&session->internals.handshake_hash_buffer);
     _gnutls_buffer_clear(&session->internals.handshake_data_buffer);
     _gnutls_buffer_clear(&session->internals.application_data_buffer);
