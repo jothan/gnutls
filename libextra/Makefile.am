@@ -119,19 +119,19 @@ endif
 
 
 gnutls-extra-api.texi: gnutls_extra.c
-	@echo "" > gnutls-extra-api.texi
+	@echo "" > $@
 	@for i in $<; do \
 		echo -n "Creating documentation for file $$i... " && \
-		../doc/scripts/gdoc -texinfo $$i >> gnutls-extra-api.texi && \
+		../doc/scripts/gdoc -texinfo $$i >> $@ && \
 		echo "ok"; \
 	done
 
 gnutls-ia-api.texi: gnutls_ia.c
-	@echo "" > gnutls-extra-api.texi
+	@echo "" > $@
 	@for i in $<; do \
 		echo -n "Creating documentation for file $$i... " && \
-		../doc/scripts/gdoc -texinfo $$i >> gnutls-extra-api.texi && \
+		../doc/scripts/gdoc -texinfo $$i >> $@ && \
 		echo "ok"; \
 	done
 
-dist-hook: gnutls-extra-api.texi
+dist-hook: gnutls-extra-api.texi gnutls-ia-api.texi
