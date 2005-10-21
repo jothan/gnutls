@@ -60,9 +60,9 @@ _gnutls_inner_application_recv_params (gnutls_session_t session,
     }
 
   if (session->security_parameters.entity == GNUTLS_SERVER)
-    ext->client_app_phase_on_resumption = state;
+    ext->client_ia_mode = state;
   else
-    ext->server_app_phase_on_resumption = state;
+    ext->server_ia_mode = state;
 
   return 0;
 }
@@ -75,10 +75,8 @@ _gnutls_inner_application_send_params (gnutls_session_t session,
 {
   tls_ext_st *ext = &session->security_parameters.extensions;
 
-  if ((ext->client_app_phase_on_resumption ==
-       GNUTLS_APP_PHASE_ON_RESUMPTION_DISABLED) ||
-      (ext->client_app_phase_on_resumption ==
-       GNUTLS_APP_PHASE_ON_RESUMPTION_DISABLED))
+  if ((ext->client_ia_mode == GNUTLS_APP_PHASE_ON_RESUMPTION_DISABLED) ||
+      (ext->client_ia_mode == GNUTLS_APP_PHASE_ON_RESUMPTION_DISABLED))
     return 0;
 
   if (data_size < 1)
@@ -91,7 +89,7 @@ _gnutls_inner_application_send_params (gnutls_session_t session,
     {
       /* Simple case, just send what the application requested. */
 
-      switch (ext->client_app_phase_on_resumption)
+      switch (ext->client_ia_mode)
 	{
 	case GNUTLS_APP_PHASE_ON_RESUMPTION_NO:
 	  *data = NO;
@@ -112,16 +110,14 @@ _gnutls_inner_application_send_params (gnutls_session_t session,
          client set app_phase_on_resumption to "yes" or if the server
          does not resume the session. */
 
-      if ((ext->client_app_phase_on_resumption ==
-	   GNUTLS_APP_PHASE_ON_RESUMPTION_YES ) ||
+      if ((ext->client_ia_mode == GNUTLS_APP_PHASE_ON_RESUMPTION_YES ) ||
 	  session->internals.resumed == RESUME_FALSE)
 	*data = YES;
       /* The server MAY set app_phase_on_resumption to "yes" for a
 	 resumed session even if the client set
 	 app_phase_on_resumption to "no", as the server may have
 	 reason to proceed with one or more application phases. */
-      else if (ext->server_app_phase_on_resumption ==
-	       GNUTLS_APP_PHASE_ON_RESUMPTION_YES)
+      else if (ext->server_ia_mode == GNUTLS_APP_PHASE_ON_RESUMPTION_YES)
 	*data = YES;
       else
 	*data = NO;
