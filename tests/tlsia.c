@@ -115,7 +115,7 @@ client (void)
   gnutls_transport_set_ptr (session, (gnutls_transport_ptr_t) sd);
 
   /* Enable TLS/IA. */
-  gnutls_ia_client_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO);
+  gnutls_ia_client_set (session, GNUTLS_APP_PHASE_ON_RESUMPTION_NO);
 
   /* Perform the TLS handshake
    */
@@ -324,7 +324,7 @@ server (void)
   gnutls_transport_set_ptr (session, (gnutls_transport_ptr_t) sd);
 
   /* Enable TLS/IA. */
-  gnutls_ia_server_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES);
+  gnutls_ia_server_set (session, GNUTLS_APP_PHASE_ON_RESUMPTION_YES);
 
   ret = gnutls_handshake (session);
   if (ret < 0)
