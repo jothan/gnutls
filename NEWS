@@ -5,15 +5,17 @@ See the end for copying conditions.
 
 * Version 1.2.8+ia (unreleased)
 - GnuTLS now support TLS Inner application (TLS/IA) as per
-  draft-funk-tls-inner-application-extension-01.
+  draft-funk-tls-inner-application-extension-01.  This functionality
+  is added to libgnutls-extra, so it is licensed under the GPL.
 - API and ABI modifications:
-  gnutls_inner_application_client_get,
-  gnutls_inner_application_client_set,
-  gnutls_inner_application_server_get,
-  gnutls_inner_application_server_set: Enable TLS/IA (functions).
-  gnutls_app_phase_on_resumption_t: Type of TLS/IA connection (enum type).
+  gnutls_ia_client_get, gnutls_ia_client_set, gnutls_ia_server_get,
+  gnutls_ia_server_set: New functions, to enable TLS/IA.
+  gnutls_ia_handshake: New function, to perform TLS/IA handshake.
+  gnutls_ia_handshake_p: New function, a predicate to decide whether
+  to TLS/IA handshake.
+  gnutls_ia_mode_t: Enum type with TLS/IA modes.
   GNUTLS_A_INNER_APPLICATION_FAILURE,
-  GNUTLS_A_INNER_APPLICATION_VERIFICATION: TLS/IA alert codes (enum types).
+  GNUTLS_A_INNER_APPLICATION_VERIFICATION: Enum values for TLS/IA alerts.
 
 * Version 1.2.8 (2005-10-07)
 - Libgcrypt 1.2.2 is required to fix a bug for forking GnuTLS servers.
