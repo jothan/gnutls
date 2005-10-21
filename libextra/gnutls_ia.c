@@ -24,6 +24,15 @@
 
 #include "gnutls_int.h"
 
+/**
+ * gnutls_ia_handshake:
+ * @session: is a #gnutls_session_t structure.
+ *
+ * Perform a TLS/IA handshake.  This should be called after
+ * gnutls_handshake() iff gnutls_inner_application_handshake_p().
+ *
+ * Return 0 on success, or an error code.
+ **/
 int
 gnutls_ia_handshake (gnutls_session_t session)
 {

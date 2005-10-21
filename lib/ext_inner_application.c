@@ -223,7 +223,7 @@ gnutls_inner_application_client_set (gnutls_session_t session,
  * gnutls_inner_application_handshake_p() to decide whether to call
  * gnutls_ia_handshake() or not.
  *
- * Returns: a #gnutls_app_phase_on_resumption_t indicating client
+ * Returns: a #gnutls_app_phase_on_resumption_t indicating server
  *   TLS/IA preference.
  **/
 gnutls_app_phase_on_resumption_t
