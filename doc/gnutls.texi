@@ -2418,7 +2418,7 @@ called @code{gnutls-extra}. The prototypes for this library lie in
 The following functions are to be used for @acronym{OpenPGP}
 certificate handling.  Their prototypes lie in
 @file{gnutls/openpgp.h}.  You need to link with @file{libgnutls-extra}
-to be able to use these functions (@xref{GnuTLS-extra functions}).
+to be able to use these functions (@pxref{GnuTLS-extra functions}).
 
 @include pgp-api.texi
 
@@ -2430,7 +2430,7 @@ to be able to use these functions (@xref{GnuTLS-extra functions}).
 The following functions are used for @acronym{TLS} Inner Application
 (@acronym{TLS/IA}).  Their prototypes lie in @file{gnutls/extra.h}.
 You need to link with @file{libgnutls-extra} to be able to use these
-functions (@xref{GnuTLS-extra functions}).
+functions (@pxref{GnuTLS-extra functions}).
 
 @include gnutls-ia-api.texi
 
