@@ -68,8 +68,7 @@ gnutls_ia_handshake (gnutls_session_t session)
 gnutls_ia_mode_t
 gnutls_ia_client_get (gnutls_session_t session)
 {
-  return
-    session->security_parameters.extensions.client_app_phase_on_resumption;
+  return session->security_parameters.extensions.client_ia_mode;
 }
 
 /**
@@ -101,8 +100,7 @@ gnutls_ia_client_set (gnutls_session_t session,
 		      gnutls_ia_mode_t state)
 {
   if (session->security_parameters.entity == GNUTLS_CLIENT)
-    session->security_parameters.extensions.client_app_phase_on_resumption =
-      state;
+    session->security_parameters.extensions.client_ia_mode = state;
 }
 
 /**
@@ -134,8 +132,7 @@ gnutls_ia_client_set (gnutls_session_t session,
 gnutls_ia_mode_t
 gnutls_ia_server_get (gnutls_session_t session)
 {
-  return
-    session->security_parameters.extensions.server_app_phase_on_resumption;
+  return session->security_parameters.extensions.server_ia_mode;
 }
 
 /**
@@ -168,8 +165,7 @@ gnutls_ia_server_set (gnutls_session_t session,
 		      gnutls_ia_mode_t state)
 {
   if (session->security_parameters.entity == GNUTLS_SERVER)
-    session->security_parameters.extensions.server_app_phase_on_resumption =
-      state;
+    session->security_parameters.extensions.server_ia_mode = state;
 }
 
 /**
@@ -186,8 +182,8 @@ int
 gnutls_ia_handshake_p (gnutls_session_t session)
 {
   tls_ext_st *ext = &session->security_parameters.extensions;
-  gnutls_ia_mode_t clienttlsia = ext->client_app_phase_on_resumption;
-  gnutls_ia_mode_t servertlsia = ext->server_app_phase_on_resumption;
+  gnutls_ia_mode_t clienttlsia = ext->client_ia_mode;
+  gnutls_ia_mode_t servertlsia = ext->server_ia_mode;
 
   if (session->security_parameters.entity == GNUTLS_SERVER)
     {

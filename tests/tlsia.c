@@ -115,8 +115,7 @@ client (void)
   gnutls_transport_set_ptr (session, (gnutls_transport_ptr_t) sd);
 
   /* Enable TLS/IA. */
-  gnutls_inner_application_client_set (session,
-				       GNUTLS_APP_PHASE_ON_RESUMPTION_NO);
+  gnutls_ia_client_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO);
 
   /* Perform the TLS handshake
    */
@@ -140,15 +139,13 @@ client (void)
 		    GNUTLS_A_INNER_APPLICATION_FAILURE);
   */
 
-  if (!gnutls_inner_application_handshake_p (session))
+  if (!gnutls_ia_handshake_p (session))
     fail ("client: No TLS/IA negotiation (client %d, server %d)\n",
-	  gnutls_inner_application_client_get (session),
-	  gnutls_inner_application_server_get (session));
+	  gnutls_ia_client_get (session), gnutls_ia_server_get (session));
   else
     {
       success ("client: TLS/IA handshake (client %d, server %d)\n",
-	       gnutls_inner_application_client_get (session),
-	       gnutls_inner_application_server_get (session));
+	       gnutls_ia_client_get (session), gnutls_ia_server_get (session));
 
       ret = gnutls_ia_handshake (session);
 
@@ -327,8 +324,7 @@ server (void)
   gnutls_transport_set_ptr (session, (gnutls_transport_ptr_t) sd);
 
   /* Enable TLS/IA. */
-  gnutls_inner_application_server_set (session,
-				       GNUTLS_APP_PHASE_ON_RESUMPTION_YES);
+  gnutls_ia_server_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES);
 
   ret = gnutls_handshake (session);
   if (ret < 0)
@@ -340,15 +336,13 @@ server (void)
     }
   success ("server: Handshake was completed\n");
 
-  if (!gnutls_inner_application_handshake_p (session))
+  if (!gnutls_ia_handshake_p (session))
     fail ("server: No TLS/IA negotiation (client %d, server %d)\n",
-	  gnutls_inner_application_client_get (session),
-	  gnutls_inner_application_server_get (session));
+	  gnutls_ia_client_get (session), gnutls_ia_server_get (session));
   else
     {
       success ("server: TLS/IA handshake (client %d, server %d)\n",
-	       gnutls_inner_application_client_get (session),
-	       gnutls_inner_application_server_get (session));
+	       gnutls_ia_client_get (session), gnutls_ia_server_get (session));
 
       ret = gnutls_ia_handshake (session);
 
