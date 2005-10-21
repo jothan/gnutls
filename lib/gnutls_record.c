@@ -449,7 +449,8 @@ static int check_recv_type(content_type_t recv_type)
     case GNUTLS_ALERT:
     case GNUTLS_HANDSHAKE:
     case GNUTLS_APPLICATION_DATA:
-	return 0;
+    case GNUTLS_INNER_APPLICATION:
+      return 0;
     default:
 	gnutls_assert();
 	return GNUTLS_E_UNSUPPORTED_VERSION_PACKET;
