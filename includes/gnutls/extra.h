@@ -82,8 +82,19 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
 /* TLS/IA stuff
  */
 
-extern int
-gnutls_ia_handshake (gnutls_session_t session);
+  extern int gnutls_ia_handshake (gnutls_session_t session);
+  extern gnutls_app_phase_on_resumption_t
+  gnutls_ia_client_get (gnutls_session_t session);
+  extern void gnutls_ia_client_set(gnutls_session_t session,
+				   gnutls_app_phase_on_resumption_t state);
+  extern gnutls_app_phase_on_resumption_t
+  gnutls_ia_server_get (gnutls_session_t session);
+  extern void gnutls_ia_server_set(gnutls_session_t session,
+				   gnutls_app_phase_on_resumption_t state);
+  extern int gnutls_ia_handshake_p (gnutls_session_t session);
+
+/* Global stuff
+ */
 
 int gnutls_global_init_extra(void);
 
