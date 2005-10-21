@@ -286,9 +286,9 @@ int gnutls_server_name_get(gnutls_session_t session,
     unsigned int * type, unsigned int indx);
 
 typedef enum {
-  GNUTLS_APP_PHASE_ON_RESUMPTION_DISABLED = 0,
-  GNUTLS_APP_PHASE_ON_RESUMPTION_NO = 1,
-  GNUTLS_APP_PHASE_ON_RESUMPTION_YES = 2
+  GNUTLS_IA_DISABLED = 0,
+  GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO = 1,
+  GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES = 2
 } gnutls_ia_mode_t;
 
 /* functions to set priority of cipher suites 
