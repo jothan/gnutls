@@ -28,6 +28,8 @@
 #include "gnutls_num.h"
 #include "ext_inner_application.h"
 
+#define NO 0
+#define YES 1
 
 int
 _gnutls_inner_application_recv_params (gnutls_session_t session,
@@ -44,11 +46,11 @@ _gnutls_inner_application_recv_params (gnutls_session_t session,
 
   switch ((unsigned char)*data)
     {
-    case 0:
+    case NO:
       state = GNUTLS_APP_PHASE_ON_RESUMPTION_NO;
       break;
 
-    case 1:
+    case YES:
       state = GNUTLS_APP_PHASE_ON_RESUMPTION_YES;
       break;
 
@@ -84,9 +86,6 @@ _gnutls_inner_application_send_params (gnutls_session_t session,
       gnutls_assert ();
       return GNUTLS_E_SHORT_MEMORY_BUFFER;
     }
-
-#define NO 0
-#define YES 1
 
   if (session->security_parameters.entity == GNUTLS_CLIENT)
     {
