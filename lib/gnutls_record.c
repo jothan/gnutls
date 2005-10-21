@@ -680,11 +680,16 @@ static int record_check_type(gnutls_session_t session,
 
 	    break;
 	case GNUTLS_INNER_APPLICATION:
-	  /* Store unexpected data into buffer here?  what's the
-	     point? compare application data case. */
+	  /* even if data is unexpected put it into the buffer */
+	  if ((ret = _gnutls_record_buffer_put(recv_type, session,
+					       (void *) data,
+					       data_size)) < 0) {
+	    gnutls_assert();
+	    return ret;
+	  }
 	  gnutls_assert();
-	  puts("baaad");
 	  return GNUTLS_E_UNEXPECTED_PACKET;
+	  break;
 	default:
 
 	    _gnutls_record_log
