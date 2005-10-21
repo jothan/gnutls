@@ -95,7 +95,7 @@ endif
 
 # TLS/IA
 
-COBJECTS += = gnutls_ia.c
+COBJECTS += gnutls_ia.c
 
 libgnutls_extra_la_LDFLAGS += \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
