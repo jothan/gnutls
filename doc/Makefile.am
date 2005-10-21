@@ -28,17 +28,18 @@ endif
 
 info_TEXINFOS = gnutls.texi
 gnutls_TEXINFOS = gnutls.texi fdl.texi error_codes.texi			\
-	gnutls-api.texi gnutls-extra-api.texi x509-api.texi		\
-	pgp-api.texi examples/ex-client1.c examples/ex-client2.c	\
-	examples/ex-session-info.c examples/ex-verify.c			\
-	examples/ex-cert-select.c examples/ex-client-resume.c		\
-	examples/ex-client-srp.c examples/ex-rfc2818.c			\
-	examples/ex-serv1.c examples/ex-serv-export.c			\
-	examples/ex-serv-anon.c examples/ex-serv-pgp.c			\
-	examples/ex-serv-srp.c examples/ex-alert.c			\
-	examples/ex-x509-info.c examples/ex-crq.c examples/ex-pkcs12.c	\
-	internals.eps internals.png layers.eps layers.png pgp1.eps	\
-	pgp1.png x509-1.eps x509-1.png gnutls-logo.eps
+	gnutls-api.texi gnutls-extra-api.texi gnutls-ia-api.texi	\
+	x509-api.texi pgp-api.texi examples/ex-client1.c		\
+	examples/ex-client2.c examples/ex-session-info.c		\
+	examples/ex-verify.c examples/ex-cert-select.c			\
+	examples/ex-client-resume.c examples/ex-client-srp.c		\
+	examples/ex-rfc2818.c examples/ex-serv1.c			\
+	examples/ex-serv-export.c examples/ex-serv-anon.c		\
+	examples/ex-serv-pgp.c examples/ex-serv-srp.c			\
+	examples/ex-alert.c examples/ex-x509-info.c examples/ex-crq.c	\
+	examples/ex-pkcs12.c internals.eps internals.png layers.eps	\
+	layers.png pgp1.eps pgp1.png x509-1.eps x509-1.png		\
+	gnutls-logo.eps
 
 AM_MAKEINFOHTMLFLAGS = --no-split
 
@@ -47,6 +48,9 @@ AM_MAKEINFOHTMLFLAGS = --no-split
 
 ../libextra/gnutls-extra-api.texi:
 	cd ../libextra && make gnutls-extra-api.texi
+
+../libextra/gnutls-ia-api.texi:
+	cd ../libextra && make gnutls-ia-api.texi
 
 ../lib/x509/x509-api.texi:
 	cd ../lib/x509 && make x509-api.texi
@@ -59,6 +63,9 @@ gnutls-api.texi: ../lib/gnutls-api.texi
 
 gnutls-extra-api.texi: ../libextra/gnutls-extra-api.texi
 	-scripts/sort2.pl < ../libextra/gnutls-extra-api.texi > gnutls-extra-api.texi
+
+gnutls-ia-api.texi: ../libextra/gnutls-ia-api.texi
+	-scripts/sort2.pl < ../libextra/gnutls-ia-api.texi > gnutls-ia-api.texi
 
 x509-api.texi: ../lib/x509/x509-api.texi
 	-scripts/sort2.pl < ../lib/x509/x509-api.texi > x509-api.texi
