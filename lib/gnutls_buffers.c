@@ -128,6 +128,9 @@ int _gnutls_record_buffer_get_size(content_type_t type,
     case GNUTLS_HANDSHAKE:
 	return session->internals.handshake_data_buffer.length;
 
+    case GNUTLS_INNER_APPLICATION:
+      return session->internals.ia_data_buffer.length;
+
     default:
 	return GNUTLS_E_INVALID_REQUEST;
     }
