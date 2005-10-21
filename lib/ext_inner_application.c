@@ -47,11 +47,11 @@ _gnutls_inner_application_recv_params (gnutls_session_t session,
   switch ((unsigned char)*data)
     {
     case NO:
-      state = GNUTLS_APP_PHASE_ON_RESUMPTION_NO;
+      state = GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO;
       break;
 
     case YES:
-      state = GNUTLS_APP_PHASE_ON_RESUMPTION_YES;
+      state = GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES;
       break;
 
     default:
@@ -75,8 +75,8 @@ _gnutls_inner_application_send_params (gnutls_session_t session,
 {
   tls_ext_st *ext = &session->security_parameters.extensions;
 
-  if ((ext->client_ia_mode == GNUTLS_APP_PHASE_ON_RESUMPTION_DISABLED) ||
-      (ext->client_ia_mode == GNUTLS_APP_PHASE_ON_RESUMPTION_DISABLED))
+  if ((ext->client_ia_mode == GNUTLS_IA_DISABLED) ||
+      (ext->client_ia_mode == GNUTLS_IA_DISABLED))
     return 0;
 
   if (data_size < 1)
@@ -91,11 +91,11 @@ _gnutls_inner_application_send_params (gnutls_session_t session,
 
       switch (ext->client_ia_mode)
 	{
-	case GNUTLS_APP_PHASE_ON_RESUMPTION_NO:
+	case GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO:
 	  *data = NO;
 	  break;
 
-	case GNUTLS_APP_PHASE_ON_RESUMPTION_YES:
+	case GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES:
 	  *data = YES;
 	  break;
 
@@ -110,14 +110,14 @@ _gnutls_inner_application_send_params (gnutls_session_t session,
          client set app_phase_on_resumption to "yes" or if the server
          does not resume the session. */
 
-      if ((ext->client_ia_mode == GNUTLS_APP_PHASE_ON_RESUMPTION_YES ) ||
+      if ((ext->client_ia_mode == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES ) ||
 	  session->internals.resumed == RESUME_FALSE)
 	*data = YES;
       /* The server MAY set app_phase_on_resumption to "yes" for a
 	 resumed session even if the client set
 	 app_phase_on_resumption to "no", as the server may have
 	 reason to proceed with one or more application phases. */
-      else if (ext->server_ia_mode == GNUTLS_APP_PHASE_ON_RESUMPTION_YES)
+      else if (ext->server_ia_mode == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES)
 	*data = YES;
       else
 	*data = NO;
