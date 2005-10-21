@@ -378,7 +378,8 @@ typedef struct {
     mac_hd_t handshake_mac_handle_md5;	/* hash of the handshake messages */
 
     gnutls_buffer handshake_data_buffer;	/* this is a buffer that holds the current handshake message */
-    resumable_session_t resumable;	/* TRUE or FALSE - if we can resume that session */
+    gnutls_buffer ia_data_buffer;	/* holds inner application data (TLS/IA) */
+  resumable_session_t resumable;	/* TRUE or FALSE - if we can resume that session */
     handshake_state_t handshake_state;	/* holds
 					 * a number which indicates where
 					 * the handshake procedure has been
