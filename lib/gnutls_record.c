@@ -465,7 +465,9 @@ static int check_recv_type(content_type_t recv_type)
 static int check_buffers(gnutls_session_t session, content_type_t type,
 			 opaque * data, int sizeofdata)
 {
-    if ((type == GNUTLS_APPLICATION_DATA || type == GNUTLS_HANDSHAKE)
+    if ((type == GNUTLS_APPLICATION_DATA ||
+	 type == GNUTLS_HANDSHAKE ||
+	 type == GNUTLS_INNER_APPLICATION)
 	&& _gnutls_record_buffer_get_size(type, session) > 0) {
 	int ret, ret2;
 	ret = _gnutls_record_buffer_get(type, session, data, sizeofdata);
@@ -587,7 +589,9 @@ static int record_check_type(gnutls_session_t session,
     int ret;
 
     if ((recv_type == type)
-	&& (type == GNUTLS_APPLICATION_DATA || type == GNUTLS_HANDSHAKE)) {
+	&& (type == GNUTLS_APPLICATION_DATA ||
+	    type == GNUTLS_HANDSHAKE ||
+	    type == GNUTLS_INNER_APPLICATION)) {
 	_gnutls_record_buffer_put(type, session, (void *) data, data_size);
     } else {
 	switch (recv_type) {
@@ -675,6 +679,12 @@ static int record_check_type(gnutls_session_t session,
 	    return _gnutls_recv_hello_request(session, data, data_size);
 
 	    break;
+	case GNUTLS_INNER_APPLICATION:
+	  /* Store unexpected data into buffer here?  what's the
+	     point? compare application data case. */
+	  gnutls_assert();
+	  puts("baaad");
+	  return GNUTLS_E_UNEXPECTED_PACKET;
 	default:
 
 	    _gnutls_record_log
@@ -933,8 +943,10 @@ ssize_t _gnutls_recv_int(gnutls_session_t session, content_type_t type,
 
 /* Get Application data from buffer 
  */
-    if ((type == GNUTLS_APPLICATION_DATA || type == GNUTLS_HANDSHAKE)
-	&& (recv_type == type)) {
+    if ((recv_type == type) &&
+	(type == GNUTLS_APPLICATION_DATA ||
+	 type == GNUTLS_HANDSHAKE ||
+	 type == GNUTLS_INNER_APPLICATION)) {
 
 	ret = _gnutls_record_buffer_get(type, session, data, sizeofdata);
 	if (ret < 0) {
