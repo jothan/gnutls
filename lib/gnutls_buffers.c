@@ -192,7 +192,7 @@ int _gnutls_record_buffer_get(content_type_t type,
 	    length = session->internals.handshake_data_buffer.length;
 	}
 
-	_gnutls_buffers_log("BUF[REC][HD]: Read %d bytes of Data(%d)\n",
+	_gnutls_buffers_log("BUF[REC][HSK]: Read %d bytes of Data(%d)\n",
 			    length, type);
 
 	session->internals.handshake_data_buffer.length -= length;
@@ -205,6 +205,25 @@ int _gnutls_record_buffer_get(content_type_t type,
 		session->internals.handshake_data_buffer.length);
 
 	break;
+
+    case GNUTLS_INNER_APPLICATION:
+      if (length > session->internals.ia_data_buffer.length) {
+	length = session->internals.ia_data_buffer.length;
+      }
+
+      _gnutls_buffers_log("BUF[REC][IA]: Read %d bytes of Data(%d)\n",
+			  length, type);
+
+      session->internals.ia_data_buffer.length -= length;
+      memcpy(data, session->internals.ia_data_buffer.data, length);
+
+      /* overwrite buffer */
+      memmove(session->internals.ia_data_buffer.data,
+	      &session->internals.ia_data_buffer.data[length],
+	      session->internals.ia_data_buffer.length);
+
+      break;
+
     default:
 	gnutls_assert();
 	return GNUTLS_E_INVALID_REQUEST;
