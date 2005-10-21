@@ -53,11 +53,11 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = gnutls-extra.pc
 DISTCLEANFILES = $(pkgconfig_DATA)
 
-EXTRA_DIST = gnutls-extra-api.texi
+EXTRA_DIST = gnutls-extra-api.texi gnutls-ia-api.texi
 
 lib_LTLIBRARIES = libgnutls-extra.la
 
-COBJECTS = gnutls_extra.c
+libgnutls_extra_la_SOURCES = gnutls_extra.c
 
 # OpenSSL
 
@@ -84,7 +84,7 @@ endif
 libgnutls_extra_la_LIBADD =
 libgnutls_extra_la_LDFLAGS =
 if ENABLE_OPENPGP
-COBJECTS += gnutls_openpgp.c
+libgnutls_extra_la_SOURCES += gnutls_openpgp.c
 libgnutls_extra_la_LIBADD += openpgp/libgnutls_openpgp.la
 if ENABLE_INCLUDED_OPENCDK
 libgnutls_extra_la_LIBADD += opencdk/libminiopencdk.la
@@ -95,13 +95,13 @@ endif
 
 # TLS/IA
 
-COBJECTS += gnutls_ia.c
+libgnutls_extra_la_SOURCES += gnutls_ia.c
 
 libgnutls_extra_la_LDFLAGS += \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
 	$(LZO_LIBS)
 
-libgnutls_extra_la_SOURCES = $(COBJECTS) gnutls_extra.h libgnutls-extra.vers
+libgnutls_extra_la_SOURCES += gnutls_extra.h libgnutls-extra.vers
 
 libgnutls_extra_la_LIBADD += ../lib/libgnutls.la ../gl/libgnu.la
 
@@ -117,9 +117,18 @@ SUBDIRS += minilzo
 libgnutls_extra_la_LIBADD += minilzo/libminilzo.la
 endif
 
-gnutls-extra-api.texi: $(COBJECTS)
+
+gnutls-extra-api.texi: gnutls_extra.c
 	@echo "" > gnutls-extra-api.texi
-	@for i in $(COBJECTS); do \
+	@for i in $<; do \
+		echo -n "Creating documentation for file $$i... " && \
+		../doc/scripts/gdoc -texinfo $$i >> gnutls-extra-api.texi && \
+		echo "ok"; \
+	done
+
+gnutls-ia-api.texi: gnutls_ia.c
+	@echo "" > gnutls-extra-api.texi
+	@for i in $<; do \
 		echo -n "Creating documentation for file $$i... " && \
 		../doc/scripts/gdoc -texinfo $$i >> gnutls-extra-api.texi && \
 		echo "ok"; \
