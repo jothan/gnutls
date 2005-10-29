@@ -244,7 +244,7 @@ typedef struct {
     server_name_st server_names[MAX_SERVER_NAME_EXTENSIONS];
     /* limit server_name extensions */
     uint server_names_size;
-    opaque srp_username[MAX_SRP_USERNAME];
+    opaque srp_username[MAX_SRP_USERNAME+1];
 } tls_ext_st;
 
 /* auth_info_t structures now MAY contain malloced 

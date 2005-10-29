@@ -240,6 +240,19 @@ else
  AC_MSG_RESULT(yes)
 fi
 
+AC_MSG_CHECKING([whether to disable PSK authentication support])
+AC_ARG_ENABLE(psk-authentication,
+	AS_HELP_STRING([--disable-psk-authentication],
+		[disable the PSK authentication support]),
+	ac_enable_srp=no)
+if test x$ac_enable_srp != xno; then
+ AC_MSG_RESULT(no)
+ AC_DEFINE(ENABLE_PSK, 1, [enable PSK authentication])
+else
+ ac_full=0
+ AC_MSG_RESULT(yes)
+fi
+
 AC_MSG_CHECKING([whether to disable anonymous authentication support])
 AC_ARG_ENABLE(anon-authentication,
 	AS_HELP_STRING([--disable-anon-authentication],
