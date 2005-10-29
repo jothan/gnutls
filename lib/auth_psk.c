@@ -182,7 +182,7 @@ int _gnutls_proc_psk_client_kx(gnutls_session_t session, opaque * data,
 
     /* find the key of this username
      */
-    ret = _gnutls_psk_pwd_find_entry( session, (char*)username.data, &psk);
+    ret = _gnutls_psk_pwd_find_entry( session, info->username, &psk);
     if (ret < 0) {
 	gnutls_assert();
 	return ret;
