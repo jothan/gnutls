@@ -6,8 +6,6 @@ Current list:
 * Convert the current sexp stuff to the gcrypt ac API. 
 * Make the current ciphering code a bit more abstract to
   allow easy integration with TLS hardware.
-* Make the session data (used for session resuming) platform
-  independent.
 * Allow adding multiple subject alternative names.
 * Allow verifying of certificates on their reception.
 * Verify added CRLs (is it really needed?)
