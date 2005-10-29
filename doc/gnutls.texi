@@ -139,17 +139,17 @@ include:
 
 @itemize
 
-@item Support for TLS 1.0, TLS 1.1, and SSL 3.0 protocols.
+@item Support for TLS 1.0, TLS 1.1, and SSL 3.0 protocols;
 
-@item Support for both @acronym{X.509} and @acronym{OpenPGP} certificates.
+@item Support for both @acronym{X.509} and @acronym{OpenPGP} certificates;
 
-@item Support for handling and verification of certificates.
+@item Support for handling and verification of certificates;
 
-@item Support for @acronym{SRP} for TLS authentication.
+@item Support for @acronym{SRP} for TLS authentication;
 
-@item Support for @acronym{PSK}@footnote{Pre-shared keys} for TLS authentication.
+@item Support for @acronym{PSK}@footnote{Pre-shared keys} for TLS authentication;
 
-@item Support for TLS Extension mechanism.
+@item Support for TLS Extension mechanism;
 
 @item Support for TLS Compression Methods.
 
