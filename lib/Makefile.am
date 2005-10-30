@@ -114,7 +114,7 @@ pkix_asn1_tab.c: pkix.asn
 gnutls_asn1_tab.c: gnutls.asn
 	-asn1Parser gnutls.asn gnutls_asn1_tab.c
 
-gnutls-api.texi: $(COBJECTS) $(SRP_COBJECTS)
+gnutls-api.texi: $(COBJECTS) $(SRP_COBJECTS) $(PSK_COBJECTS)
 	@echo "" > gnutls-api.texi
 	@for i in $(COBJECTS) $(SRP_COBJECTS); do \
 		echo -n "Creating documentation for file $$i... " && \
