@@ -5,7 +5,7 @@ See the end for copying conditions.
 
 * Version 1.x.x
 - The PSK ciphersuites have been added.
-- The session resumption is now system independent.
+- The session resumption data are now system independent.
 
 * Version 1.2.9
 - Documentation was updated and improved.
