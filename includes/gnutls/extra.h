@@ -82,20 +82,30 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
 /* TLS/IA stuff
  */
 
+  typedef enum {
+    GNUTLS_IA_APPLICATION_PAYLOAD = 0,
+    GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED = 1,
+    GNUTLS_IA_FINAL_PHASE_FINISHED = 2
+  } gnutls_ia_apptype;
+
   typedef int (*gnutls_ia_avp_func)(void*, const char *last, size_t lastlen,
 				    char **new, size_t *newlen);
 
   extern void gnutls_ia_set_avp_function (gnutls_session_t session,
 					  gnutls_ia_avp_func avp_func);
+  extern void gnutls_ia_set_ptr (gnutls_session_t session, void *ptr);
+  extern void *gnutls_ia_get_ptr (gnutls_session_t session);
 
-  extern int gnutls_ia_handshake (gnutls_session_t session);
   extern gnutls_ia_mode_t gnutls_ia_client_get (gnutls_session_t session);
   extern void gnutls_ia_client_set(gnutls_session_t session,
 				   gnutls_ia_mode_t state);
   extern gnutls_ia_mode_t gnutls_ia_server_get (gnutls_session_t session);
   extern void gnutls_ia_server_set(gnutls_session_t session,
 				   gnutls_ia_mode_t state);
+
   extern int gnutls_ia_handshake_p (gnutls_session_t session);
+
+  extern int gnutls_ia_handshake (gnutls_session_t session);
 
 /* Global stuff
  */
