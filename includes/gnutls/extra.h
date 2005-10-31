@@ -82,7 +82,8 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
 /* TLS/IA stuff
  */
 
-  typedef int (*gnutls_ia_avp_func)(void*, const char *last, char **new);
+  typedef int (*gnutls_ia_avp_func)(void*, const char *last, size_t lastlen,
+				    char **new, size_t *newlen);
 
   extern void gnutls_ia_set_avp_function (gnutls_session_t session,
 					  gnutls_ia_avp_func avp_func);
