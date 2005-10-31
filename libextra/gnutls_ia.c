@@ -103,6 +103,10 @@ _gnutls_recv_inner_application (gnutls_session_t session,
   return len - 4;
 }
 
+/* XXX rewrite the following two functions as state machines, to
+   handle EAGAIN/EINTERRUPTED?  just add more problems to callers,
+   though.  */
+
 #define SERVER_FINISHED_LABEL "server phase finished"
 #define CLIENT_FINISHED_LABEL "client phase finished"
 
@@ -124,7 +128,7 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 					    buf, buflen, &avp, &avplen);
       if (buf)
 	gnutls_free (buf);
-      if (ret != GNUTLS_E_SUCCESS)
+      if (ret != GNUTLS_IA_APPLICATION_PAYLOAD)
 	{
 	  int tmpret;
 	  tmpret = gnutls_alert_send(session, GNUTLS_AL_FATAL,
@@ -191,8 +195,39 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 	    }
 	  else
 	    puts("verify ok");
-	}
 
+	  ret = _gnutls_PRF(session->security_parameters.inner_secret,
+			    TLS_MASTER_SIZE,
+			    CLIENT_FINISHED_LABEL,
+			    strlen (CLIENT_FINISHED_LABEL),
+			    "", 0, 12, verify_data);
+	  if (ret < 0)
+	    {
+	      int tmpret;
+	      tmpret = gnutls_alert_send(session, GNUTLS_AL_FATAL,
+					 GNUTLS_A_INNER_APPLICATION_FAILURE);
+	      if (tmpret < 0)
+		gnutls_assert();
+	      return ret;
+	    }
+
+	  {
+	    char buf[64];
+	    _gnutls_hard_log("INT: client %d phase finish: %s\n", msg_type,
+			     _gnutls_bin2hex(verify_data, 12,
+					     buf, sizeof(buf)));
+	  }
+
+
+	  len = _gnutls_send_inner_application (session, msg_type,
+						12, verify_data);
+	  if (len < 0)
+	    return len;
+	  printf ("client: send ack len %d\n", len);
+
+	  if (msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
+	    break;
+	}
     }
 
   return 0;
@@ -221,10 +256,56 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
 	for (i = 0; i < len; i++)
 	  printf ("%02x - %c\n", buf[i] & 0xFF, buf[i]);
 
-      if (msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
+      if (msg_type == GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED ||
+	  msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
 	{
-	  printf ("ok done\n");
-	  break;
+	  char verify_data[12];
+
+	  /* XXX check that WE sent inter/final first. */
+
+	  ret = _gnutls_PRF(session->security_parameters.inner_secret,
+			    TLS_MASTER_SIZE,
+			    CLIENT_FINISHED_LABEL,
+			    strlen (CLIENT_FINISHED_LABEL),
+			    "", 0, 12, verify_data);
+	  if (ret < 0)
+	    {
+	      int tmpret;
+	      tmpret = gnutls_alert_send(session, GNUTLS_AL_FATAL,
+					 GNUTLS_A_INNER_APPLICATION_FAILURE);
+	      if (tmpret < 0)
+		gnutls_assert();
+	      return ret;
+	    }
+
+
+	  {
+	    char buf[64];
+	    _gnutls_hard_log("INT: server %d client finish: %s\n", msg_type,
+			     _gnutls_bin2hex(verify_data, 12,
+					     buf, sizeof(buf)));
+	  }
+
+	  if (len != 12 || memcmp (verify_data, buf, 12) != 0)
+	    {
+	      puts("server: verify bad");
+	      ret = gnutls_alert_send(session, GNUTLS_AL_FATAL,
+				      GNUTLS_A_INNER_APPLICATION_VERIFICATION);
+	      if (ret < 0)
+		{
+		  gnutls_assert();
+		  return ret;
+		}
+
+	      return 4711;
+	    }
+	  else
+	    puts("server: verify ok");
+
+	  if (msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
+	    break;
+	  else
+	    continue;
 	}
 
       avp = NULL;
