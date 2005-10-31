@@ -131,7 +131,6 @@ client (void)
   /* Use default priorities */
   gnutls_set_default_priority (session);
   gnutls_kx_set_priority (session, kx_prio);
-  gnutls_global_set_log_level(10);
 
   /* put the anonymous credentials to the current session
    */
@@ -391,8 +390,6 @@ server (void)
   gnutls_ia_server_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES);
   gnutls_ia_set_avp_function (session, server_avp);
 
-  gnutls_global_set_log_level(10);
-
   ret = gnutls_handshake (session);
   if (ret < 0)
     {
@@ -415,13 +412,13 @@ server (void)
 
       if (ret < 0)
 	{
-	  fail ("client: TLS/IA handshake failed\n");
+	  fail ("server: TLS/IA handshake failed\n");
 	  gnutls_perror (ret);
 	  return;
 	}
       else
 	{
-	  success ("client: TLS/IA Handshake was completed\n");
+	  success ("server: TLS/IA Handshake was completed\n");
 	}
     }
 
