@@ -379,7 +379,7 @@ typedef struct {
 
     gnutls_buffer handshake_data_buffer;	/* this is a buffer that holds the current handshake message */
     gnutls_buffer ia_data_buffer;	/* holds inner application data (TLS/IA) */
-  resumable_session_t resumable;	/* TRUE or FALSE - if we can resume that session */
+    resumable_session_t resumable;	/* TRUE or FALSE - if we can resume that session */
     handshake_state_t handshake_state;	/* holds
 					 * a number which indicates where
 					 * the handshake procedure has been
@@ -575,6 +575,11 @@ typedef struct {
      * as a temporary store buffer.
      */
     gnutls_datum_t recv_buffer;
+
+    /* TLS/IA AVP handler function.
+     */
+    gnutls_ia_avp_func ia_avp_func;
+    void *ia_avp_ptr;
 
     /* If you add anything here, check _gnutls_handshake_internal_state_clear().
      */
