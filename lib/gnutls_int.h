@@ -307,6 +307,8 @@ typedef struct {
     /* holds the negotiated certificate type */
     gnutls_certificate_type_t cert_type;
     gnutls_protocol_t version;	/* moved here */
+    /* For TLS/IA. */
+    opaque inner_secret[TLS_MASTER_SIZE];
 } security_parameters_st;
 
 /* This structure holds the generated keys
