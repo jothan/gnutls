@@ -88,8 +88,9 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
     GNUTLS_IA_FINAL_PHASE_FINISHED = 2
   } gnutls_ia_apptype;
 
-  typedef int (*gnutls_ia_avp_func)(void*, const char *last, size_t lastlen,
-				    char **new, size_t *newlen);
+  typedef int (*gnutls_ia_avp_func) (void *ptr,
+				     const char *last, size_t lastlen,
+				     char **new, size_t *newlen);
 
   extern void gnutls_ia_set_avp_function (gnutls_session_t session,
 					  gnutls_ia_avp_func avp_func);
