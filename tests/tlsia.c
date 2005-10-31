@@ -81,6 +81,34 @@ tcp_close (int sd)
   close (sd);
 }
 
+int client_avp (void *ptr, const char *last, size_t lastlen,
+		char **new, size_t *newlen)
+{
+  char *p;
+
+  if (last && lastlen)
+    {
+      size_t i;
+      printf ("client: received %d bytes AVP:\n", lastlen);
+      for (i = 0; i < lastlen; i++)
+	printf ("%02x ", last[i] & 0xFF);
+      printf ("\n");
+    }
+
+  p = readline ("Client TLS/IA AVP: ");
+
+  if (p)
+    {
+      *new = gnutls_strdup (p);
+      *newlen = strlen (*new);
+      free (p);
+    }
+  else
+    return -1;
+
+  return 0;
+}
+
 void
 client (void)
 {
@@ -115,7 +143,8 @@ client (void)
   gnutls_transport_set_ptr (session, (gnutls_transport_ptr_t) sd);
 
   /* Enable TLS/IA. */
-  gnutls_ia_client_set (session, GNUTLS_APP_PHASE_ON_RESUMPTION_NO);
+  gnutls_ia_client_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO);
+  gnutls_ia_set_avp_function (session, client_avp);
 
   /* Perform the TLS handshake
    */
@@ -257,6 +286,40 @@ gnutls_session_t session;
 char buffer[MAX_BUF + 1];
 int optval = 1;
 
+int server_avp (void *ptr, const char *last, size_t lastlen,
+		char **new, size_t *newlen)
+{
+  char *p;
+
+  if (last && lastlen)
+    {
+      size_t i;
+      printf ("server: received %d bytes AVP:\n", lastlen);
+      for (i = 0; i < lastlen; i++)
+	printf ("%02x ", last[i] & 0xFF);
+      printf ("\n");
+    }
+
+  p = readline ("Server TLS/IA AVP: ");
+
+  if (p && strcmp (p, "1") == 0)
+    return 1;
+
+  if (p && strcmp (p, "2") == 0)
+    return 2;
+
+  if (p)
+    {
+      *new = gnutls_strdup (p);
+      *newlen = strlen (*new);
+      free (p);
+    }
+  else
+    return -1;
+
+  return 0;
+}
+
 void
 server_start (void)
 {
@@ -324,7 +387,8 @@ server (void)
   gnutls_transport_set_ptr (session, (gnutls_transport_ptr_t) sd);
 
   /* Enable TLS/IA. */
-  gnutls_ia_server_set (session, GNUTLS_APP_PHASE_ON_RESUMPTION_YES);
+  gnutls_ia_server_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES);
+  gnutls_ia_set_avp_function (session, server_avp);
 
   ret = gnutls_handshake (session);
   if (ret < 0)
