@@ -26,6 +26,7 @@
 #include "gnutls_record.h"
 #include "gnutls_errors.h"
 #include "gnutls_num.h"
+#include "gnutls_state.h"
 
 /*
  * enum {
@@ -102,6 +103,9 @@ _gnutls_recv_inner_application (gnutls_session_t session,
   return len - 4;
 }
 
+#define SERVER_FINISHED_LABEL "server phase finished"
+#define CLIENT_FINISHED_LABEL "client phase finished"
+
 int
 _gnutls_ia_client_handshake (gnutls_session_t session)
 {
@@ -143,6 +147,52 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 	return len;
       buflen = len;
       printf ("client: recv len %d msgtype %d\n", buflen, msg_type);
+
+      if (msg_type == GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED ||
+	  msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
+	{
+	  char verify_data[12];
+
+	  ret = _gnutls_PRF(session->security_parameters.inner_secret,
+			    TLS_MASTER_SIZE,
+			    SERVER_FINISHED_LABEL,
+			    strlen (SERVER_FINISHED_LABEL),
+			    "", 0, 12, verify_data);
+	  if (ret < 0)
+	    {
+	      int tmpret;
+	      tmpret = gnutls_alert_send(session, GNUTLS_AL_FATAL,
+					 GNUTLS_A_INNER_APPLICATION_FAILURE);
+	      if (tmpret < 0)
+		gnutls_assert();
+	      return ret;
+	    }
+
+
+	  {
+	    char buf[64];
+	    _gnutls_hard_log("INT: client %d phase finish: %s\n", msg_type,
+			     _gnutls_bin2hex(verify_data, 12,
+					     buf, sizeof(buf)));
+	  }
+
+	  if (buflen != 12 || memcmp (verify_data, buf, 12) != 0)
+	    {
+	      puts("verify bad");
+	      ret = gnutls_alert_send(session, GNUTLS_AL_FATAL,
+				      GNUTLS_A_INNER_APPLICATION_VERIFICATION);
+	      if (ret < 0)
+		{
+		  gnutls_assert();
+		  return ret;
+		}
+
+	      return 4711;
+	    }
+	  else
+	    puts("verify ok");
+	}
+
     }
 
   return 0;
@@ -171,6 +221,12 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
 	for (i = 0; i < len; i++)
 	  printf ("%02x - %c\n", buf[i] & 0xFF, buf[i]);
 
+      if (msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
+	{
+	  printf ("ok done\n");
+	  break;
+	}
+
       avp = NULL;
       avplen = 0;
 
@@ -186,12 +242,41 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
 	  return ret;
 	}
 
-      if (ret == 1)
-	msg_type = GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED;
-      else if (ret == 2)
-	msg_type = GNUTLS_IA_FINAL_PHASE_FINISHED;
-      else
-	msg_type = GNUTLS_IA_APPLICATION_PAYLOAD;
+      msg_type = ret;
+
+      if (msg_type == GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED ||
+	  msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
+	{
+	  avplen = 12;
+	  avp = gnutls_malloc (avplen);
+	  if (!avp)
+	    {
+	      gnutls_assert ();
+	      return GNUTLS_E_MEMORY_ERROR;
+	    }
+
+	  ret = _gnutls_PRF(session->security_parameters.inner_secret,
+			    TLS_MASTER_SIZE,
+			    SERVER_FINISHED_LABEL,
+			    strlen (SERVER_FINISHED_LABEL),
+			    /* XXX specification unclear on seed. */
+			    "", 0, avplen, avp);
+	  if (ret < 0)
+	    {
+	      int tmpret;
+	      tmpret = gnutls_alert_send(session, GNUTLS_AL_FATAL,
+					 GNUTLS_A_INNER_APPLICATION_FAILURE);
+	      if (tmpret < 0)
+		gnutls_assert();
+	      return ret;
+	    }
+
+	  {
+	    char buf[64];
+	    _gnutls_hard_log("INT: %d phase finish: %s\n", msg_type,
+			     _gnutls_bin2hex(avp, avplen, buf, sizeof(buf)));
+	  }
+	}
 
       len = _gnutls_send_inner_application (session, msg_type, avplen, avp);
       gnutls_free (avp);
@@ -221,6 +306,18 @@ gnutls_ia_handshake (gnutls_session_t session)
   if (!session->internals.ia_avp_func)
     return GNUTLS_E_INTERNAL_ERROR;
 
+  /* XXX Should we do this when tls ms is set first time? */
+  memcpy (session->security_parameters.inner_secret,
+	  session->security_parameters.master_secret, TLS_MASTER_SIZE);
+
+  {
+    char buf[64];
+    _gnutls_hard_log("INT: INNER SECRET: %s\n",
+		     _gnutls_bin2hex(session->security_parameters.
+				     inner_secret, TLS_MASTER_SIZE, buf,
+				     sizeof(buf)));
+  }
+
   if (session->security_parameters.entity == GNUTLS_CLIENT)
     ret = _gnutls_ia_client_handshake (session);
   else
@@ -240,17 +337,20 @@ gnutls_ia_handshake (gnutls_session_t session)
  * from the server, and to get a new AVP to send to the server.  The
  * last AVP received from the server is passed along in @last.  The
  * function must allocate and populate @new with a new AVP to send.
- * The function return 0 on success, any other return value abort the
- * TLS/IA handshake.
+ * The function return 0 (%GNUTLS_IA_APPLICATION_PAYLOAD) on success,
+ * any other return value abort the TLS/IA handshake.
  *
  * In a server, the AVP callback is called to process incoming AVPs
  * from the client, and to get a new AVP to send to the client.  It
  * can also be used to instruct the TLS/IA handshake to do go into the
- * Intermediate or Final phases.  It should return 0 on success, if a
- * new AVP is to be sent to the client, return 1 to indicate that an
- * IntermediatePhaseFinished message should be sent, and return 2 to
- * indicate that an FinalPhaseFinished message should be sent.  In the
- * last two cases, the @new parameter is unused.
+ * Intermediate or Final phases.  It return a negative error code, or
+ * an #gnutls_ia_apptype message type.  Specifically, return
+ * %GNUTLS_IA_APPLICATION_PAYLOAD (0) to send another AVP to the
+ * client, return %GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED (1) to
+ * indicate that an IntermediatePhaseFinished message should be sent,
+ * and return %GNUTLS_IA_FINAL_PHASE_FINISHED (2) to indicate that an
+ * FinalPhaseFinished message should be sent.  In the last two cases,
+ * the contents of the @new parameter is irrelevant.
  *
  * Note that the callback must use allocate the @new parameter using
  * gnutls_malloc(), because it is released via gnutls_free() by the
