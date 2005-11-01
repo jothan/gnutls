@@ -116,14 +116,16 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
 				    gnutls_ia_avp_func avp_func);
 
   extern void
-  gnutls_ia_set_client_avp_ptr (gnutls_session_t session, void *ptr);
+  gnutls_ia_set_client_avp_ptr (gnutls_ia_server_credentials_t cred,
+				void *ptr);
   extern void *
-  gnutls_ia_get_client_avp_ptr (gnutls_session_t session);
+  gnutls_ia_get_client_avp_ptr (gnutls_ia_server_credentials_t cred);
 
   extern void
-  gnutls_ia_set_server_avp_ptr (gnutls_session_t session, void *ptr);
+  gnutls_ia_set_server_avp_ptr (gnutls_ia_server_credentials_t cred,
+				void *ptr);
   extern void *
-  gnutls_ia_get_server_avp_ptr (gnutls_session_t session);
+  gnutls_ia_get_server_avp_ptr (gnutls_ia_server_credentials_t cred);
 
   extern gnutls_ia_mode_t gnutls_ia_client_get (gnutls_session_t session);
   extern void gnutls_ia_client_set(gnutls_session_t session,
