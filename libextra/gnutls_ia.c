@@ -491,18 +491,30 @@ void gnutls_ia_free_server_credentials(gnutls_ia_server_credentials_t sc)
 }
 
 /**
- * gnutls_ia_set_client_avp_function - Used to set a callback to retrieve the AVP structures
+ * gnutls_ia_set_client_avp_function - Used to set a AVP callback
  * @cred: is a #gnutls_ia_client_credentials_t structure.
  * @avp_func: is the callback function
  *
  * Set the TLS/IA AVP callback handler used for the session.
  *
  * The AVP callback is called to process AVPs received from the
- * server, and to get a new AVP to send to the server.  The last AVP
- * received from the server is passed along in @last.  The function
- * must allocate and populate @new with a new AVP to send.  The
- * function return 0 (%GNUTLS_IA_APPLICATION_PAYLOAD) on success, any
- * other return value abort the TLS/IA handshake.
+ * server, and to get a new AVP to send to the server.
+ *
+ * The callback's function form is:
+ * int (*avp_func) (gnutls_session_t session, void *ptr,
+ *                  const char *last, size_t lastlen,
+ *                  char **new, size_t *newlen);
+ *
+ * The @session parameter is the #gnutls_session_t structure
+ * corresponding to the current session.  The @ptr parameter is the
+ * application hook pointer, set through
+ * gnutls_ia_set_client_avp_ptr().  The AVP received from the server
+ * is present in @last of @lastlen size, which will be %NULL on the
+ * first invocation.  The newly allocated output AVP to send to the
+ * server should be placed in *@new of *@newlen size.
+ *
+ * Return 0 (%GNUTLS_IA_APPLICATION_PAYLOAD) on success, or a negative
+ * error code to abort the TLS/IA handshake.
  *
  * Note that the callback must use allocate the @new parameter using
  * gnutls_malloc(), because it is released via gnutls_free() by the
@@ -546,23 +558,38 @@ gnutls_ia_get_client_avp_ptr (gnutls_ia_client_credentials_t cred)
 }
 
 /**
- * gnutls_srp_set_server_credentials_function - Used to set a callback to retrieve the username and password
- * @cred: is a #gnutls_srp_server_credentials_t structure.
+ * gnutls_ia_set_server_credentials_function - Used to set a AVP callback
+ * @cred: is a #gnutls_ia_server_credentials_t structure.
  * @func: is the callback function
  *
  * Set the TLS/IA AVP callback handler used for the session.
+ *
+ * The callback's function form is:
+ * int (*avp_func) (gnutls_session_t session, void *ptr,
+ *                  const char *last, size_t lastlen,
+ *                  char **new, size_t *newlen);
+ *
+ * The @session parameter is the #gnutls_session_t structure
+ * corresponding to the current session.  The @ptr parameter is the
+ * application hook pointer, set through
+ * gnutls_ia_set_server_avp_ptr().  The AVP received from the client
+ * is present in @last of @lastlen size.  The newly allocated output
+ * AVP to send to the client should be placed in *@new of *@newlen
+ * size.
  *
  * The AVP callback is called to process incoming AVPs from the
  * client, and to get a new AVP to send to the client.  It can also be
  * used to instruct the TLS/IA handshake to do go into the
  * Intermediate or Final phases.  It return a negative error code, or
- * an #gnutls_ia_apptype message type.  Specifically, return
- * %GNUTLS_IA_APPLICATION_PAYLOAD (0) to send another AVP to the
- * client, return %GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED (1) to
- * indicate that an IntermediatePhaseFinished message should be sent,
- * and return %GNUTLS_IA_FINAL_PHASE_FINISHED (2) to indicate that an
+ * an #gnutls_ia_apptype message type.
+ *
+ * Specifically, return %GNUTLS_IA_APPLICATION_PAYLOAD (0) to send
+ * another AVP to the client, return
+ * %GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED (1) to indicate that an
+ * IntermediatePhaseFinished message should be sent, and return
+ * %GNUTLS_IA_FINAL_PHASE_FINISHED (2) to indicate that an
  * FinalPhaseFinished message should be sent.  In the last two cases,
- * the contents of the @new parameter is irrelevant.
+ * the contents of the @new and @newlen parameter is not used.
  *
  * Note that the callback must use allocate the @new parameter using
  * gnutls_malloc(), because it is released via gnutls_free() by the
