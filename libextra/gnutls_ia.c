@@ -186,14 +186,6 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 	      return ret;
 	    }
 
-
-	  {
-	    char buf[64];
-	    _gnutls_hard_log ("INT: client %d phase finish: %s\n", msg_type,
-			      _gnutls_bin2hex (verify_data, 12,
-					       buf, sizeof (buf)));
-	  }
-
 	  if (buflen != 12 || memcmp (verify_data, buf, 12) != 0)
 	    {
 	      puts ("verify bad");
@@ -224,14 +216,6 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 		gnutls_assert ();
 	      return ret;
 	    }
-
-	  {
-	    char buf[64];
-	    _gnutls_hard_log ("INT: client %d phase finish: %s\n", msg_type,
-			      _gnutls_bin2hex (verify_data, 12,
-					       buf, sizeof (buf)));
-	  }
-
 
 	  len = _gnutls_send_inner_application (session, msg_type,
 						12, verify_data);
@@ -297,14 +281,6 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
 	      return ret;
 	    }
 
-
-	  {
-	    char buf[64];
-	    _gnutls_hard_log ("INT: server %d client finish: %s\n", msg_type,
-			      _gnutls_bin2hex (verify_data, 12,
-					       buf, sizeof (buf)));
-	  }
-
 	  if (len != 12 || memcmp (verify_data, buf, 12) != 0)
 	    {
 	      puts ("server: verify bad");
@@ -369,13 +345,6 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
 		gnutls_assert ();
 	      return ret;
 	    }
-
-	  {
-	    char buf[64];
-	    _gnutls_hard_log ("INT: %d phase finish: %s\n", msg_type,
-			      _gnutls_bin2hex (avp, avplen, buf,
-					       sizeof (buf)));
-	  }
 	}
 
       len = _gnutls_send_inner_application (session, msg_type, avplen, avp);
