@@ -81,7 +81,8 @@ tcp_close (int sd)
   close (sd);
 }
 
-int client_avp (void *ptr, const char *last, size_t lastlen,
+int client_avp (gnutls_session_t session, void *ptr,
+		const char *last, size_t lastlen,
 		char **new, size_t *newlen)
 {
   char *p;
@@ -286,7 +287,8 @@ gnutls_session_t session;
 char buffer[MAX_BUF + 1];
 int optval = 1;
 
-int server_avp (void *ptr, const char *last, size_t lastlen,
+int server_avp (gnutls_session_t session, void *ptr,
+		const char *last, size_t lastlen,
 		char **new, size_t *newlen)
 {
   char *p;
