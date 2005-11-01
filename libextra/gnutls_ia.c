@@ -28,6 +28,16 @@
 #include "gnutls_num.h"
 #include "gnutls_state.h"
 
+struct gnutls_ia_client_credentials_st {
+  gnutls_ia_avp_func avp_func;
+  void *avp_ptr;
+};
+
+struct gnutls_ia_server_credentials_st {
+  gnutls_ia_avp_func avp_func;
+  void *avp_ptr;
+};
+
 /*
  * enum {
  *   application_payload(0), intermediate_phase_finished(1),
@@ -117,6 +127,11 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
   size_t buflen = 0;
   ssize_t len;
   int ret;
+  const gnutls_ia_client_credentials_t cred =
+    _gnutls_get_cred(session->key, GNUTLS_CRD_IA, NULL);
+
+  if (cred == NULL)
+    return GNUTLS_E_INTERNAL_ERROR;
 
   while (1)
     {
@@ -124,9 +139,8 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
       char *avp;
       size_t avplen;
 
-      ret = session->internals.ia_avp_func (session,
-					    session->internals.ia_avp_ptr,
-					    buf, buflen, &avp, &avplen);
+      ret = cred->avp_func (session, cred->avp_ptr,
+			    buf, buflen, &avp, &avplen);
       if (buf)
 	gnutls_free (buf);
       if (ret != GNUTLS_IA_APPLICATION_PAYLOAD)
@@ -242,6 +256,11 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
   char *buf;
   size_t i;
   int ret;
+  const gnutls_ia_server_credentials_t cred =
+    _gnutls_get_cred(session->key, GNUTLS_CRD_IA, NULL);
+
+  if (cred == NULL)
+    return GNUTLS_E_INTERNAL_ERROR;
 
   do
     {
@@ -312,9 +331,8 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
       avp = NULL;
       avplen = 0;
 
-      ret = session->internals.ia_avp_func (session,
-					    session->internals.ia_avp_ptr,
-					    buf, len, &avp, &avplen);
+      ret = cred->avp_func (session, cred->avp_ptr,
+			    buf, len, &avp, &avplen);
       if (ret < 0)
 	{
 	  int tmpret;
@@ -386,9 +404,6 @@ gnutls_ia_handshake (gnutls_session_t session)
 {
   int ret;
 
-  if (!session->internals.ia_avp_func)
-    return GNUTLS_E_INTERNAL_ERROR;
-
   /* XXX Should we do this when tls ms is set first time? */
   memcpy (session->security_parameters.inner_secret,
 	  session->security_parameters.master_secret, TLS_MASTER_SIZE);
@@ -410,22 +425,136 @@ gnutls_ia_handshake (gnutls_session_t session)
 }
 
 /**
- * gnutls_ia_set_avp_function:
- * @session: is a #gnutls_session_t structure.
- * @avp_func: is a #gnutls_ia_avp_func function pointer.
+ * gnutls_ia_allocate_client_credentials - Used to allocate an gnutls_ia_server_credentials_t structure
+ * @sc: is a pointer to an #gnutls_ia_server_credentials_t structure.
+ *
+ * This structure is complex enough to manipulate directly thus this
+ * helper function is provided in order to allocate it.
+ *
+ * Returns 0 on success.
+ **/
+int
+gnutls_ia_allocate_client_credentials(gnutls_ia_client_credentials_t * sc)
+{
+  *sc = gnutls_calloc(1, sizeof(*sc));
+
+  if (*sc == NULL)
+    return GNUTLS_E_MEMORY_ERROR;
+
+  return 0;
+}
+
+/**
+ * gnutls_ia_free_client_credentials - Used to free an allocated #gnutls_ia_client_credentials_t structure
+ * @sc: is an #gnutls_ia_client_credentials_t structure.
+ *
+ * This structure is complex enough to manipulate directly thus this
+ * helper function is provided in order to free (deallocate) it.
+ *
+ **/
+void gnutls_ia_free_client_credentials(gnutls_ia_client_credentials_t sc)
+{
+  gnutls_free(sc);
+}
+
+/**
+ * gnutls_ia_allocate_server_credentials - Used to allocate an gnutls_ia_server_credentials_t structure
+ * @sc: is a pointer to an #gnutls_ia_server_credentials_t structure.
+ *
+ * This structure is complex enough to manipulate directly thus this
+ * helper function is provided in order to allocate it.
+ *
+ * Returns 0 on success.
+ **/
+int
+gnutls_ia_allocate_server_credentials(gnutls_ia_server_credentials_t * sc)
+{
+  *sc = gnutls_calloc(1, sizeof(*sc));
+
+  if (*sc == NULL)
+    return GNUTLS_E_MEMORY_ERROR;
+
+  return 0;
+}
+
+/**
+ * gnutls_ia_free_server_credentials - Used to free an allocated #gnutls_ia_server_credentials_t structure
+ * @sc: is an #gnutls_ia_server_credentials_t structure.
+ *
+ * This structure is complex enough to manipulate directly thus this
+ * helper function is provided in order to free (deallocate) it.
+ *
+ **/
+void gnutls_ia_free_server_credentials(gnutls_ia_server_credentials_t sc)
+{
+  gnutls_free(sc);
+}
+
+/**
+ * gnutls_ia_set_client_avp_function - Used to set a callback to retrieve the AVP structures
+ * @cred: is a #gnutls_ia_client_credentials_t structure.
+ * @avp_func: is the callback function
  *
  * Set the TLS/IA AVP callback handler used for the session.
  *
- * In a client, the AVP callback is called to process AVPs received
- * from the server, and to get a new AVP to send to the server.  The
- * last AVP received from the server is passed along in @last.  The
- * function must allocate and populate @new with a new AVP to send.
- * The function return 0 (%GNUTLS_IA_APPLICATION_PAYLOAD) on success,
- * any other return value abort the TLS/IA handshake.
+ * The AVP callback is called to process AVPs received from the
+ * server, and to get a new AVP to send to the server.  The last AVP
+ * received from the server is passed along in @last.  The function
+ * must allocate and populate @new with a new AVP to send.  The
+ * function return 0 (%GNUTLS_IA_APPLICATION_PAYLOAD) on success, any
+ * other return value abort the TLS/IA handshake.
  *
- * In a server, the AVP callback is called to process incoming AVPs
- * from the client, and to get a new AVP to send to the client.  It
- * can also be used to instruct the TLS/IA handshake to do go into the
+ * Note that the callback must use allocate the @new parameter using
+ * gnutls_malloc(), because it is released via gnutls_free() by the
+ * TLS/IA handshake function.
+ *
+ **/
+void
+gnutls_ia_set_client_avp_function(gnutls_ia_client_credentials_t cred,
+				  gnutls_ia_avp_func avp_func)
+{
+  cred->avp_func = avp_func;
+}
+
+/**
+ * gnutls_ia_set_client_avp_ptr - Sets a pointer to be sent to TLS/IA callback
+ * @cred: is a #gnutls_ia_client_credentials_t structure.
+ * @ptr: is the pointer
+ *
+ * Sets the pointer that will be provided to the TLS/IA callback
+ * function as the first argument.
+ *
+ **/
+void
+gnutls_ia_set_client_avp_ptr (gnutls_ia_client_credentials_t cred, void *ptr)
+{
+  cred->avp_ptr = ptr;
+}
+
+/**
+ * gnutls_ia_get_client_avp_ptr - Returns the pointer which is sent to TLS/IA callback
+ * @cred: is a #gnutls_ia_client_credentials_t structure.
+ *
+ * Returns the pointer that will be provided to the TLS/IA callback
+ * function as the first argument.
+ *
+ **/
+void *
+gnutls_ia_get_client_avp_ptr (gnutls_ia_client_credentials_t cred)
+{
+  return cred->avp_ptr;
+}
+
+/**
+ * gnutls_srp_set_server_credentials_function - Used to set a callback to retrieve the username and password
+ * @cred: is a #gnutls_srp_server_credentials_t structure.
+ * @func: is the callback function
+ *
+ * Set the TLS/IA AVP callback handler used for the session.
+ *
+ * The AVP callback is called to process incoming AVPs from the
+ * client, and to get a new AVP to send to the client.  It can also be
+ * used to instruct the TLS/IA handshake to do go into the
  * Intermediate or Final phases.  It return a negative error code, or
  * an #gnutls_ia_apptype message type.  Specifically, return
  * %GNUTLS_IA_APPLICATION_PAYLOAD (0) to send another AVP to the
@@ -440,15 +569,15 @@ gnutls_ia_handshake (gnutls_session_t session)
  * TLS/IA handshake function.
  **/
 void
-gnutls_ia_set_avp_function (gnutls_session_t session,
-			    gnutls_ia_avp_func avp_func)
+gnutls_ia_set_server_avp_function(gnutls_ia_server_credentials_t cred,
+				  gnutls_ia_avp_func avp_func)
 {
-  session->internals.ia_avp_func = avp_func;
+  cred->avp_func = avp_func;
 }
 
 /**
- * gnutls_ia_set_ptr - Sets a pointer to be sent to TLS/IA callback
- * @session: is a #gnutls_session_t structure.
+ * gnutls_ia_set_server_avp_ptr - Sets a pointer to be sent to TLS/IA callback
+ * @cred: is a #gnutls_ia_client_credentials_t structure.
  * @ptr: is the pointer
  *
  * Sets the pointer that will be provided to the TLS/IA callback
@@ -456,23 +585,23 @@ gnutls_ia_set_avp_function (gnutls_session_t session,
  *
  **/
 void
-gnutls_ia_set_ptr (gnutls_session_t session, void *ptr)
+gnutls_ia_set_server_avp_ptr (gnutls_ia_server_credentials_t cred, void *ptr)
 {
-  session->internals.ia_avp_ptr = ptr;
+  cred->avp_ptr = ptr;
 }
 
 /**
- * gnutls_ia_get_ptr - Returns the pointer which is sent to TLS/IA callback
- * @session: is a #gnutls_session_t structure.
+ * gnutls_ia_get_server_avp_ptr - Returns the pointer which is sent to TLS/IA callback
+ * @cred: is a #gnutls_ia_client_credentials_t structure.
  *
  * Returns the pointer that will be provided to the TLS/IA callback
  * function as the first argument.
  *
  **/
 void *
-gnutls_ia_get_ptr (gnutls_session_t session)
+gnutls_ia_get_server_avp_ptr (gnutls_ia_server_credentials_t cred)
 {
-  return session->internals.ia_avp_ptr;
+  return cred->avp_ptr;
 }
 
 /**
