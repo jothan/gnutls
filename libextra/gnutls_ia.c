@@ -396,7 +396,7 @@ gnutls_ia_handshake (gnutls_session_t session)
 int
 gnutls_ia_allocate_client_credentials (gnutls_ia_client_credentials_t * sc)
 {
-  *sc = gnutls_calloc (1, sizeof (*sc));
+  *sc = gnutls_calloc (1, sizeof (**sc));
 
   if (*sc == NULL)
     return GNUTLS_E_MEMORY_ERROR;
@@ -430,7 +430,7 @@ gnutls_ia_free_client_credentials (gnutls_ia_client_credentials_t sc)
 int
 gnutls_ia_allocate_server_credentials (gnutls_ia_server_credentials_t * sc)
 {
-  *sc = gnutls_calloc (1, sizeof (*sc));
+  *sc = gnutls_calloc (1, sizeof (**sc));
 
   if (*sc == NULL)
     return GNUTLS_E_MEMORY_ERROR;
