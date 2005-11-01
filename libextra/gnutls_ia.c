@@ -124,7 +124,8 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
       char *avp;
       size_t avplen;
 
-      ret = session->internals.ia_avp_func (session->internals.ia_avp_ptr,
+      ret = session->internals.ia_avp_func (session,
+					    session->internals.ia_avp_ptr,
 					    buf, buflen, &avp, &avplen);
       if (buf)
 	gnutls_free (buf);
@@ -311,7 +312,8 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
       avp = NULL;
       avplen = 0;
 
-      ret = session->internals.ia_avp_func (session->internals.ia_avp_ptr,
+      ret = session->internals.ia_avp_func (session,
+					    session->internals.ia_avp_ptr,
 					    buf, len, &avp, &avplen);
       if (ret < 0)
 	{
