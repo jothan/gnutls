@@ -2437,7 +2437,8 @@ an Application Phase for resumed sessions) would be similar to the
 following:
 
 @example
-int client_avp (void *ptr, const char *last, size_t lastlen,
+int client_avp (gnuls_session_t *session, void *ptr,
+                const char *last, size_t lastlen,
 		char **new, size_t *newlen)
 @{
 ...
@@ -2445,12 +2446,15 @@ int client_avp (void *ptr, const char *last, size_t lastlen,
 ...
 int main ()
 @{
+  gnutls_ia_client_credentials_t iacred;
 ...
   gnutls_init (&session, GNUTLS_CLIENT);
 ...
   /* Enable TLS/IA. */
+  gnutls_ia_allocate_client_credentials(&iacred);
+  gnutls_ia_set_client_avp_function(iacred, client_avp);
+  gnutls_credentials_set (session, GNUTLS_CRD_IA, iacred);
   gnutls_ia_client_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO);
-  gnutls_ia_set_avp_function (session, client_avp);
 ...
   ret = gnutls_handshake (session);
   // Error handling...
@@ -2466,12 +2470,13 @@ See below for detailed descriptions of all the functions used above.
 
 The function @code{client_avp} would have to be implemented by your
 application.  The function is responsible for handling the AVP data.
-See @code{gnutls_ia_set_avp_function} below for more information on
-how that function should be implemented.
+See @code{gnutls_ia_set_client_avp_function} below for more
+information on how that function should be implemented.
 
-The control flow in a typical server is very similar as the above,
-simply replace the call to @code{gnutls_ia_server_set} with a call to
-@code{gnutls_ia_server_set}.
+The control flow in a typical server is similar to the above, use
+@code{gnutls_ia_server_credentials_t} instead of
+@code{gnutls_ia_client_credentials_t}, and replace the call to the
+client functions with the corresponding server functions.
 
 @include gnutls-ia-api.texi
 
