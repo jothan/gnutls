@@ -578,11 +578,6 @@ typedef struct {
      */
     gnutls_datum_t recv_buffer;
 
-    /* TLS/IA AVP handler function.
-     */
-    gnutls_ia_avp_func ia_avp_func;
-    void *ia_avp_ptr;
-
     /* If you add anything here, check _gnutls_handshake_internal_state_clear().
      */
 } internals_st;
