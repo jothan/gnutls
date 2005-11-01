@@ -117,6 +117,7 @@ client (void)
   gnutls_session_t session;
   char buffer[MAX_BUF + 1];
   gnutls_anon_client_credentials_t anoncred;
+  gnutls_ia_client_credentials_t iacred;
   /* Need to enable anonymous KX specifically. */
   const int kx_prio[] = { GNUTLS_KX_ANON_DH, 0 };
 
@@ -124,6 +125,7 @@ client (void)
   gnutls_global_init_extra();
 
   gnutls_anon_allocate_client_credentials (&anoncred);
+  gnutls_ia_allocate_client_credentials(&iacred);
 
   /* Initialize TLS session
    */
@@ -136,6 +138,7 @@ client (void)
   /* put the anonymous credentials to the current session
    */
   gnutls_credentials_set (session, GNUTLS_CRD_ANON, anoncred);
+  gnutls_credentials_set (session, GNUTLS_CRD_IA, iacred);
 
   /* connect to the peer
    */
@@ -144,8 +147,8 @@ client (void)
   gnutls_transport_set_ptr (session, (gnutls_transport_ptr_t) sd);
 
   /* Enable TLS/IA. */
+  gnutls_ia_set_client_avp_function(iacred, client_avp);
   gnutls_ia_client_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO);
-  gnutls_ia_set_avp_function (session, client_avp);
 
   /* Perform the TLS handshake
    */
@@ -223,6 +226,8 @@ end:
 
   gnutls_deinit (session);
 
+  gnutls_ia_free_client_credentials (iacred);
+
   gnutls_anon_free_client_credentials (anoncred);
 
   gnutls_global_deinit ();
@@ -238,6 +243,7 @@ end:
 
 /* These are global */
 gnutls_anon_server_credentials_t anoncred;
+gnutls_ia_server_credentials_t iacred;
 
 gnutls_session_t
 initialize_tls_session (void)
@@ -330,6 +336,7 @@ server_start (void)
   gnutls_global_init ();
 
   gnutls_anon_allocate_server_credentials (&anoncred);
+  gnutls_ia_allocate_server_credentials (&iacred);
 
   success ("Launched, generating DH parameters...\n");
 
@@ -389,8 +396,9 @@ server (void)
   gnutls_transport_set_ptr (session, (gnutls_transport_ptr_t) sd);
 
   /* Enable TLS/IA. */
+  gnutls_credentials_set (session, GNUTLS_CRD_IA, iacred);
+  gnutls_ia_set_client_avp_function(iacred, server_avp);
   gnutls_ia_server_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES);
-  gnutls_ia_set_avp_function (session, server_avp);
 
   ret = gnutls_handshake (session);
   if (ret < 0)
@@ -468,6 +476,8 @@ server (void)
   gnutls_deinit (session);
 
   close (listen_sd);
+
+  gnutls_ia_free_server_credentials (iacred);
 
   gnutls_anon_free_server_credentials (anoncred);
 
