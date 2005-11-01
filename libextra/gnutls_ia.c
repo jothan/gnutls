@@ -64,6 +64,7 @@ _gnutls_send_inner_application (gnutls_session_t session,
 				size_t length, const char *data)
 {
   opaque *p;
+  ssize_t len;
 
   p = gnutls_malloc (length + 4);
   if (!p)
@@ -76,8 +77,12 @@ _gnutls_send_inner_application (gnutls_session_t session,
   _gnutls_write_uint24 (length, p + 1);
   memcpy (p + 4, data, length);
 
-  return _gnutls_send_int (session, GNUTLS_INNER_APPLICATION, -1,
-			   p, length + 4);
+  len = _gnutls_send_int (session, GNUTLS_INNER_APPLICATION, -1,
+			  p, length + 4);
+
+  free (p);
+
+  return len;
 }
 
 static ssize_t
@@ -224,7 +229,10 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 	  printf ("client: send ack len %d\n", len);
 
 	  if (msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
-	    break;
+	    {
+	      free (buf);
+	      break;
+	    }
 	}
     }
 
