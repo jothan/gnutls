@@ -591,6 +591,29 @@ int gnutls_srp_base64_decode( const gnutls_datum_t *b64_data, char* result, int*
 int gnutls_srp_base64_decode_alloc( const gnutls_datum_t *b64_data,
 				      gnutls_datum_t* result);
 
+  /* TLS/IA credential
+   */
+
+  typedef struct gnutls_ia_server_credentials_st* gnutls_ia_server_credentials_t;
+  typedef struct gnutls_ia_client_credentials_st* gnutls_ia_client_credentials_t;
+
+  extern void
+  gnutls_ia_free_client_credentials(gnutls_ia_client_credentials_t sc);
+  extern int
+  gnutls_ia_allocate_client_credentials(gnutls_ia_client_credentials_t * sc);
+
+  extern void
+  gnutls_ia_free_server_credentials(gnutls_ia_server_credentials_t sc);
+  extern int
+  gnutls_ia_allocate_server_credentials(gnutls_ia_server_credentials_t * sc);
+
+  extern void
+  gnutls_ia_set_client_avp_function(gnutls_ia_client_credentials_t cred,
+				    gnutls_ia_avp_func avp_func);
+  extern void
+  gnutls_ia_set_server_avp_function(gnutls_ia_server_credentials_t cred,
+				    gnutls_ia_avp_func avp_func);
+
 #ifndef GNUTLS_UI_H
 # define GNUTLS_UI_H
 
