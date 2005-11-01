@@ -88,14 +88,42 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
     GNUTLS_IA_FINAL_PHASE_FINISHED = 2
   } gnutls_ia_apptype;
 
+  /* TLS/IA credential
+   */
+
   typedef int (*gnutls_ia_avp_func) (gnutls_session_t session, void *ptr,
 				     const char *last, size_t lastlen,
 				     char **new, size_t *newlen);
 
-  extern void gnutls_ia_set_avp_function (gnutls_session_t session,
-					  gnutls_ia_avp_func avp_func);
-  extern void gnutls_ia_set_ptr (gnutls_session_t session, void *ptr);
-  extern void *gnutls_ia_get_ptr (gnutls_session_t session);
+  typedef struct gnutls_ia_server_credentials_st* gnutls_ia_server_credentials_t;
+  typedef struct gnutls_ia_client_credentials_st* gnutls_ia_client_credentials_t;
+
+  extern void
+  gnutls_ia_free_client_credentials(gnutls_ia_client_credentials_t sc);
+  extern int
+  gnutls_ia_allocate_client_credentials(gnutls_ia_client_credentials_t * sc);
+
+  extern void
+  gnutls_ia_free_server_credentials(gnutls_ia_server_credentials_t sc);
+  extern int
+  gnutls_ia_allocate_server_credentials(gnutls_ia_server_credentials_t * sc);
+
+  extern void
+  gnutls_ia_set_client_avp_function(gnutls_ia_client_credentials_t cred,
+				    gnutls_ia_avp_func avp_func);
+  extern void
+  gnutls_ia_set_server_avp_function(gnutls_ia_server_credentials_t cred,
+				    gnutls_ia_avp_func avp_func);
+
+  extern void
+  gnutls_ia_set_client_avp_ptr (gnutls_session_t session, void *ptr);
+  extern void *
+  gnutls_ia_get_client_avp_ptr (gnutls_session_t session);
+
+  extern void
+  gnutls_ia_set_server_avp_ptr (gnutls_session_t session, void *ptr);
+  extern void *
+  gnutls_ia_get_server_avp_ptr (gnutls_session_t session);
 
   extern gnutls_ia_mode_t gnutls_ia_client_get (gnutls_session_t session);
   extern void gnutls_ia_client_set(gnutls_session_t session,
