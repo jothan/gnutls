@@ -85,7 +85,7 @@ _gnutls_recv_inner_application (gnutls_session_t session,
 				char **data)
 {
   ssize_t len;
-  opaque buf[1024];
+  opaque buf[1024]; /* XXX: loop to increment buffer size? */
 
   len = _gnutls_recv_int(session, GNUTLS_INNER_APPLICATION, -1,
 			 buf, 1024);
@@ -407,14 +407,6 @@ gnutls_ia_handshake (gnutls_session_t session)
   /* XXX Should we do this when tls ms is set first time? */
   memcpy (session->security_parameters.inner_secret,
 	  session->security_parameters.master_secret, TLS_MASTER_SIZE);
-
-  {
-    char buf[64];
-    _gnutls_hard_log("INT: INNER SECRET: %s\n",
-		     _gnutls_bin2hex(session->security_parameters.
-				     inner_secret, TLS_MASTER_SIZE, buf,
-				     sizeof(buf)));
-  }
 
   if (session->security_parameters.entity == GNUTLS_CLIENT)
     ret = _gnutls_ia_client_handshake (session);
