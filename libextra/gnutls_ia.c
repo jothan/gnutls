@@ -40,6 +40,27 @@ struct gnutls_ia_server_credentials_st
   void *avp_ptr;
 };
 
+ssize_t
+gnutls_ia_send(gnutls_session_t session, char *data, ssize_t datal)
+{
+  ssize_t len;
+
+  len = _gnutls_send_int (session, GNUTLS_INNER_APPLICATION, -1,
+			  data, datal);
+
+  return len;
+}
+
+ssize_t
+gnutls_ia_recv(gnutls_session_t session, char *data, ssize_t datal)
+{
+  ssize_t len;
+
+  len = _gnutls_recv_int (session, GNUTLS_INNER_APPLICATION, -1, data, datal);
+
+  return len;
+}
+
 /*
  * enum {
  *   application_payload(0), intermediate_phase_finished(1),
@@ -77,8 +98,7 @@ _gnutls_send_inner_application (gnutls_session_t session,
   _gnutls_write_uint24 (length, p + 1);
   memcpy (p + 4, data, length);
 
-  len = _gnutls_send_int (session, GNUTLS_INNER_APPLICATION, -1,
-			  p, length + 4);
+  len = gnutls_ia_send (session, p, length + 4);
 
   free (p);
 
@@ -92,7 +112,7 @@ _gnutls_recv_inner_application (gnutls_session_t session,
   ssize_t len;
   opaque buf[1024];		/* XXX: loop to increment buffer size? */
 
-  len = _gnutls_recv_int (session, GNUTLS_INNER_APPLICATION, -1, buf, 1024);
+  len = gnutls_ia_recv (session, buf, 1024);
   if (len < 4)
     {
       gnutls_assert ();
