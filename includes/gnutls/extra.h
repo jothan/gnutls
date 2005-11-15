@@ -138,6 +138,22 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
 
   extern int gnutls_ia_handshake (gnutls_session_t session);
 
+  /* TLS/IA low level interface. */
+
+  typedef enum {
+    GNUTLS_IA_INTERMEDIATEPHASE,
+    GNUTLS_IA_FINALPHASE
+  } gnutls_endphase_t;
+
+  extern int
+  gnutls_ia_client_endphase(gnutls_session_t session,
+			    gnutls_endphase_t which,
+			    char *session_key, ssize_t session_keyl);
+  extern int
+  gnutls_ia_server_endphase(gnutls_session_t session,
+			    gnutls_endphase_t which,
+			    char *session_key, ssize_t session_keyl);
+
   extern ssize_t
   gnutls_ia_send(gnutls_session_t session, char *data, ssize_t datal,
 		 char *session_key, ssize_t session_keyl);
