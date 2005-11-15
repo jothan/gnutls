@@ -40,49 +40,6 @@ struct gnutls_ia_server_credentials_st
   void *avp_ptr;
 };
 
-ssize_t
-gnutls_ia_send(gnutls_session_t session, char *data, ssize_t datal)
-{
-  ssize_t len;
-
-  len = _gnutls_send_int (session, GNUTLS_INNER_APPLICATION, -1,
-			  data, datal);
-
-  return len;
-}
-
-ssize_t
-gnutls_ia_recv(gnutls_session_t session, char *data, ssize_t datal)
-{
-  ssize_t len;
-
-  len = _gnutls_recv_int (session, GNUTLS_INNER_APPLICATION, -1, data, datal);
-
-  return len;
-}
-
-typedef enum {
-  GNUTLS_IA_INTERMEDIATEPHASE,
-  GNUTLS_IA_FINALPHASE
-} gnutls_endphase_t;
-
-int
-gnutls_ia_client_endphase(gnutls_session_t session,
-			  gnutls_endphase_t which,
-			  char *session_key, ssize_t session_keyl)
-{
-
-}
-
-
-int
-gnutls_ia_server_endphase(gnutls_session_t session,
-			  gnutls_endphase_t which,
-			  char *session_key, ssize_t session_keyl)
-{
-
-}
-
 /*
  * enum {
  *   application_payload(0), intermediate_phase_finished(1),
@@ -157,6 +114,28 @@ _gnutls_recv_inner_application (gnutls_session_t session,
   memcpy (*data, buf + 4, len - 4);
 
   return len - 4;
+}
+
+typedef enum {
+  GNUTLS_IA_INTERMEDIATEPHASE,
+  GNUTLS_IA_FINALPHASE
+} gnutls_endphase_t;
+
+int
+gnutls_ia_client_endphase(gnutls_session_t session,
+			  gnutls_endphase_t which,
+			  char *session_key, ssize_t session_keyl)
+{
+
+}
+
+
+int
+gnutls_ia_server_endphase(gnutls_session_t session,
+			  gnutls_endphase_t which,
+			  char *session_key, ssize_t session_keyl)
+{
+
 }
 
 ssize_t
