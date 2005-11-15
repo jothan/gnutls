@@ -77,7 +77,8 @@ _gnutls_send_inner_application (gnutls_session_t session,
   _gnutls_write_uint24 (length, p + 1);
   memcpy (p + 4, data, length);
 
-  len = gnutls_ia_send (session, p, length + 4);
+  len = _gnutls_send_int (session, GNUTLS_INNER_APPLICATION, -1,
+			  p, length + 4);
 
   free (p);
 
@@ -91,7 +92,7 @@ _gnutls_recv_inner_application (gnutls_session_t session,
   ssize_t len;
   opaque buf[1024];		/* XXX: loop to increment buffer size? */
 
-  len = gnutls_ia_recv (session, buf, 1024);
+  len = _gnutls_recv_int (session, GNUTLS_INNER_APPLICATION, -1, buf, 1024);
   if (len < 4)
     {
       gnutls_assert ();
@@ -116,11 +117,6 @@ _gnutls_recv_inner_application (gnutls_session_t session,
   return len - 4;
 }
 
-typedef enum {
-  GNUTLS_IA_INTERMEDIATEPHASE,
-  GNUTLS_IA_FINALPHASE
-} gnutls_endphase_t;
-
 int
 gnutls_ia_client_endphase(gnutls_session_t session,
 			  gnutls_endphase_t which,
@@ -144,8 +140,9 @@ gnutls_ia_send(gnutls_session_t session, char *data, ssize_t datal,
 {
   ssize_t len;
 
-  len = _gnutls_send_int (session, GNUTLS_INNER_APPLICATION, -1,
-			  data, datal);
+  len = _gnutls_send_inner_application (session,
+					GNUTLS_IA_APPLICATION_PAYLOAD,
+					datal, data);
 
   return len;
 }
