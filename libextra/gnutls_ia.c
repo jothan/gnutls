@@ -207,32 +207,35 @@ gnutls_ia_server_endphase(gnutls_session_t session,
   ssize_t len;
   int ret;
 
-  ret = _gnutls_PRF (session->security_parameters.inner_secret,
-		     TLS_MASTER_SIZE,
-		     CLIENT_FINISHED_LABEL,
-		     strlen (CLIENT_FINISHED_LABEL),
-		     "", 0, 12, local_checksum);
-  if (ret < 0)
+  if (checksum)
     {
-      int tmpret;
-      tmpret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
-				  GNUTLS_A_INNER_APPLICATION_FAILURE);
-      if (tmpret < 0)
-	gnutls_assert ();
-      return ret;
-    }
-
-  if (memcmp (local_checksum, checksum, 12) != 0)
-    {
-      ret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
-			       GNUTLS_A_INNER_APPLICATION_VERIFICATION);
+      ret = _gnutls_PRF (session->security_parameters.inner_secret,
+			 TLS_MASTER_SIZE,
+			 CLIENT_FINISHED_LABEL,
+			 strlen (CLIENT_FINISHED_LABEL),
+			 "", 0, 12, local_checksum);
       if (ret < 0)
 	{
-	  gnutls_assert ();
+	  int tmpret;
+	  tmpret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
+				      GNUTLS_A_INNER_APPLICATION_FAILURE);
+	  if (tmpret < 0)
+	    gnutls_assert ();
 	  return ret;
 	}
 
-      return -4711;
+      if (memcmp (local_checksum, checksum, 12) != 0)
+	{
+	  ret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
+				   GNUTLS_A_INNER_APPLICATION_VERIFICATION);
+	  if (ret < 0)
+	    {
+	      gnutls_assert ();
+	      return ret;
+	    }
+
+	  return -4711;
+	}
     }
 
   ret = _gnutls_PRF (session->security_parameters.inner_secret,
