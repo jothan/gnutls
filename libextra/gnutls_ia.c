@@ -87,34 +87,39 @@ _gnutls_send_inner_application (gnutls_session_t session,
 
 static ssize_t
 _gnutls_recv_inner_application (gnutls_session_t session,
-				gnutls_ia_apptype * msg_type, char **data)
+				gnutls_ia_apptype * msg_type,
+				size_t length, char *data)
 {
   ssize_t len;
-  opaque buf[1024];		/* XXX: loop to increment buffer size? */
+  opaque pkt[4];
 
-  len = _gnutls_recv_int (session, GNUTLS_INNER_APPLICATION, -1, buf, 1024);
-  if (len < 4)
+  len = _gnutls_recv_int (session, GNUTLS_INNER_APPLICATION, -1, pkt, 4);
+  if (len != 4)
     {
       gnutls_assert ();
       return GNUTLS_E_UNEXPECTED_PACKET_LENGTH;
     }
 
-  if (_gnutls_read_uint24 (&buf[1]) != len - 4)
+  *msg_type = pkt[0];
+  len = _gnutls_read_uint24 (&pkt[1]);
+
+  if (length < len)
+    {
+      /* XXX push back pkt to IA buffer? */
+      gnutls_assert ();
+      return GNUTLS_E_SHORT_MEMORY_BUFFER;
+    }
+
+  length = len;
+
+  len = _gnutls_recv_int (session, GNUTLS_INNER_APPLICATION, -1, data, length);
+  if (len != length)
     {
       gnutls_assert ();
       return GNUTLS_E_UNEXPECTED_PACKET_LENGTH;
     }
 
-  *msg_type = buf[0];
-  *data = gnutls_malloc (len - 4);
-  if (!*data)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_MEMORY_ERROR;
-    }
-  memcpy (*data, buf + 4, len - 4);
-
-  return len - 4;
+  return len;
 }
 
 int
@@ -170,6 +175,7 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 {
   char *buf = NULL;
   size_t buflen = 0;
+  char tmp[1024]; /* XXX */
   ssize_t len;
   int ret;
   const gnutls_ia_client_credentials_t cred =
@@ -186,8 +192,6 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 
       ret = cred->avp_func (session, cred->avp_ptr,
 			    buf, buflen, &avp, &avplen);
-      if (buf)
-	gnutls_free (buf);
       if (ret != GNUTLS_IA_APPLICATION_PAYLOAD)
 	{
 	  int tmpret;
@@ -206,10 +210,12 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 	return len;
       printf ("client: send len %d\n", len);
 
-      len = _gnutls_recv_inner_application (session, &msg_type, &buf);
+      len = _gnutls_recv_inner_application (session, &msg_type,
+					    sizeof (tmp), tmp);
       if (len < 0)
 	return len;
       buflen = len;
+      buf = tmp;
       printf ("client: recv len %d msgtype %d\n", buflen, msg_type);
 
       if (msg_type == GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED ||
@@ -270,10 +276,7 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 	  printf ("client: send ack len %d\n", len);
 
 	  if (msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
-	    {
-	      free (buf);
-	      break;
-	    }
+	    break;
 	}
     }
 
@@ -285,7 +288,7 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
 {
   gnutls_ia_apptype msg_type;
   ssize_t len;
-  char *buf;
+  char buf[1024];
   size_t i;
   int ret;
   const gnutls_ia_server_credentials_t cred =
@@ -299,7 +302,8 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
       char *avp;
       size_t avplen;
 
-      len = _gnutls_recv_inner_application (session, &msg_type, &buf);
+      len = _gnutls_recv_inner_application (session, &msg_type,
+					    sizeof (buf), buf);
       if (len < 0)
 	return len;
 
