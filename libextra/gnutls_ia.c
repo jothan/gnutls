@@ -237,29 +237,32 @@ gnutls_ia_server_endphase(gnutls_session_t session,
 	  return -4711;
 	}
     }
-
-  ret = _gnutls_PRF (session->security_parameters.inner_secret,
-		     TLS_MASTER_SIZE,
-		     SERVER_FINISHED_LABEL,
-		     strlen (SERVER_FINISHED_LABEL),
-		     /* XXX specification unclear on seed. */
-		     "", 0, 12, local_checksum);
-  if (ret < 0)
+  else
     {
-      int tmpret;
-      tmpret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
-				  GNUTLS_A_INNER_APPLICATION_FAILURE);
-      if (tmpret < 0)
-	gnutls_assert ();
-      return ret;
-    }
+      ret = _gnutls_PRF (session->security_parameters.inner_secret,
+			 TLS_MASTER_SIZE,
+			 SERVER_FINISHED_LABEL,
+			 strlen (SERVER_FINISHED_LABEL),
+			 /* XXX specification unclear on seed. */
+			 "", 0, 12, local_checksum);
+      if (ret < 0)
+	{
+	  int tmpret;
+	  tmpret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
+				      GNUTLS_A_INNER_APPLICATION_FAILURE);
+	  if (tmpret < 0)
+	    gnutls_assert ();
+	  return ret;
+	}
 
-  len =
-    _gnutls_send_inner_application (session,
-				    final_p ? GNUTLS_IA_FINAL_PHASE_FINISHED :
-				    GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED,
-				    12, local_checksum);
-  printf ("server: send len %d\n", len);
+      len =
+	_gnutls_send_inner_application (session,
+					final_p ?
+					GNUTLS_IA_FINAL_PHASE_FINISHED :
+					GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED,
+					12, local_checksum);
+      printf ("server: send len %d\n", len);
+    }
 
   return 0;
 }
@@ -288,7 +291,7 @@ gnutls_ia_recv(gnutls_session_t session, char *data, ssize_t datal,
 
   if (msg_type == GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED)
     return GNUTLS_E_WARNING_IA_IPHF_RECEIVED;
-  else /* msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED */
+  else if (msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
     return GNUTLS_E_WARNING_IA_FPHF_RECEIVED;
 
   return len;
@@ -430,59 +433,25 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
       char *avp;
       size_t avplen;
 
-      len = _gnutls_recv_inner_application (session, &msg_type,
-					    sizeof (buf), buf);
+      len = gnutls_ia_recv (session, buf, sizeof (buf), NULL, 0);
+
+      if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED ||
+	  len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED)
+	{
+	  ret =
+	    gnutls_ia_server_endphase (session, buf,
+				       len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED,
+				       NULL, 0);
+	  if (ret < 0)
+	    return ret;
+	  if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED)
+	    continue;
+	  else
+	    break;
+	}
+
       if (len < 0)
 	return len;
-
-      printf ("server: recv len %d msgtype %d\n", len, msg_type);
-      if (len > 0)
-	for (i = 0; i < len; i++)
-	  printf ("%02x - %c\n", buf[i] & 0xFF, buf[i]);
-
-      if (msg_type == GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED ||
-	  msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
-	{
-	  char verify_data[12];
-
-	  /* XXX check that WE sent inter/final first. */
-
-	  ret = _gnutls_PRF (session->security_parameters.inner_secret,
-			     TLS_MASTER_SIZE,
-			     CLIENT_FINISHED_LABEL,
-			     strlen (CLIENT_FINISHED_LABEL),
-			     "", 0, 12, verify_data);
-	  if (ret < 0)
-	    {
-	      int tmpret;
-	      tmpret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
-					  GNUTLS_A_INNER_APPLICATION_FAILURE);
-	      if (tmpret < 0)
-		gnutls_assert ();
-	      return ret;
-	    }
-
-	  if (len != 12 || memcmp (verify_data, buf, 12) != 0)
-	    {
-	      puts ("server: verify bad");
-	      ret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
-				       GNUTLS_A_INNER_APPLICATION_VERIFICATION);
-	      if (ret < 0)
-		{
-		  gnutls_assert ();
-		  return ret;
-		}
-
-	      return 4711;
-	    }
-	  else
-	    puts ("server: verify ok");
-
-	  if (msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
-	    break;
-	  else
-	    continue;
-	}
 
       avp = NULL;
       avplen = 0;
@@ -503,36 +472,20 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
       if (msg_type == GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED ||
 	  msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
 	{
-	  avplen = 12;
-	  avp = gnutls_malloc (avplen);
-	  if (!avp)
-	    {
-	      gnutls_assert ();
-	      return GNUTLS_E_MEMORY_ERROR;
-	    }
-
-	  ret = _gnutls_PRF (session->security_parameters.inner_secret,
-			     TLS_MASTER_SIZE,
-			     SERVER_FINISHED_LABEL,
-			     strlen (SERVER_FINISHED_LABEL),
-			     /* XXX specification unclear on seed. */
-			     "", 0, avplen, avp);
+	  ret = gnutls_ia_server_endphase (session, NULL,
+					   msg_type ==
+					   GNUTLS_IA_FINAL_PHASE_FINISHED,
+					   NULL, 0);
 	  if (ret < 0)
-	    {
-	      int tmpret;
-	      tmpret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
-					  GNUTLS_A_INNER_APPLICATION_FAILURE);
-	      if (tmpret < 0)
-		gnutls_assert ();
-	      return ret;
-	    }
+	    return ret;
 	}
-
-      len = _gnutls_send_inner_application (session, msg_type, avplen, avp);
-      gnutls_free (avp);
-      if (len < 0)
-	return len;
-      printf ("server: send len %d\n", len);
+      else
+	{
+	  len = gnutls_ia_send (session, avp, avplen, NULL, 0);
+	  gnutls_free (avp);
+	  if (len < 0)
+	    return len;
+	}
     }
   while (1);
 
