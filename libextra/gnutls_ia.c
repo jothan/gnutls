@@ -121,7 +121,8 @@ _gnutls_recv_inner_application (gnutls_session_t session,
 
   length = len;
 
-  len = _gnutls_recv_int (session, GNUTLS_INNER_APPLICATION, -1, data, length);
+  len =
+    _gnutls_recv_int (session, GNUTLS_INNER_APPLICATION, -1, data, length);
   if (len != length)
     {
       gnutls_assert ();
@@ -132,9 +133,10 @@ _gnutls_recv_inner_application (gnutls_session_t session,
 }
 
 int
-gnutls_ia_client_endphase(gnutls_session_t session,
-			  char *checksum,
-			  int final_p, char *session_key, ssize_t session_keyl)
+gnutls_ia_client_endphase (gnutls_session_t session,
+			   char *checksum,
+			   int final_p, char *session_key,
+			   ssize_t session_keyl)
 {
   char local_checksum[12];
   ssize_t len;
@@ -196,10 +198,10 @@ gnutls_ia_client_endphase(gnutls_session_t session,
 
 
 int
-gnutls_ia_server_endphase(gnutls_session_t session,
-			  char *checksum,
-			  int final_p,
-			  char *session_key, ssize_t session_keyl)
+gnutls_ia_server_endphase (gnutls_session_t session,
+			   char *checksum,
+			   int final_p,
+			   char *session_key, ssize_t session_keyl)
 {
   char local_checksum[12];
   ssize_t len;
@@ -265,8 +267,8 @@ gnutls_ia_server_endphase(gnutls_session_t session,
 }
 
 ssize_t
-gnutls_ia_send(gnutls_session_t session, char *data, ssize_t datal,
-	       char *session_key, ssize_t session_keyl)
+gnutls_ia_send (gnutls_session_t session, char *data, ssize_t datal,
+		char *session_key, ssize_t session_keyl)
 {
   ssize_t len;
 
@@ -278,8 +280,8 @@ gnutls_ia_send(gnutls_session_t session, char *data, ssize_t datal,
 }
 
 ssize_t
-gnutls_ia_recv(gnutls_session_t session, char *data, ssize_t datal,
-	       char *session_key, ssize_t session_keyl)
+gnutls_ia_recv (gnutls_session_t session, char *data, ssize_t datal,
+		char *session_key, ssize_t session_keyl)
 {
   gnutls_ia_apptype msg_type;
   ssize_t len;
@@ -303,7 +305,7 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 {
   char *buf = NULL;
   size_t buflen = 0;
-  char tmp[1024]; /* XXX */
+  char tmp[1024];		/* XXX */
   ssize_t len;
   int ret;
   const gnutls_ia_client_credentials_t cred =
@@ -341,7 +343,8 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 	{
 	  ret =
 	    gnutls_ia_client_endphase (session, tmp,
-				       len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED,
+				       len ==
+				       GNUTLS_E_WARNING_IA_FPHF_RECEIVED,
 				       NULL, 0);
 	  if (ret < 0)
 	    return ret;
@@ -387,7 +390,8 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
 	{
 	  ret =
 	    gnutls_ia_server_endphase (session, buf,
-				       len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED,
+				       len ==
+				       GNUTLS_E_WARNING_IA_FPHF_RECEIVED,
 				       NULL, 0);
 	  if (ret < 0)
 	    return ret;
