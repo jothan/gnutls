@@ -43,6 +43,7 @@ struct gnutls_ia_server_credentials_st
 static const char server_finished_label[] = "server phase finished";
 static const char client_finished_label[] = "client phase finished";
 static const char inner_permutation_label[] = "inner secret permutation";
+static const char challenge_label[] = "inner application challenge";
 
 /*
  * enum {
@@ -144,6 +145,45 @@ _gnutls_recv_inner_application (gnutls_session_t session,
   return len;
 }
 
+static int
+_gnutls_ia_prf (gnutls_session_t session,
+		size_t label_size,
+		const char *label,
+		size_t extra_size,
+		const char *extra,
+		size_t outsize,
+		char *out)
+{
+  int ret;
+  opaque *seed;
+  size_t seedsize = 2 * TLS_RANDOM_SIZE + extra_size;
+
+  seed = gnutls_malloc (seedsize);
+  if (!seed)
+    {
+      gnutls_assert();
+      return GNUTLS_E_MEMORY_ERROR;
+    }
+
+  memcpy (seed, session->security_parameters.server_random, TLS_RANDOM_SIZE);
+  memcpy (seed + TLS_RANDOM_SIZE, session->security_parameters.client_random,
+	  TLS_RANDOM_SIZE);
+  memcpy (seed + 2 * TLS_RANDOM_SIZE, extra, extra_size);
+
+  ret = _gnutls_PRF (session->security_parameters.inner_secret,
+		     TLS_MASTER_SIZE,
+		     label,
+		     label_size,
+		     seed,
+		     seedsize,
+		     outsize,
+		     out);
+
+  gnutls_free (seed);
+
+  return ret;
+}
+
 /**
  * gnutls_ia_permute_inner_secret:
  * @session: is a #gnutls_session_t structure.
@@ -168,33 +208,38 @@ gnutls_ia_permute_inner_secret (gnutls_session_t session,
 				size_t session_keys_size,
 				const char *session_keys)
 {
-  int ret;
-  opaque *seed;
-  size_t seedsize = 2 * TLS_RANDOM_SIZE + session_keys_size;
+  return _gnutls_ia_prf (session,
+			 inner_permutation_label,
+			 sizeof (inner_permutation_label) - 1,
+			 session_keys_size,
+			 session_keys,
+			 TLS_RANDOM_SIZE,
+			 session->security_parameters.inner_secret);
+}
 
-  seed = gnutls_malloc (seedsize);
-  if (!seed)
-    {
-      gnutls_assert();
-      return GNUTLS_E_MEMORY_ERROR;
-    }
-
-  memcpy (seed, session->security_parameters.server_random, TLS_RANDOM_SIZE);
-  memcpy (seed + TLS_RANDOM_SIZE, session->security_parameters.client_random,
-	  TLS_RANDOM_SIZE);
-  memcpy (seed + 2 * TLS_RANDOM_SIZE, session_keys, session_keys_size);
-
-  ret = _gnutls_PRF (session->security_parameters.inner_secret,
-		     TLS_MASTER_SIZE,
-		     inner_permutation_label,
-		     sizeof (inner_permutation_label) - 1,
-		     seed, seedsize,
-		     TLS_MASTER_SIZE,
-		     session->security_parameters.inner_secret);
-
-  gnutls_free (seed);
-
-  return ret;
+/**
+ * gnutls_ia_generate_challenge:
+ * @session: is a #gnutls_session_t structure.
+ * @buffer_size: size of output buffer.
+ * @buffer: pre-allocated buffer to contain @buffer_size bytes of output.
+ *
+ * Generate a application challenge that the client cannot control or
+ * predict, based on the TLS/IA inner secret.
+ *
+ * Return value: Returns 0 on success, or an negative error code.
+ **/
+int
+gnutls_ia_generate_challenge (gnutls_session_t session,
+			      size_t buffer_size,
+			      char *buffer)
+{
+  return _gnutls_ia_prf (session,
+			 challenge_label,
+			 sizeof (challenge_label) - 1,
+			 0,
+			 NULL,
+			 buffer_size,
+			 buffer);
 }
 
 /**
