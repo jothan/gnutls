@@ -155,11 +155,9 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
 			    char *session_key, ssize_t session_keyl);
 
   extern ssize_t
-  gnutls_ia_send(gnutls_session_t session, char *data, ssize_t datal,
-		 char *session_key, ssize_t session_keyl);
+  gnutls_ia_send(gnutls_session_t session, char *data, ssize_t datal);
   extern ssize_t
-  gnutls_ia_recv(gnutls_session_t session, char *data, ssize_t datal,
-		 char *session_key, ssize_t session_keyl);
+  gnutls_ia_recv(gnutls_session_t session, char *data, ssize_t datal);
 
 /* Global stuff
  */
