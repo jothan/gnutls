@@ -198,6 +198,32 @@ gnutls_ia_permute_inner_secret (gnutls_session_t session,
 }
 
 /**
+ * gnutls_ia_extract_inner_secret:
+ * @session: is a #gnutls_session_t structure.
+ * @buffer: pre-allocated buffer to hold 48 bytes of inner secret.
+ *
+ * Copy the 48 bytes large inner secret into the specified buffer
+ *
+ * Use this function after the TLS/IA handshake has concluded (i.e.,
+ * after the last TLS/IA Final Phase Message has been acknowledged).
+ *
+ * The TLS/IA inner secret can be used as input to a PRF to derive
+ * session keys.  Do not use the inner secret directly as a session
+ * key, because for a resumed session that does not include an
+ * application phase, the inner secret will be identical to the inner
+ * secret in the original session.  It is important to include, for
+ * example, the client and server randomness when deriving a sesssion
+ * key from the inner secret.
+ **/
+void
+gnutls_ia_extract_inner_secret (gnutls_session_t session,
+				char *buffer)
+{
+  memcpy (buffer, session->security_parameters.inner_secret, TLS_MASTER_SIZE);
+}
+
+
+/**
  * gnutls_ia_client_endphase:
  * @session: is a #gnutls_session_t structure.
  * @checksum: Checksum data recived from server, via gnutls_ia_recv().

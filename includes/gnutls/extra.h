@@ -149,6 +149,9 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
   gnutls_ia_permute_inner_secret (gnutls_session_t session,
 				  size_t session_keys_size,
 				  const char *session_keys);
+  extern void
+  gnutls_ia_extract_inner_secret (gnutls_session_t session,
+				  char *buffer);
 
   extern int
   gnutls_ia_client_endphase(gnutls_session_t session,
