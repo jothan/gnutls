@@ -315,10 +315,16 @@ int server_avp (gnutls_session_t session, void *ptr,
   gnutls_ia_permute_inner_secret (session, 3, "foo");
 
   if (p && strcmp (p, "1") == 0)
-    return 1;
+    {
+      puts ("Sending IntermediatePhaseFinished...");
+      return 1;
+    }
 
   if (p && strcmp (p, "2") == 0)
-    return 2;
+    {
+      puts ("Sending FinalPhaseFinished...");
+      return 2;
+    }
 
   if (p)
     {
