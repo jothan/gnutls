@@ -42,6 +42,7 @@ struct gnutls_ia_server_credentials_st
 
 static const char server_finished_label[] = "server phase finished";
 static const char client_finished_label[] = "client phase finished";
+static const char inner_permutation_label[] = "inner secret permutation";
 
 /*
  * enum {
@@ -91,7 +92,7 @@ _gnutls_send_inner_application (gnutls_session_t session,
   len = _gnutls_send_int (session, GNUTLS_INNER_APPLICATION, -1, p, plen);
 
   if (p)
-    free (p);
+    gnutls_free (p);
 
   return len;
 }
@@ -144,13 +145,63 @@ _gnutls_recv_inner_application (gnutls_session_t session,
 }
 
 /**
+ * gnutls_ia_permute_inner_secret:
+ * @session: is a #gnutls_session_t structure.
+ * @session_keys_size: Size of generated session keys (0 if none).
+ * @session_keys: Generated session keys, used to permute inner secret
+ *                (NULL if none).
+ *
+ * Permute the inner secret using the generate session keys.
+ *
+ * This can be called in the TLS/IA AVP callback to mix any generated
+ * session keys with the TLS/IA inner secret.
+ *
+ * When using the low-level interface, this should be called during an
+ * application phase, before calling gnutls_ia_client_endphase() or
+ * gnutls_ia_server_endphase(), if the application generated any
+ * session keys that should be mixed with the inner secret.
+ *
+ * Return value: Return zero on success, or a negative error code.
+ **/
+int
+gnutls_ia_permute_inner_secret (gnutls_session_t session,
+				size_t session_keys_size,
+				const char *session_keys)
+{
+  int ret;
+  opaque *seed;
+  size_t seedsize = 2 * TLS_RANDOM_SIZE + session_keys_size;
+
+  seed = gnutls_malloc (seedsize);
+  if (!seed)
+    {
+      gnutls_assert();
+      return GNUTLS_E_MEMORY_ERROR;
+    }
+
+  memcpy (seed, session->security_parameters.server_random, TLS_RANDOM_SIZE);
+  memcpy (seed + TLS_RANDOM_SIZE, session->security_parameters.client_random,
+	  TLS_RANDOM_SIZE);
+  memcpy (seed + 2 * TLS_RANDOM_SIZE, session_keys, session_keys_size);
+
+  ret = _gnutls_PRF (session->security_parameters.inner_secret,
+		     TLS_MASTER_SIZE,
+		     inner_permutation_label,
+		     sizeof (inner_permutation_label) - 1,
+		     seed, seedsize,
+		     TLS_MASTER_SIZE,
+		     session->security_parameters.inner_secret);
+
+  gnutls_free (seed);
+
+  return ret;
+}
+
+/**
  * gnutls_ia_client_endphase:
  * @session: is a #gnutls_session_t structure.
  * @checksum: Checksum data recived from server, via gnutls_ia_recv().
  * @final_p: Set iff this signal the final phase.
- * @session_key_size: Size of generated session keys (0 if none).
- * @session_key: Generated session keys, used to permute inner secret
- *               (NULL if none).
  *
  * Acknowledge the end of an application phase in the TLS/IA
  * handshake.  This function verify the @checksum data using the TLS
@@ -168,9 +219,7 @@ _gnutls_recv_inner_application (gnutls_session_t session,
 int
 gnutls_ia_client_endphase (gnutls_session_t session,
 			   char *checksum,
-			   int final_p,
-			   size_t session_key_size,
-			   const char *session_key)
+			   int final_p)
 {
   char local_checksum[12];
   ssize_t len;
@@ -234,9 +283,7 @@ gnutls_ia_client_endphase (gnutls_session_t session,
 int
 gnutls_ia_server_endphase (gnutls_session_t session,
 			   char *checksum,
-			   int final_p,
-			   size_t session_key_size,
-			   const char *session_key)
+			   int final_p)
 {
   char local_checksum[12];
   ssize_t len;
@@ -437,8 +484,7 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 	  ret =
 	    gnutls_ia_client_endphase (session, tmp,
 				       len ==
-				       GNUTLS_E_WARNING_IA_FPHF_RECEIVED,
-				       NULL, 0);
+				       GNUTLS_E_WARNING_IA_FPHF_RECEIVED);
 	  if (ret < 0)
 	    return ret;
 	  if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED)
@@ -483,8 +529,7 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
 	  ret =
 	    gnutls_ia_server_endphase (session, buf,
 				       len ==
-				       GNUTLS_E_WARNING_IA_FPHF_RECEIVED,
-				       NULL, 0);
+				       GNUTLS_E_WARNING_IA_FPHF_RECEIVED);
 	  if (ret < 0)
 	    return ret;
 	  if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED)
@@ -517,8 +562,7 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
 	{
 	  ret = gnutls_ia_server_endphase (session, NULL,
 					   msg_type ==
-					   GNUTLS_IA_FINAL_PHASE_FINISHED,
-					   NULL, 0);
+					   GNUTLS_IA_FINAL_PHASE_FINISHED);
 	  if (ret < 0)
 	    return ret;
 	}
