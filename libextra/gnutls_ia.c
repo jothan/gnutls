@@ -330,12 +330,12 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 	  return ret;
 	}
 
-      len = gnutls_ia_send (session, avp, avplen, NULL, 0);
+      len = gnutls_ia_send (session, avp, avplen);
       gnutls_free (avp);
       if (len < 0)
 	return len;
 
-      len = gnutls_ia_recv (session, tmp, sizeof (tmp), NULL, 0);
+      len = gnutls_ia_recv (session, tmp, sizeof (tmp));
       if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED ||
 	  len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED)
 	{
@@ -381,7 +381,7 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
       char *avp;
       size_t avplen;
 
-      len = gnutls_ia_recv (session, buf, sizeof (buf), NULL, 0);
+      len = gnutls_ia_recv (session, buf, sizeof (buf));
 
       if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED ||
 	  len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED)
@@ -430,7 +430,7 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
 	}
       else
 	{
-	  len = gnutls_ia_send (session, avp, avplen, NULL, 0);
+	  len = gnutls_ia_send (session, avp, avplen);
 	  gnutls_free (avp);
 	  if (len < 0)
 	    return len;
