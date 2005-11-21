@@ -692,6 +692,9 @@ gnutls_ia_free_server_credentials (gnutls_ia_server_credentials_t sc)
  * first invocation.  The newly allocated output AVP to send to the
  * server should be placed in *@new of *@newlen size.
  *
+ * The callback may invoke gnutls_ia_permute_inner_secret() to mix any
+ * generated session keys with the TLS/IA inner secret.
+ *
  * Return 0 (%GNUTLS_IA_APPLICATION_PAYLOAD) on success, or a negative
  * error code to abort the TLS/IA handshake.
  *
@@ -761,6 +764,9 @@ gnutls_ia_get_client_avp_ptr (gnutls_ia_client_credentials_t cred)
  * used to instruct the TLS/IA handshake to do go into the
  * Intermediate or Final phases.  It return a negative error code, or
  * an #gnutls_ia_apptype message type.
+ *
+ * The callback may invoke gnutls_ia_permute_inner_secret() to mix any
+ * generated session keys with the TLS/IA inner secret.
  *
  * Specifically, return %GNUTLS_IA_APPLICATION_PAYLOAD (0) to send
  * another AVP to the client, return
