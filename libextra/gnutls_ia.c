@@ -519,10 +519,6 @@ gnutls_ia_handshake (gnutls_session_t session)
 {
   int ret;
 
-  /* XXX Should we do this when tls ms is set first time? */
-  memcpy (session->security_parameters.inner_secret,
-	  session->security_parameters.master_secret, TLS_MASTER_SIZE);
-
   if (session->security_parameters.entity == GNUTLS_CLIENT)
     ret = _gnutls_ia_client_handshake (session);
   else
