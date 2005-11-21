@@ -40,8 +40,8 @@ struct gnutls_ia_server_credentials_st
   void *avp_ptr;
 };
 
-#define SERVER_FINISHED_LABEL "server phase finished"
-#define CLIENT_FINISHED_LABEL "client phase finished"
+static const char server_finished_label[] = "server phase finished";
+static const char client_finished_label[] = "client phase finished";
 
 /*
  * enum {
@@ -144,8 +144,8 @@ gnutls_ia_client_endphase (gnutls_session_t session,
 
   ret = _gnutls_PRF (session->security_parameters.inner_secret,
 		     TLS_MASTER_SIZE,
-		     SERVER_FINISHED_LABEL,
-		     strlen (SERVER_FINISHED_LABEL),
+		     server_finished_label,
+		     sizeof (server_finished_label) - 1,
 		     "", 0, 12, local_checksum);
   if (ret < 0)
     {
@@ -172,8 +172,8 @@ gnutls_ia_client_endphase (gnutls_session_t session,
 
   ret = _gnutls_PRF (session->security_parameters.inner_secret,
 		     TLS_MASTER_SIZE,
-		     CLIENT_FINISHED_LABEL,
-		     strlen (CLIENT_FINISHED_LABEL),
+		     client_finished_label,
+		     sizeof (client_finished_label) - 1,
 		     "", 0, 12, local_checksum);
   if (ret < 0)
     {
@@ -211,8 +211,8 @@ gnutls_ia_server_endphase (gnutls_session_t session,
     {
       ret = _gnutls_PRF (session->security_parameters.inner_secret,
 			 TLS_MASTER_SIZE,
-			 CLIENT_FINISHED_LABEL,
-			 strlen (CLIENT_FINISHED_LABEL),
+			 client_finished_label,
+			 sizeof (client_finished_label) - 1,
 			 "", 0, 12, local_checksum);
       if (ret < 0)
 	{
@@ -241,8 +241,8 @@ gnutls_ia_server_endphase (gnutls_session_t session,
     {
       ret = _gnutls_PRF (session->security_parameters.inner_secret,
 			 TLS_MASTER_SIZE,
-			 SERVER_FINISHED_LABEL,
-			 strlen (SERVER_FINISHED_LABEL),
+			 server_finished_label,
+			 sizeof (server_finished_label) - 1,
 			 /* XXX specification unclear on seed. */
 			 "", 0, 12, local_checksum);
       if (ret < 0)
