@@ -143,11 +143,34 @@ _gnutls_recv_inner_application (gnutls_session_t session,
   return len;
 }
 
+/**
+ * gnutls_ia_client_endphase:
+ * @session: is a #gnutls_session_t structure.
+ * @checksum: Checksum data recived from server, via gnutls_ia_recv().
+ * @final_p: Set iff this signal the final phase.
+ * @session_key_size: Size of generated session keys (0 if none).
+ * @session_key: Generated session keys, used to permute inner secret
+ *               (NULL if none).
+ *
+ * Acknowledge the end of an application phase in the TLS/IA
+ * handshake.  This function verify the @checksum data using the TLS
+ * PRF and the inner secret.  It will send an
+ * GNUTLS_A_INNER_APPLICATION_VERIFICATION alert to the server if
+ * verification fails, and GNUTLS_A_INNER_APPLICATION_FAILURE on any
+ * other error.
+ *
+ * This must only be called when gnutls_ia_recv() return
+ * GNUTLS_E_WARNING_IA_IPHF_RECEIVED or
+ * GNUTLS_E_WARNING_IA_FPHF_RECEIVED.
+ *
+ * Return zero on success, or an error code.
+ **/
 int
 gnutls_ia_client_endphase (gnutls_session_t session,
 			   char *checksum,
-			   int final_p, char *session_key,
-			   ssize_t session_keyl)
+			   int final_p,
+			   size_t session_key_size,
+			   const char *session_key)
 {
   char local_checksum[12];
   ssize_t len;
@@ -212,7 +235,8 @@ int
 gnutls_ia_server_endphase (gnutls_session_t session,
 			   char *checksum,
 			   int final_p,
-			   char *session_key, ssize_t session_keyl)
+			   size_t session_key_size,
+			   const char *session_key)
 {
   char local_checksum[12];
   ssize_t len;
@@ -317,10 +341,10 @@ gnutls_ia_send (gnutls_session_t session, char *data, ssize_t sizeofdata)
 /**
  * gnutls_ia_recv - read data from the TLS/IA protocol
  * @session: is a #gnutls_session_t structure.
- * @data: the buffer that the data will be read into
- * @sizeofdata: the number of requested bytes
+ * @data: the buffer that the data will be read into, must hold >= 12 bytes.
+ * @sizeofdata: the number of requested bytes, must be >= 12.
  *
- *  Receive TLS/IA data.  This function has the similar semantics with
+ * Receive TLS/IA data.  This function has the similar semantics with
  * recv(). The only difference is that is accepts a GNUTLS session,
  * and uses different error codes.
  *
@@ -340,9 +364,15 @@ gnutls_ia_send (gnutls_session_t session, char *data, ssize_t sizeofdata)
  * initiated a handshake. In that case the server can only initiate a
  * handshake or terminate the connection.
  *
- * Returns the number of bytes received and zero on EOF.  A negative
- * error code is returned in case of an error.  The number of bytes
- * received might be less than @code{count}.
+ * Returns the number of bytes received.  A negative error code is
+ * returned in case of an error.  The
+ * GNUTLS_E_WARNING_IA_IPHF_RECEIVED is returned when a intermediate
+ * phase finished message has been received, and
+ * GNUTLS_E_WARNING_IA_FPHF_RECEIVED when a final phase finished
+ * message has been received; in both cases will @data hold 12 bytes
+ * of checksum data that should be passed on to
+ * gnutls_ia_client_endphase() or gnutls_ia_server_endphase(),
+ * respectively.
  **/
 ssize_t
 gnutls_ia_recv (gnutls_session_t session, char *data, ssize_t sizeofdata)
