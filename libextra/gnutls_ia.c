@@ -61,37 +61,48 @@ static const char client_finished_label[] = "client phase finished";
  *
  */
 
+/* Send TLS/IA data.  If data==NULL && sizeofdata==NULL, then the last
+   send was interrupted for some reason, and then we try to send it
+   again.  Returns the number of bytes sent, or an error code.  */
 static ssize_t
 _gnutls_send_inner_application (gnutls_session_t session,
 				gnutls_ia_apptype msg_type,
-				size_t length, const char *data)
+				const char *data, size_t sizeofdata)
 {
-  opaque *p;
+  opaque *p = NULL;
+  size_t plen = 0;
   ssize_t len;
 
-  p = gnutls_malloc (length + 4);
-  if (!p)
+  if (data != NULL & sizeofdata != 0)
     {
-      gnutls_assert ();
-      return GNUTLS_E_MEMORY_ERROR;
+      plen = sizeofdata + 4;
+      p = gnutls_malloc (plen);
+      if (!p)
+	{
+	  gnutls_assert ();
+	  return GNUTLS_E_MEMORY_ERROR;
+	}
+
+      *(unsigned char *) p = (unsigned char) (msg_type & 0xFF);
+      _gnutls_write_uint24 (sizeofdata, p + 1);
+      memcpy (p + 4, data, sizeofdata);
     }
 
-  *(unsigned char *) p = (unsigned char) (msg_type & 0xFF);
-  _gnutls_write_uint24 (length, p + 1);
-  memcpy (p + 4, data, length);
+  len = _gnutls_send_int (session, GNUTLS_INNER_APPLICATION, -1, p, plen);
 
-  len = _gnutls_send_int (session, GNUTLS_INNER_APPLICATION, -1,
-			  p, length + 4);
-
-  free (p);
+  if (p)
+    free (p);
 
   return len;
 }
 
+/* Receive TLS/IA data.  Store received TLS/IA message type in
+   *MSG_TYPE, and the data in DATA of max SIZEOFDATA size.  Return the
+   number of bytes read, or an error code. */
 static ssize_t
 _gnutls_recv_inner_application (gnutls_session_t session,
 				gnutls_ia_apptype * msg_type,
-				size_t length, char *data)
+				char *data, size_t sizeofdata)
 {
   ssize_t len;
   opaque pkt[4];
@@ -112,18 +123,18 @@ _gnutls_recv_inner_application (gnutls_session_t session,
       return GNUTLS_E_UNEXPECTED_PACKET_LENGTH;
     }
 
-  if (length < len)
+  if (sizeofdata < len)
     {
       /* XXX push back pkt to IA buffer? */
       gnutls_assert ();
       return GNUTLS_E_SHORT_MEMORY_BUFFER;
     }
 
-  length = len;
+  sizeofdata = len;
 
-  len =
-    _gnutls_recv_int (session, GNUTLS_INNER_APPLICATION, -1, data, length);
-  if (len != length)
+  len = _gnutls_recv_int (session, GNUTLS_INNER_APPLICATION, -1,
+			  data, sizeofdata);
+  if (len != sizeofdata)
     {
       gnutls_assert ();
       return GNUTLS_E_UNEXPECTED_PACKET_LENGTH;
@@ -189,7 +200,7 @@ gnutls_ia_client_endphase (gnutls_session_t session,
     _gnutls_send_inner_application (session,
 				    final_p ? GNUTLS_IA_FINAL_PHASE_FINISHED :
 				    GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED,
-				    12, local_checksum);
+				    local_checksum, 12);
   if (len < 0)
     return len;
 
@@ -260,31 +271,86 @@ gnutls_ia_server_endphase (gnutls_session_t session,
 					final_p ?
 					GNUTLS_IA_FINAL_PHASE_FINISHED :
 					GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED,
-					12, local_checksum);
+					local_checksum, 12);
     }
 
   return 0;
 }
 
+/**
+ * gnutls_ia_send: Send peer the specified TLS/IA data.
+ * @session: is a #gnutls_session_t structure.
+ * @data: contains the data to send
+ * @sizeofdata: is the length of the data
+ *
+ * Send TLS/IA application payload data.  This function has the
+ * similar semantics with send(). The only difference is that is
+ * accepts a GNUTLS session, and uses different error codes.
+ *
+ * The TLS/IA protocol is synchronous, so you cannot send more than
+ * one packet at a time.  The client always send the first packet.
+ *
+ * To finish an application phase, use gnutls_ia_client_endphase() and
+ * gnutls_ia_server_endphase().  After that, the client should send
+ * the first packet again.
+ *
+ * If the EINTR is returned by the internal push function (the default
+ * is send()} then %GNUTLS_E_INTERRUPTED will be returned.  If
+ * %GNUTLS_E_INTERRUPTED or %GNUTLS_E_AGAIN is returned, you must call
+ * this function again, with the same parameters; alternatively you
+ * could provide a %NULL pointer for data, and 0 for size.
+ *
+ * Returns the number of bytes sent, or a negative error code.
+ **/
 ssize_t
-gnutls_ia_send (gnutls_session_t session, char *data, ssize_t datal)
+gnutls_ia_send (gnutls_session_t session, char *data, ssize_t sizeofdata)
 {
   ssize_t len;
 
   len = _gnutls_send_inner_application (session,
 					GNUTLS_IA_APPLICATION_PAYLOAD,
-					datal, data);
+					data, sizeofdata);
 
   return len;
 }
 
+/**
+ * gnutls_ia_recv - read data from the TLS/IA protocol
+ * @session: is a #gnutls_session_t structure.
+ * @data: the buffer that the data will be read into
+ * @sizeofdata: the number of requested bytes
+ *
+ *  Receive TLS/IA data.  This function has the similar semantics with
+ * recv(). The only difference is that is accepts a GNUTLS session,
+ * and uses different error codes.
+ *
+ * In the special case that a server requests a renegotiation, the
+ * client may receive an error code of GNUTLS_E_REHANDSHAKE.  This
+ * message may be simply ignored, replied with an alert containing
+ * NO_RENEGOTIATION, or replied with a new handshake, depending on the
+ * client's will.
+ *
+ * If EINTR is returned by the internal push function (the default is
+ * @code{recv()}) then GNUTLS_E_INTERRUPTED will be returned.  If
+ * GNUTLS_E_INTERRUPTED or GNUTLS_E_AGAIN is returned, you must call
+ * this function again, with the same parameters; alternatively you
+ * could provide a NULL pointer for data, and 0 for size.
+ *
+ * A server may also receive GNUTLS_E_REHANDSHAKE when a client has
+ * initiated a handshake. In that case the server can only initiate a
+ * handshake or terminate the connection.
+ *
+ * Returns the number of bytes received and zero on EOF.  A negative
+ * error code is returned in case of an error.  The number of bytes
+ * received might be less than @code{count}.
+ **/
 ssize_t
-gnutls_ia_recv (gnutls_session_t session, char *data, ssize_t datal)
+gnutls_ia_recv (gnutls_session_t session, char *data, ssize_t sizeofdata)
 {
   gnutls_ia_apptype msg_type;
   ssize_t len;
 
-  len = _gnutls_recv_inner_application (session, &msg_type, datal, data);
+  len = _gnutls_recv_inner_application (session, &msg_type, data, sizeofdata);
 
   if (msg_type == GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED)
     return GNUTLS_E_WARNING_IA_IPHF_RECEIVED;
@@ -314,7 +380,6 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 
   while (1)
     {
-      gnutls_ia_apptype msg_type;
       char *avp;
       size_t avplen;
 
@@ -368,7 +433,6 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
   gnutls_ia_apptype msg_type;
   ssize_t len;
   char buf[1024];
-  size_t i;
   int ret;
   const gnutls_ia_server_credentials_t cred =
     _gnutls_get_cred (session->key, GNUTLS_CRD_IA, NULL);
