@@ -250,7 +250,7 @@ gnutls_ia_client_endphase (gnutls_session_t session,
 	  return ret;
 	}
 
-      return -4711;
+      return GNUTLS_E_IA_VERIFY_FAILED;
     }
 
   ret = _gnutls_PRF (session->security_parameters.inner_secret,
@@ -316,7 +316,7 @@ gnutls_ia_server_endphase (gnutls_session_t session,
 	      return ret;
 	    }
 
-	  return -4711;
+	  return GNUTLS_E_IA_VERIFY_FAILED;
 	}
     }
   else
