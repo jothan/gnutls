@@ -107,6 +107,8 @@ int client_avp (gnutls_session_t session, void *ptr,
   else
     return -1;
 
+  gnutls_ia_permute_inner_secret (session, 3, "foo");
+
   return 0;
 }
 
@@ -309,6 +311,8 @@ int server_avp (gnutls_session_t session, void *ptr,
     }
 
   p = readline ("Server TLS/IA AVP: ");
+
+  gnutls_ia_permute_inner_secret (session, 3, "foo");
 
   if (p && strcmp (p, "1") == 0)
     return 1;
