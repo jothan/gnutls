@@ -310,7 +310,7 @@ int server_avp (gnutls_session_t session, void *ptr,
       printf ("\n");
     }
 
-  p = readline ("Server TLS/IA AVP: ");
+  p = readline ("Server TLS/IA AVP (type '1' to sync, '2' to finish): ");
 
   gnutls_ia_permute_inner_secret (session, 3, "foo");
 

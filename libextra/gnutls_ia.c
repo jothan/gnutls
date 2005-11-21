@@ -209,8 +209,8 @@ gnutls_ia_permute_inner_secret (gnutls_session_t session,
 				const char *session_keys)
 {
   return _gnutls_ia_prf (session,
-			 inner_permutation_label,
 			 sizeof (inner_permutation_label) - 1,
+			 inner_permutation_label,
 			 session_keys_size,
 			 session_keys,
 			 TLS_RANDOM_SIZE,
@@ -234,8 +234,8 @@ gnutls_ia_generate_challenge (gnutls_session_t session,
 			      char *buffer)
 {
   return _gnutls_ia_prf (session,
-			 challenge_label,
 			 sizeof (challenge_label) - 1,
+			 challenge_label,
 			 0,
 			 NULL,
 			 buffer_size,
