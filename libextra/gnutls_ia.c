@@ -267,8 +267,7 @@ gnutls_ia_server_endphase (gnutls_session_t session,
 }
 
 ssize_t
-gnutls_ia_send (gnutls_session_t session, char *data, ssize_t datal,
-		char *session_key, ssize_t session_keyl)
+gnutls_ia_send (gnutls_session_t session, char *data, ssize_t datal)
 {
   ssize_t len;
 
@@ -280,8 +279,7 @@ gnutls_ia_send (gnutls_session_t session, char *data, ssize_t datal,
 }
 
 ssize_t
-gnutls_ia_recv (gnutls_session_t session, char *data, ssize_t datal,
-		char *session_key, ssize_t session_keyl)
+gnutls_ia_recv (gnutls_session_t session, char *data, ssize_t datal)
 {
   gnutls_ia_apptype msg_type;
   ssize_t len;
