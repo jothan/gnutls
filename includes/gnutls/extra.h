@@ -140,11 +140,6 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
 
   /* TLS/IA low level interface. */
 
-  typedef enum {
-    GNUTLS_IA_INTERMEDIATEPHASE,
-    GNUTLS_IA_FINALPHASE
-  } gnutls_endphase_t;
-
   extern int
   gnutls_ia_permute_inner_secret (gnutls_session_t session,
 				  size_t session_keys_size,
