@@ -330,7 +330,7 @@ gnutls_ia_endphase_send(gnutls_session_t session, int final_p)
 /* Verify TLS/IA end phase CHECKSUM.  It will send an
    GNUTLS_A_INNER_APPLICATION_VERIFICATION alert to the server if
    verification fails.  Return 0 on success, or an error. */
-int
+static int
 _gnutls_ia_verify_endphase (gnutls_session_t session, char *checksum)
 {
   char local_checksum[CHECKSUM_SIZE];
