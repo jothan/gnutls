@@ -28,6 +28,8 @@
 #include "gnutls_num.h"
 #include "gnutls_state.h"
 
+#define CHECKSUM_SIZE 12
+
 struct gnutls_ia_client_credentials_st
 {
   gnutls_ia_avp_func avp_func;
@@ -46,6 +48,9 @@ static const char inner_permutation_label[] = "inner secret permutation";
 static const char challenge_label[] = "inner application challenge";
 
 /*
+ * The TLS/IA packet is the InnerApplication token, described as
+ * follows in draft-funk-tls-inner-application-extension-01.txt:
+ *
  * enum {
  *   application_payload(0), intermediate_phase_finished(1),
  *   final_phase_finished(2), (255)
@@ -65,10 +70,12 @@ static const char challenge_label[] = "inner application challenge";
 
 /* Send TLS/IA data.  If data==NULL && sizeofdata==NULL, then the last
    send was interrupted for some reason, and then we try to send it
-   again.  Returns the number of bytes sent, or an error code.  */
+   again.  Returns the number of bytes sent, or an error code.  If
+   this return E_AGAIN and E_INTERRUPTED, call this function again
+   with data==NULL&&sizeofdata=0NULL until it returns successfully. */
 static ssize_t
 _gnutls_send_inner_application (gnutls_session_t session,
-				gnutls_ia_apptype msg_type,
+				gnutls_ia_apptype_t msg_type,
 				const char *data, size_t sizeofdata)
 {
   opaque *p = NULL;
@@ -103,7 +110,7 @@ _gnutls_send_inner_application (gnutls_session_t session,
    number of bytes read, or an error code. */
 static ssize_t
 _gnutls_recv_inner_application (gnutls_session_t session,
-				gnutls_ia_apptype * msg_type,
+				gnutls_ia_apptype_t * msg_type,
 				char *data, size_t sizeofdata)
 {
   ssize_t len;
@@ -119,7 +126,7 @@ _gnutls_recv_inner_application (gnutls_session_t session,
   *msg_type = pkt[0];
   len = _gnutls_read_uint24 (&pkt[1]);
 
-  if (*msg_type != GNUTLS_IA_APPLICATION_PAYLOAD && len != 12)
+  if (*msg_type != GNUTLS_IA_APPLICATION_PAYLOAD && len != CHECKSUM_SIZE)
     {
       gnutls_assert ();
       return GNUTLS_E_UNEXPECTED_PACKET_LENGTH;
@@ -139,12 +146,18 @@ _gnutls_recv_inner_application (gnutls_session_t session,
   if (len != sizeofdata)
     {
       gnutls_assert ();
+      /* XXX Correct? */
       return GNUTLS_E_UNEXPECTED_PACKET_LENGTH;
     }
 
   return len;
 }
 
+/* Apply the TLS PRF using the TLS/IA inner secret as keying material,
+   where the seed is the client random concatenated with the server
+   random concatenated EXTRA of EXTRA_SIZE length (which can be NULL/0
+   respectively).  LABEL and LABEL_SIZE is used as the label.  The
+   result is placed in pre-allocated OUT of OUTSIZE length. */
 static int
 _gnutls_ia_prf (gnutls_session_t session,
 		size_t label_size,
@@ -191,15 +204,10 @@ _gnutls_ia_prf (gnutls_session_t session,
  * @session_keys: Generated session keys, used to permute inner secret
  *                (NULL if none).
  *
- * Permute the inner secret using the generate session keys.
+ * Permute the inner secret using the generated session keys.
  *
  * This can be called in the TLS/IA AVP callback to mix any generated
  * session keys with the TLS/IA inner secret.
- *
- * When using the low-level interface, this should be called during an
- * application phase, before calling gnutls_ia_client_endphase() or
- * gnutls_ia_server_endphase(), if the application generated any
- * session keys that should be mixed with the inner secret.
  *
  * Return value: Return zero on success, or a negative error code.
  **/
@@ -223,7 +231,7 @@ gnutls_ia_permute_inner_secret (gnutls_session_t session,
  * @buffer_size: size of output buffer.
  * @buffer: pre-allocated buffer to contain @buffer_size bytes of output.
  *
- * Generate a application challenge that the client cannot control or
+ * Generate an application challenge that the client cannot control or
  * predict, based on the TLS/IA inner secret.
  *
  * Return value: Returns 0 on success, or an negative error code.
@@ -249,12 +257,10 @@ gnutls_ia_generate_challenge (gnutls_session_t session,
  *
  * Copy the 48 bytes large inner secret into the specified buffer
  *
- * Use this function after the TLS/IA handshake has concluded (i.e.,
- * after the last TLS/IA Final Phase Message has been acknowledged).
- *
- * The TLS/IA inner secret can be used as input to a PRF to derive
- * session keys.  Do not use the inner secret directly as a session
- * key, because for a resumed session that does not include an
+ * This function is typically used after the TLS/IA handshake has
+ * concluded.  The TLS/IA inner secret can be used as input to a PRF
+ * to derive session keys.  Do not use the inner secret directly as a
+ * session key, because for a resumed session that does not include an
  * application phase, the inner secret will be identical to the inner
  * secret in the original session.  It is important to include, for
  * example, the client and server randomness when deriving a sesssion
@@ -267,51 +273,85 @@ gnutls_ia_extract_inner_secret (gnutls_session_t session,
   memcpy (buffer, session->security_parameters.inner_secret, TLS_MASTER_SIZE);
 }
 
-
 /**
- * gnutls_ia_client_endphase:
+ * gnutls_ia_endphase_send:
  * @session: is a #gnutls_session_t structure.
- * @checksum: Checksum data recived from server, via gnutls_ia_recv().
- * @final_p: Set iff this signal the final phase.
+ * @final_p: Set iff this should signal the final phase.
  *
- * Acknowledge the end of an application phase in the TLS/IA
- * handshake.  This function verify the @checksum data using the TLS
- * PRF and the inner secret.  It will send an
- * GNUTLS_A_INNER_APPLICATION_VERIFICATION alert to the server if
- * verification fails, and GNUTLS_A_INNER_APPLICATION_FAILURE on any
- * other error.
+ * Send a TLS/IA end phase message.
  *
- * This must only be called when gnutls_ia_recv() return
- * GNUTLS_E_WARNING_IA_IPHF_RECEIVED or
- * GNUTLS_E_WARNING_IA_FPHF_RECEIVED.
+ * In the client, this should only be used to acknowledge an end phase
+ * message sent by the server.
  *
- * Return zero on success, or an error code.
+ * In the server, this can be called instead of gnutls_ia_send() if
+ * the server wishes to end an application phase.
+ *
+ * Return value: Return 0 on success, or an error code.
  **/
 int
-gnutls_ia_client_endphase (gnutls_session_t session,
-			   char *checksum,
-			   int final_p)
+gnutls_ia_endphase_send(gnutls_session_t session, int final_p)
 {
-  char local_checksum[12];
+  char local_checksum[CHECKSUM_SIZE];
+  int client = session->security_parameters.entity == GNUTLS_CLIENT;
+  const char *label = client ? client_finished_label : server_finished_label;
+  int size_of_label = client ? sizeof (client_finished_label) :
+    sizeof (server_finished_label);
   ssize_t len;
   int ret;
 
   ret = _gnutls_PRF (session->security_parameters.inner_secret,
 		     TLS_MASTER_SIZE,
-		     server_finished_label,
-		     sizeof (server_finished_label) - 1,
-		     "", 0, 12, local_checksum);
+		     label, size_of_label - 1,
+		     /* XXX specification unclear on seed. */
+		     "", 0, CHECKSUM_SIZE, local_checksum);
+  if (ret < 0)
+    return ret;
+
+  len = _gnutls_send_inner_application
+    (session,
+     final_p ? GNUTLS_IA_FINAL_PHASE_FINISHED :
+     GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED,
+     local_checksum, CHECKSUM_SIZE);
+
+  /* XXX  Instead of calling this function over and over...?
+   * while (len == GNUTLS_E_AGAIN || len == GNUTLS_E_INTERRUPTED)
+   *  len = _gnutls_io_write_flush(session);
+   */
+
+  if (len < 0)
+    {
+      gnutls_assert();
+      return len;
+    }
+
+  return 0;
+}
+
+/* Verify TLS/IA end phase CHECKSUM.  It will send an
+   GNUTLS_A_INNER_APPLICATION_VERIFICATION alert to the server if
+   verification fails.  Return 0 on success, or an error. */
+int
+_gnutls_ia_verify_endphase (gnutls_session_t session, char *checksum)
+{
+  char local_checksum[CHECKSUM_SIZE];
+  int client = session->security_parameters.entity == GNUTLS_CLIENT;
+  const char *label = client ? server_finished_label : client_finished_label;
+  int size_of_label = client ? sizeof (server_finished_label) :
+    sizeof (client_finished_label);
+  ssize_t len;
+  int ret;
+
+  ret = _gnutls_PRF (session->security_parameters.inner_secret,
+		     TLS_MASTER_SIZE,
+		     label, size_of_label - 1,
+		     "", 0, CHECKSUM_SIZE, local_checksum);
   if (ret < 0)
     {
-      int tmpret;
-      tmpret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
-				  GNUTLS_A_INNER_APPLICATION_FAILURE);
-      if (tmpret < 0)
-	gnutls_assert ();
+      gnutls_assert ();
       return ret;
     }
 
-  if (memcmp (local_checksum, checksum, 12) != 0)
+  if (memcmp (local_checksum, checksum, CHECKSUM_SIZE) != 0)
     {
       ret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
 			       GNUTLS_A_INNER_APPLICATION_VERIFICATION);
@@ -322,100 +362,6 @@ gnutls_ia_client_endphase (gnutls_session_t session,
 	}
 
       return GNUTLS_E_IA_VERIFY_FAILED;
-    }
-
-  ret = _gnutls_PRF (session->security_parameters.inner_secret,
-		     TLS_MASTER_SIZE,
-		     client_finished_label,
-		     sizeof (client_finished_label) - 1,
-		     "", 0, 12, local_checksum);
-  if (ret < 0)
-    {
-      int tmpret;
-      tmpret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
-				  GNUTLS_A_INNER_APPLICATION_FAILURE);
-      if (tmpret < 0)
-	gnutls_assert ();
-      return ret;
-    }
-
-  len =
-    _gnutls_send_inner_application (session,
-				    final_p ? GNUTLS_IA_FINAL_PHASE_FINISHED :
-				    GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED,
-				    local_checksum, 12);
-  if (len < 0)
-    return len;
-
-  return 0;
-}
-
-
-int
-gnutls_ia_server_endphase (gnutls_session_t session,
-			   char *checksum,
-			   int final_p)
-{
-  char local_checksum[12];
-  ssize_t len;
-  int ret;
-
-  if (checksum)
-    {
-      ret = _gnutls_PRF (session->security_parameters.inner_secret,
-			 TLS_MASTER_SIZE,
-			 client_finished_label,
-			 sizeof (client_finished_label) - 1,
-			 "", 0, 12, local_checksum);
-      if (ret < 0)
-	{
-	  int tmpret;
-	  tmpret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
-				      GNUTLS_A_INNER_APPLICATION_FAILURE);
-	  if (tmpret < 0)
-	    gnutls_assert ();
-	  return ret;
-	}
-
-      if (memcmp (local_checksum, checksum, 12) != 0)
-	{
-	  ret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
-				   GNUTLS_A_INNER_APPLICATION_VERIFICATION);
-	  if (ret < 0)
-	    {
-	      gnutls_assert ();
-	      return ret;
-	    }
-
-	  return GNUTLS_E_IA_VERIFY_FAILED;
-	}
-    }
-  else
-    {
-      ret = _gnutls_PRF (session->security_parameters.inner_secret,
-			 TLS_MASTER_SIZE,
-			 server_finished_label,
-			 sizeof (server_finished_label) - 1,
-			 /* XXX specification unclear on seed. */
-			 "", 0, 12, local_checksum);
-      if (ret < 0)
-	{
-	  int tmpret;
-	  tmpret = gnutls_alert_send (session, GNUTLS_AL_FATAL,
-				      GNUTLS_A_INNER_APPLICATION_FAILURE);
-	  if (tmpret < 0)
-	    gnutls_assert ();
-	  return ret;
-	}
-
-      len =
-	_gnutls_send_inner_application (session,
-					final_p ?
-					GNUTLS_IA_FINAL_PHASE_FINISHED :
-					GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED,
-					local_checksum, 12);
-      if (len < 0)
-	return len;
     }
 
   return 0;
@@ -434,9 +380,9 @@ gnutls_ia_server_endphase (gnutls_session_t session,
  * The TLS/IA protocol is synchronous, so you cannot send more than
  * one packet at a time.  The client always send the first packet.
  *
- * To finish an application phase, use gnutls_ia_client_endphase() and
- * gnutls_ia_server_endphase().  After that, the client should send
- * the first packet again.
+ * To finish an application phase in the server, use
+ * gnutls_ia_endphase_send().  The client cannot end an application
+ * phase.
  *
  * If the EINTR is returned by the internal push function (the default
  * is send()} then %GNUTLS_E_INTERRUPTED will be returned.  If
@@ -468,6 +414,9 @@ gnutls_ia_send (gnutls_session_t session, char *data, ssize_t sizeofdata)
  * recv(). The only difference is that is accepts a GNUTLS session,
  * and uses different error codes.
  *
+ * If the received message is an end phase message, the checksum will
+ * be verified.
+ *
  * If EINTR is returned by the internal push function (the default is
  * @code{recv()}) then GNUTLS_E_INTERRUPTED will be returned.  If
  * GNUTLS_E_INTERRUPTED or GNUTLS_E_AGAIN is returned, you must call
@@ -476,26 +425,42 @@ gnutls_ia_send (gnutls_session_t session, char *data, ssize_t sizeofdata)
  *
  * Returns the number of bytes received.  A negative error code is
  * returned in case of an error.  The
- * GNUTLS_E_WARNING_IA_IPHF_RECEIVED is returned when a intermediate
- * phase finished message has been received, and
- * GNUTLS_E_WARNING_IA_FPHF_RECEIVED when a final phase finished
- * message has been received; in both cases will @data hold 12 bytes
- * of checksum data that should be passed on to
- * gnutls_ia_client_endphase() or gnutls_ia_server_endphase(),
- * respectively.
+ * %GNUTLS_E_WARNING_IA_IPHF_RECEIVED is returned when a intermediate
+ * phase finished message has been successfully received, and
+ * %GNUTLS_E_WARNING_IA_FPHF_RECEIVED when a final phase finished
+ * message has been successfully received.  If the checksum
+ * verification of the end phase message, %GNUTLS_E_IA_VERIFY_FAILED
+ * is returned.
  **/
 ssize_t
 gnutls_ia_recv (gnutls_session_t session, char *data, ssize_t sizeofdata)
 {
-  gnutls_ia_apptype msg_type;
+  gnutls_ia_apptype_t msg_type;
   ssize_t len;
 
   len = _gnutls_recv_inner_application (session, &msg_type, data, sizeofdata);
 
-  if (msg_type == GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED)
-    return GNUTLS_E_WARNING_IA_IPHF_RECEIVED;
-  else if (msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
-    return GNUTLS_E_WARNING_IA_FPHF_RECEIVED;
+  if (msg_type != GNUTLS_IA_APPLICATION_PAYLOAD)
+    {
+      int ret;
+
+      ret = _gnutls_ia_verify_endphase (session, data);
+      if (ret < 0)
+	return ret;
+
+      if (session->security_parameters.entity == GNUTLS_CLIENT)
+	{
+	  ret = gnutls_ia_endphase_send
+	    (session, msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED);
+	  if (ret < 0)
+	    return ret;
+	}
+
+      if (msg_type == GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED)
+	return GNUTLS_E_WARNING_IA_IPHF_RECEIVED;
+      else if (msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
+	return GNUTLS_E_WARNING_IA_FPHF_RECEIVED;
+    }
 
   return len;
 }
@@ -541,20 +506,10 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 	return len;
 
       len = gnutls_ia_recv (session, tmp, sizeof (tmp));
-      if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED ||
-	  len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED)
-	{
-	  ret =
-	    gnutls_ia_client_endphase (session, tmp,
-				       len ==
-				       GNUTLS_E_WARNING_IA_FPHF_RECEIVED);
-	  if (ret < 0)
-	    return ret;
-	  if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED)
-	    continue;
-	  else
-	    break;
-	}
+      if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED)
+	continue;
+      else if (len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED)
+	break;
 
       if (len < 0)
 	return len;
@@ -569,7 +524,7 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 int
 _gnutls_ia_server_handshake (gnutls_session_t session)
 {
-  gnutls_ia_apptype msg_type;
+  gnutls_ia_apptype_t msg_type;
   ssize_t len;
   char buf[1024];
   int ret;
@@ -585,21 +540,10 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
       size_t avplen;
 
       len = gnutls_ia_recv (session, buf, sizeof (buf));
-
-      if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED ||
-	  len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED)
-	{
-	  ret =
-	    gnutls_ia_server_endphase (session, buf,
-				       len ==
-				       GNUTLS_E_WARNING_IA_FPHF_RECEIVED);
-	  if (ret < 0)
-	    return ret;
-	  if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED)
-	    continue;
-	  else
-	    break;
-	}
+      if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED)
+	continue;
+      else if (len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED)
+	break;
 
       if (len < 0)
 	return len;
@@ -620,12 +564,10 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
 
       msg_type = ret;
 
-      if (msg_type == GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED ||
-	  msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
+      if (msg_type != GNUTLS_IA_APPLICATION_PAYLOAD)
 	{
-	  ret = gnutls_ia_server_endphase (session, NULL,
-					   msg_type ==
-					   GNUTLS_IA_FINAL_PHASE_FINISHED);
+	  ret = gnutls_ia_endphase_send (session, msg_type ==
+					 GNUTLS_IA_FINAL_PHASE_FINISHED);
 	  if (ret < 0)
 	    return ret;
 	}
@@ -826,7 +768,7 @@ gnutls_ia_get_client_avp_ptr (gnutls_ia_client_credentials_t cred)
  * client, and to get a new AVP to send to the client.  It can also be
  * used to instruct the TLS/IA handshake to do go into the
  * Intermediate or Final phases.  It return a negative error code, or
- * an #gnutls_ia_apptype message type.
+ * an #gnutls_ia_apptype_t message type.
  *
  * The callback may invoke gnutls_ia_permute_inner_secret() to mix any
  * generated session keys with the TLS/IA inner secret.
