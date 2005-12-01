@@ -414,6 +414,8 @@ gnutls_ia_server_endphase (gnutls_session_t session,
 					GNUTLS_IA_FINAL_PHASE_FINISHED :
 					GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED,
 					local_checksum, 12);
+      if (len < 0)
+	return len;
     }
 
   return 0;
