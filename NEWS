@@ -3,19 +3,56 @@ Copyright (C) 2004, 2005 Simon Josefsson
 Copyright (C) 2000, 2001, 2002, 2003, 2004 Nikos Mavroyanopoulos
 See the end for copying conditions.
 
-* Version 1.2.8+ia.0 (unreleased)
+* Version 1.2.8+ia.1 (unreleased)
 - GnuTLS now support TLS Inner application (TLS/IA) as per
   draft-funk-tls-inner-application-extension-01.  This functionality
   is added to libgnutls-extra, so it is licensed under the GPL.
 - API and ABI modifications:
-  gnutls_ia_client_get, gnutls_ia_client_set, gnutls_ia_server_get,
-  gnutls_ia_server_set: New functions, to enable TLS/IA.
+  gnutls_ia_client_get,
+  gnutls_ia_client_set,
+  gnutls_ia_server_get,
+  gnutls_ia_server_set: New functions, to enable TLS/IA on a session.
+
   gnutls_ia_handshake: New function, to perform TLS/IA handshake.
+
   gnutls_ia_handshake_p: New function, a predicate to decide whether
-  to TLS/IA handshake.
+    to TLS/IA handshake.
+
+  gnutls_ia_free_client_credentials,
+  gnutls_ia_allocate_client_credentials,
+  gnutls_ia_free_server_credentials,
+  gnutls_ia_allocate_server_credentials: New functions to allocate a
+    TLS/IA credential.
+
+  gnutls_ia_set_client_avp_function,
+  gnutls_ia_set_server_avp_function,
+  gnutls_ia_set_client_avp_ptr,
+  gnutls_ia_get_client_avp_ptr,
+  gnutls_ia_set_server_avp_ptr,
+  gnutls_ia_get_server_avp_ptr: New functions to handle the AVP callback.
+
+  gnutls_ia_permute_inner_secret: New function to mix session keys
+    with inner secret.
+
+  gnutls_ia_endphase_send,
+  gnutls_ia_send,
+  gnutls_ia_recv: Low-level API.
+
+  gnutls_ia_generate_challenge,
+  gnutls_ia_extract_inner_secret: New functions that can be used
+    after successful TLS/IA negotiation.
+
   gnutls_ia_mode_t: Enum type with TLS/IA modes.
+
+  gnutls_ia_apptype_t: Enum type with TLS/IA packet types.
+
   GNUTLS_A_INNER_APPLICATION_FAILURE,
   GNUTLS_A_INNER_APPLICATION_VERIFICATION: Enum values for TLS/IA alerts.
+
+  GNUTLS_E_WARNING_IA_IPHF_RECEIVED,
+  GNUTLS_E_WARNING_IA_FPHF_RECEIVED: New error codes, to signal when
+    an application phase has finished.
+  GNUTLS_E_IA_VERIFY_FAILED: New error code to signal TLS/IA verify failure.
 
 * Version 1.2.8 (2005-10-07)
 - Libgcrypt 1.2.2 is required to fix a bug for forking GnuTLS servers.
