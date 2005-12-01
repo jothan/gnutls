@@ -86,7 +86,7 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
     GNUTLS_IA_APPLICATION_PAYLOAD = 0,
     GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED = 1,
     GNUTLS_IA_FINAL_PHASE_FINISHED = 2
-  } gnutls_ia_apptype;
+  } gnutls_ia_apptype_t;
 
   /* TLS/IA credential
    */
