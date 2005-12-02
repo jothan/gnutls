@@ -139,15 +139,18 @@ _gnutls_recv_inner_application (gnutls_session_t session,
       return GNUTLS_E_SHORT_MEMORY_BUFFER;
     }
 
-  sizeofdata = len;
-
-  len = _gnutls_recv_int (session, GNUTLS_INNER_APPLICATION, -1,
-			  data, sizeofdata);
-  if (len != sizeofdata)
+  if (len > 0)
     {
-      gnutls_assert ();
-      /* XXX Correct? */
-      return GNUTLS_E_UNEXPECTED_PACKET_LENGTH;
+      int tmplen = len;
+
+      len = _gnutls_recv_int (session, GNUTLS_INNER_APPLICATION, -1,
+			      data, tmplen);
+      if (len != tmplen)
+	{
+	  gnutls_assert ();
+	  /* XXX Correct? */
+	  return GNUTLS_E_UNEXPECTED_PACKET_LENGTH;
+	}
     }
 
   return len;
@@ -507,7 +510,11 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 
       len = gnutls_ia_recv (session, tmp, sizeof (tmp));
       if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED)
-	continue;
+	{
+	  buf = NULL;
+	  buflen = 0;
+	  continue;
+	}
       else if (len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED)
 	break;
 
