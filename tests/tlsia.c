@@ -99,7 +99,7 @@ int client_avp (gnutls_session_t session, void *ptr,
   switch (iter)
     {
     case 0:
-      p = "foo";
+      p = "client's first AVP, next will be empty";
       break;
 
     case 1:
@@ -107,11 +107,11 @@ int client_avp (gnutls_session_t session, void *ptr,
       break;
 
     case 2:
-      p = "bar";
+      p = "client avp";
       break;
 
     default:
-      p = "baz";
+      p = "final client AVP, we'll restart next";
       iter = -1;
       break;
     }
@@ -323,7 +323,7 @@ int server_avp (gnutls_session_t session, void *ptr,
   static int iter = 0;
   char *p;
 
-  if (last && lastlen)
+  if (last)
     printf ("server: received %d bytes AVP: `%.*s'\n",
 	    lastlen, lastlen, last);
 
@@ -332,11 +332,11 @@ int server_avp (gnutls_session_t session, void *ptr,
   switch (iter)
     {
     case 0:
-      p = "foo";
+      p = "first server AVP";
       break;
 
     case 1:
-      p = "bar";
+      p = "second server AVP, next will be empty, then a intermediate finish";
       break;
 
     case 2:
@@ -348,7 +348,7 @@ int server_avp (gnutls_session_t session, void *ptr,
       break;
 
     case 4:
-      p = "foo";
+      p = "server avp, after intermediate finish, next another intermediate";
       break;
 
     case 5:
@@ -356,7 +356,7 @@ int server_avp (gnutls_session_t session, void *ptr,
       break;
 
     case 6:
-      p = "foo";
+      p = "server avp, next will be the finish phase";
       break;
 
     default:
@@ -369,26 +369,25 @@ int server_avp (gnutls_session_t session, void *ptr,
   if (debug)
     p = readline ("Server TLS/IA AVP (type '1' to sync, '2' to finish): ");
 
-  if (p && strcmp (p, "1") == 0)
+  if (!p)
+    return -1;
+
+  if (strcmp (p, "1") == 0)
     {
       puts ("server: Sending IntermediatePhaseFinished...");
       return 1;
     }
 
-  if (p && strcmp (p, "2") == 0)
+  if (strcmp (p, "2") == 0)
     {
       puts ("server: Sending FinalPhaseFinished...");
       return 2;
     }
 
-  if (p)
-    {
-      *new = gnutls_strdup (p);
-      *newlen = strlen (*new);
-      free (p);
-    }
-  else
+  *new = gnutls_strdup (p);
+  if (!*new)
     return -1;
+  *newlen = strlen (*new);
 
   printf ("server: sending %d bytes AVP: `%s'\n", *newlen, *new);
 
