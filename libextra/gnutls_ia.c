@@ -1006,7 +1006,7 @@ gnutls_ia_handshake_p (gnutls_session_t session)
 
       /* This is not a resumed session, always require an inner
          application. */
-      if (session->internals.resumed == RESUME_FALSE)
+      if (!gnutls_session_is_resumed (session))
 	return 1;
 
       /* The client support TLS/IA, this is a resumed session, and the
@@ -1026,7 +1026,7 @@ gnutls_ia_handshake_p (gnutls_session_t session)
 
       /* This is not a resumed session, always require an inner
          application. */
-      if (session->internals.resumed == RESUME_FALSE)
+      if (!gnutls_session_is_resumed (session))
 	return 1;
 
       /* The session is resumed, and we support TLS/IA, so let the
