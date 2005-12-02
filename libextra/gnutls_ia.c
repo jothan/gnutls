@@ -330,11 +330,25 @@ gnutls_ia_endphase_send(gnutls_session_t session, int final_p)
   return 0;
 }
 
-/* Verify TLS/IA end phase CHECKSUM.  It will send an
-   GNUTLS_A_INNER_APPLICATION_VERIFICATION alert to the server if
-   verification fails.  Return 0 on success, or an error. */
-static int
-_gnutls_ia_verify_endphase (gnutls_session_t session, char *checksum)
+/**
+ * gnutls_ia_verify_endphase:
+ * @session: is a #gnutls_session_t structure.
+ * @checksum: 12-byte checksum data, received from gnutls_ia_recv().
+ *
+ * Verify TLS/IA end phase checksum data.  If verification fails, the
+ * %GNUTLS_A_INNER_APPLICATION_VERIFICATION alert is sent to the other
+ * sie.
+ *
+ * This function is called when gnutls_ia_recv() return
+ * %GNUTLS_E_WARNING_IA_IPHF_RECEIVED or
+ * %GNUTLS_E_WARNING_IA_FPHF_RECEIVED.
+ *
+ * Return value: Return 0 on successful verification, or an error
+ * code.  If the checksum verification of the end phase message fails,
+ * %GNUTLS_E_IA_VERIFY_FAILED is returned.
+ **/
+int
+gnutls_ia_verify_endphase (gnutls_session_t session, char *checksum)
 {
   char local_checksum[CHECKSUM_SIZE];
   int client = session->security_parameters.entity == GNUTLS_CLIENT;
@@ -416,8 +430,10 @@ gnutls_ia_send (gnutls_session_t session, char *data, size_t sizeofdata)
  * recv(). The only difference is that is accepts a GNUTLS session,
  * and uses different error codes.
  *
- * If the received message is an end phase message, the checksum will
- * be verified.
+ * If the server attempt to finish an application phase, this function
+ * will return %GNUTLS_E_WARNING_IA_IPHF_RECEIVED or
+ * %GNUTLS_E_WARNING_IA_FPHF_RECEIVED.  The caller should then invoke
+ * gnutls_ia_verify_endphase().
  *
  * If EINTR is returned by the internal push function (the default is
  * @code{recv()}) then GNUTLS_E_INTERRUPTED will be returned.  If
@@ -427,12 +443,9 @@ gnutls_ia_send (gnutls_session_t session, char *data, size_t sizeofdata)
  *
  * Returns the number of bytes received.  A negative error code is
  * returned in case of an error.  The
- * %GNUTLS_E_WARNING_IA_IPHF_RECEIVED is returned when a intermediate
- * phase finished message has been successfully received, and
- * %GNUTLS_E_WARNING_IA_FPHF_RECEIVED when a final phase finished
- * message has been successfully received.  If the checksum
- * verification of the end phase message, %GNUTLS_E_IA_VERIFY_FAILED
- * is returned.
+ * %GNUTLS_E_WARNING_IA_IPHF_RECEIVED and
+ * %GNUTLS_E_WARNING_IA_FPHF_RECEIVED errors are returned when an
+ * application phase finished message has been sent by the server.
  **/
 ssize_t
 gnutls_ia_recv (gnutls_session_t session, char *data, size_t sizeofdata)
@@ -443,27 +456,10 @@ gnutls_ia_recv (gnutls_session_t session, char *data, size_t sizeofdata)
   len = _gnutls_recv_inner_application (session, &msg_type,
 					data, sizeofdata);
 
-  if (msg_type != GNUTLS_IA_APPLICATION_PAYLOAD)
-    {
-      int ret;
-
-      ret = _gnutls_ia_verify_endphase (session, data);
-      if (ret < 0)
-	return ret;
-
-      if (session->security_parameters.entity == GNUTLS_CLIENT)
-	{
-	  ret = gnutls_ia_endphase_send
-	    (session, msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED);
-	  if (ret < 0)
-	    return ret;
-	}
-
-      if (msg_type == GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED)
-	return GNUTLS_E_WARNING_IA_IPHF_RECEIVED;
-      else if (msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
-	return GNUTLS_E_WARNING_IA_FPHF_RECEIVED;
-    }
+  if (msg_type == GNUTLS_IA_INTERMEDIATE_PHASE_FINISHED)
+    return GNUTLS_E_WARNING_IA_IPHF_RECEIVED;
+  else if (msg_type == GNUTLS_IA_FINAL_PHASE_FINISHED)
+    return GNUTLS_E_WARNING_IA_FPHF_RECEIVED;
 
   return len;
 }
@@ -509,6 +505,19 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
 	return len;
 
       len = gnutls_ia_recv (session, tmp, sizeof (tmp));
+      if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED ||
+	  len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED)
+	{
+	  ret = gnutls_ia_verify_endphase (session, tmp);
+	  if (ret < 0)
+	    return ret;
+
+	  ret = gnutls_ia_endphase_send
+	    (session, len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED);
+	  if (ret < 0)
+	    return ret;
+	}
+
       if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED)
 	{
 	  buf = NULL;
@@ -547,6 +556,14 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
       size_t avplen;
 
       len = gnutls_ia_recv (session, buf, sizeof (buf));
+      if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED ||
+	  len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED)
+	{
+	  ret = gnutls_ia_verify_endphase (session, buf);
+	  if (ret < 0)
+	    return ret;
+	}
+
       if (len == GNUTLS_E_WARNING_IA_IPHF_RECEIVED)
 	continue;
       else if (len == GNUTLS_E_WARNING_IA_FPHF_RECEIVED)
