@@ -310,7 +310,7 @@ int err, listen_sd, i;
 int sd, ret;
 struct sockaddr_in sa_serv;
 struct sockaddr_in sa_cli;
-int client_len;
+socklen_t client_len;
 char topbuf[512];
 gnutls_session_t session;
 char buffer[MAX_BUF + 1];
@@ -463,7 +463,7 @@ server (void)
 
   /* Enable TLS/IA. */
   gnutls_credentials_set (session, GNUTLS_CRD_IA, iacred);
-  gnutls_ia_set_client_avp_function(iacred, server_avp);
+  gnutls_ia_set_server_avp_function (iacred, server_avp);
   gnutls_ia_server_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES);
 
   ret = gnutls_handshake (session);
