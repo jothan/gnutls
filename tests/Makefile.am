@@ -19,7 +19,7 @@
 # along with this file; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-AM_CPPFLAGS = -I../includes -I$(top_srcdir)/includes
+AM_CPPFLAGS = -I../gl -I$(top_srcdir)/gl -I../includes -I$(top_srcdir)/includes
 AM_LDFLAGS = -no-install
 LDADD = ../lib/libgnutls.la libutils.la
 
