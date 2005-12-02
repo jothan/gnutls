@@ -95,6 +95,8 @@ int client_avp (gnutls_session_t session, void *ptr,
 	printf ("%02x ", last[i] & 0xFF);
       printf ("\n");
     }
+  else
+    printf ("client: new application phase\n");
 
   p = readline ("Client TLS/IA AVP: ");
 
