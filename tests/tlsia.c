@@ -36,6 +36,8 @@
 
 #include "utils.h"
 
+#include <readline.h>
+
 /* A very basic TLS client, with anonymous authentication.
  */
 
