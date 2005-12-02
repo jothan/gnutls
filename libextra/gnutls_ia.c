@@ -1029,8 +1029,13 @@ gnutls_ia_handshake_p (gnutls_session_t session)
       if (!gnutls_session_is_resumed (session))
 	return 1;
 
-      /* The session is resumed, and we support TLS/IA, so let the
-         server decide. */
+      /* The session is resumed, so if the server wants an inner
+	 phase, let it. */
+      if (servertlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES)
+	return 1;
+
+      /* The session is resumed, and we support TLS/IA, the server
+	 doesn't need an inner phase, so we decide. */
       return clienttlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES;
     }
 }
