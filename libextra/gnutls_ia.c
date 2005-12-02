@@ -111,7 +111,7 @@ _gnutls_send_inner_application (gnutls_session_t session,
 static ssize_t
 _gnutls_recv_inner_application (gnutls_session_t session,
 				gnutls_ia_apptype_t * msg_type,
-				char *data, size_t sizeofdata)
+				opaque *data, size_t sizeofdata)
 {
   ssize_t len;
   opaque pkt[4];
@@ -168,7 +168,7 @@ _gnutls_ia_prf (gnutls_session_t session,
 		size_t extra_size,
 		const char *extra,
 		size_t outsize,
-		char *out)
+		opaque *out)
 {
   int ret;
   opaque *seed;
@@ -294,7 +294,7 @@ gnutls_ia_extract_inner_secret (gnutls_session_t session,
 int
 gnutls_ia_endphase_send(gnutls_session_t session, int final_p)
 {
-  char local_checksum[CHECKSUM_SIZE];
+  opaque local_checksum[CHECKSUM_SIZE];
   int client = session->security_parameters.entity == GNUTLS_CLIENT;
   const char *label = client ? client_finished_label : server_finished_label;
   int size_of_label = client ? sizeof (client_finished_label) :
@@ -341,7 +341,6 @@ _gnutls_ia_verify_endphase (gnutls_session_t session, char *checksum)
   const char *label = client ? server_finished_label : client_finished_label;
   int size_of_label = client ? sizeof (server_finished_label) :
     sizeof (client_finished_label);
-  ssize_t len;
   int ret;
 
   ret = _gnutls_PRF (session->security_parameters.inner_secret,
@@ -396,7 +395,7 @@ _gnutls_ia_verify_endphase (gnutls_session_t session, char *checksum)
  * Returns the number of bytes sent, or a negative error code.
  **/
 ssize_t
-gnutls_ia_send (gnutls_session_t session, char *data, ssize_t sizeofdata)
+gnutls_ia_send (gnutls_session_t session, char *data, size_t sizeofdata)
 {
   ssize_t len;
 
@@ -436,12 +435,13 @@ gnutls_ia_send (gnutls_session_t session, char *data, ssize_t sizeofdata)
  * is returned.
  **/
 ssize_t
-gnutls_ia_recv (gnutls_session_t session, char *data, ssize_t sizeofdata)
+gnutls_ia_recv (gnutls_session_t session, char *data, size_t sizeofdata)
 {
   gnutls_ia_apptype_t msg_type;
   ssize_t len;
 
-  len = _gnutls_recv_inner_application (session, &msg_type, data, sizeofdata);
+  len = _gnutls_recv_inner_application (session, &msg_type,
+					data, sizeofdata);
 
   if (msg_type != GNUTLS_IA_APPLICATION_PAYLOAD)
     {
@@ -480,7 +480,7 @@ _gnutls_ia_client_handshake (gnutls_session_t session)
   char tmp[1024];		/* XXX */
   ssize_t len;
   int ret;
-  const gnutls_ia_client_credentials_t cred =
+  const struct gnutls_ia_client_credentials_st * cred =
     _gnutls_get_cred (session->key, GNUTLS_CRD_IA, NULL);
 
   if (cred == NULL)
@@ -535,7 +535,7 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
   ssize_t len;
   char buf[1024];
   int ret;
-  const gnutls_ia_server_credentials_t cred =
+  const struct gnutls_ia_server_credentials_st * cred =
     _gnutls_get_cred (session->key, GNUTLS_CRD_IA, NULL);
 
   if (cred == NULL)
