@@ -82,7 +82,7 @@ _gnutls_send_inner_application (gnutls_session_t session,
   size_t plen = 0;
   ssize_t len;
 
-  if (data != NULL & sizeofdata != 0)
+  if (data != NULL && sizeofdata != 0)
     {
       plen = sizeofdata + 4;
       p = gnutls_malloc (plen);
