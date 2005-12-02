@@ -149,9 +149,9 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
   gnutls_ia_endphase_send(gnutls_session_t session, int final_p);
 
   extern ssize_t
-  gnutls_ia_send(gnutls_session_t session, char *data, ssize_t datal);
+  gnutls_ia_send(gnutls_session_t session, char *data, size_t datal);
   extern ssize_t
-  gnutls_ia_recv(gnutls_session_t session, char *data, ssize_t datal);
+  gnutls_ia_recv(gnutls_session_t session, char *data, size_t datal);
 
   /* Utility stuff, used after TLS/IA handshake. */
   extern int
