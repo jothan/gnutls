@@ -85,29 +85,46 @@ int client_avp (gnutls_session_t session, void *ptr,
 		const char *last, size_t lastlen,
 		char **new, size_t *newlen)
 {
+  static int iter = 0;
   char *p;
 
-  if (last && lastlen)
-    {
-      size_t i;
-      printf ("client: received %d bytes AVP:\n", lastlen);
-      for (i = 0; i < lastlen; i++)
-	printf ("%02x ", last[i] & 0xFF);
-      printf ("\n");
-    }
+  if (last)
+    printf ("client: received %d bytes AVP: `%.*s'\n",
+	    lastlen, lastlen, last);
   else
     printf ("client: new application phase\n");
 
-  p = readline ("Client TLS/IA AVP: ");
-
-  if (p)
+  switch (iter)
     {
-      *new = gnutls_strdup (p);
-      *newlen = strlen (*new);
-      free (p);
+    case 0:
+      p = "foo";
+      break;
+
+    case 1:
+      p = "";
+      break;
+
+    case 2:
+      p = "bar";
+      break;
+
+    default:
+      p = "baz";
+      iter = -1;
+      break;
     }
-  else
+
+  iter++;
+
+  if (debug)
+    p = readline ("Client TLS/IA AVP: ");
+
+  *new = gnutls_strdup (p);
+  if (!*new)
     return -1;
+  *newlen = strlen (*new);
+
+  printf ("client: sending %d bytes AVP: `%s'\n", *newlen, *new);
 
   gnutls_ia_permute_inner_secret (session, 3, "foo");
 
@@ -151,7 +168,7 @@ client (void)
   gnutls_transport_set_ptr (session, (gnutls_transport_ptr_t) sd);
 
   /* Enable TLS/IA. */
-  gnutls_ia_set_client_avp_function(iacred, client_avp);
+  gnutls_ia_set_client_avp_function (iacred, client_avp);
   gnutls_ia_client_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO);
 
   /* Perform the TLS handshake
@@ -301,30 +318,64 @@ int server_avp (gnutls_session_t session, void *ptr,
 		const char *last, size_t lastlen,
 		char **new, size_t *newlen)
 {
+  static int iter = 0;
   char *p;
 
   if (last && lastlen)
-    {
-      size_t i;
-      printf ("server: received %d bytes AVP:\n", lastlen);
-      for (i = 0; i < lastlen; i++)
-	printf ("%02x ", last[i] & 0xFF);
-      printf ("\n");
-    }
-
-  p = readline ("Server TLS/IA AVP (type '1' to sync, '2' to finish): ");
+    printf ("server: received %d bytes AVP: `%.*s'\n",
+	    lastlen, lastlen, last);
 
   gnutls_ia_permute_inner_secret (session, 3, "foo");
 
+  switch (iter)
+    {
+    case 0:
+      p = "foo";
+      break;
+
+    case 1:
+      p = "bar";
+      break;
+
+    case 2:
+      p = "";
+      break;
+
+    case 3:
+      p = "1";
+      break;
+
+    case 4:
+      p = "foo";
+      break;
+
+    case 5:
+      p = "1";
+      break;
+
+    case 6:
+      p = "foo";
+      break;
+
+    default:
+      p = "2";
+      break;
+    }
+
+  iter++;
+
+  if (debug)
+    p = readline ("Server TLS/IA AVP (type '1' to sync, '2' to finish): ");
+
   if (p && strcmp (p, "1") == 0)
     {
-      puts ("Sending IntermediatePhaseFinished...");
+      puts ("server: Sending IntermediatePhaseFinished...");
       return 1;
     }
 
   if (p && strcmp (p, "2") == 0)
     {
-      puts ("Sending FinalPhaseFinished...");
+      puts ("server: Sending FinalPhaseFinished...");
       return 2;
     }
 
@@ -336,6 +387,8 @@ int server_avp (gnutls_session_t session, void *ptr,
     }
   else
     return -1;
+
+  printf ("server: sending %d bytes AVP: `%s'\n", *newlen, *new);
 
   return 0;
 }
