@@ -25,8 +25,8 @@ LDADD = libexamples.la \
 	../../libextra/libgnutls-extra.la
 
 noinst_PROGRAMS = ex-cert-select ex-client1 ex-client2			\
-	ex-client-resume ex-client-srp ex-crq ex-serv1 ex-serv-anon	\
-	ex-serv-export ex-serv-pgp ex-serv-srp
+	ex-client-resume ex-client-srp ex-client-tlsia ex-crq ex-serv1	\
+	ex-serv-anon ex-serv-export ex-serv-pgp ex-serv-srp
 
 noinst_LTLIBRARIES = libexamples.la
 
