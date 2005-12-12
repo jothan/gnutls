@@ -8,11 +8,6 @@ See the end for copying conditions.
   draft-funk-tls-inner-application-extension-01.  This functionality
   is added to libgnutls-extra, so it is licensed under the GPL.
 - API and ABI modifications:
-  gnutls_ia_client_get,
-  gnutls_ia_client_set,
-  gnutls_ia_server_get,
-  gnutls_ia_server_set: New functions, to enable TLS/IA on a session.
-
   gnutls_ia_handshake: New function, to perform TLS/IA handshake.
 
   gnutls_ia_handshake_p: New function, a predicate to decide whether
@@ -30,6 +25,9 @@ See the end for copying conditions.
   gnutls_ia_get_client_avp_ptr,
   gnutls_ia_set_server_avp_ptr,
   gnutls_ia_get_server_avp_ptr: New functions to handle the AVP callback.
+
+  gnutls_ia_require_inner_phase: New functions, to toggle TLS/IA
+    application phases.
 
   gnutls_ia_permute_inner_secret: New function to mix session keys
     with inner secret.
