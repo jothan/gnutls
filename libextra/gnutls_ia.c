@@ -904,7 +904,6 @@ gnutls_ia_get_server_avp_ptr (gnutls_ia_server_credentials_t cred)
  * the client supports or requested TLS/IA.  A server should thus use
  * gnutls_ia_handshake_p() to decide whether to call
  * gnutls_ia_handshake() or not.
-
  **/
 void
 gnutls_ia_require_inner_phase (gnutls_session_t session, int require)
