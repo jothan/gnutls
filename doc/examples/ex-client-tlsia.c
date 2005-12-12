@@ -63,7 +63,6 @@ main (void)
 
   /* Set TLS/IA stuff
    */
-  gnutls_ia_client_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES);
   gnutls_ia_set_client_avp_function (iacred, client_avp);
 
   /* Initialize TLS session 
@@ -102,9 +101,7 @@ main (void)
 
   if (!gnutls_ia_handshake_p (session))
     {
-      fprintf (stderr, "*** TLS/IA not negotiated (client %d, server %d)...\n",
-	       gnutls_ia_client_get (session),
-	       gnutls_ia_server_get (session));
+      fprintf (stderr, "*** TLS/IA not negotiated...\n");
       goto end;
     }
   else

@@ -59,10 +59,7 @@ _gnutls_inner_application_recv_params (gnutls_session_t session,
       return 0;
     }
 
-  if (session->security_parameters.entity == GNUTLS_SERVER)
-    ext->client_ia_mode = state;
-  else
-    ext->server_ia_mode = state;
+  ext->peer_mode = state;
 
   return 0;
 }
@@ -75,10 +72,6 @@ _gnutls_inner_application_send_params (gnutls_session_t session,
 {
   tls_ext_st *ext = &session->security_parameters.extensions;
 
-  if ((ext->client_ia_mode == GNUTLS_IA_DISABLED) ||
-      (ext->client_ia_mode == GNUTLS_IA_DISABLED))
-    return 0;
-
   if (data_size < 1)
     {
       gnutls_assert ();
@@ -87,37 +80,38 @@ _gnutls_inner_application_send_params (gnutls_session_t session,
 
   if (session->security_parameters.entity == GNUTLS_CLIENT)
     {
+      gnutls_ia_client_credentials_t cred = (gnutls_ia_client_credentials_t)
+	_gnutls_get_cred(session->key, GNUTLS_CRD_IA, NULL);
+
+      if (cred == NULL)
+	return 0;
+
       /* Simple case, just send what the application requested. */
 
-      switch (ext->client_ia_mode)
-	{
-	case GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO:
-	  *data = NO;
-	  break;
-
-	case GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES:
-	  *data = YES;
-	  break;
-
-	default:
-	  gnutls_assert ();
-	  return 0;
-	}
+      if (ext->inner_phase_optional)
+	*data = NO;
+      else
+	*data = YES;
     }
   else
     {
+      gnutls_ia_server_credentials_t cred = (gnutls_ia_server_credentials_t)
+	_gnutls_get_cred(session->key, GNUTLS_CRD_IA, NULL);
+
+      if (cred == NULL)
+	return 0;
+
       /* The server MUST set app_phase_on_resumption to "yes" if the
          client set app_phase_on_resumption to "yes" or if the server
          does not resume the session. */
-
-      if ((ext->client_ia_mode == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES ) ||
-	  session->internals.resumed == RESUME_FALSE)
+      if ((ext->peer_mode == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES) ||
+	  !gnutls_session_is_resumed(session))
 	*data = YES;
       /* The server MAY set app_phase_on_resumption to "yes" for a
 	 resumed session even if the client set
 	 app_phase_on_resumption to "no", as the server may have
 	 reason to proceed with one or more application phases. */
-      else if (ext->server_ia_mode == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES)
+      else if (!ext->inner_phase_optional)
 	*data = YES;
       else
 	*data = NO;

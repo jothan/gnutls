@@ -622,58 +622,22 @@ int
 gnutls_ia_handshake_p (gnutls_session_t session)
 {
   tls_ext_st *ext = &session->security_parameters.extensions;
-  gnutls_ia_mode_t clienttlsia = ext->client_ia_mode;
-  gnutls_ia_mode_t servertlsia = ext->server_ia_mode;
 
-  if (session->security_parameters.entity == GNUTLS_SERVER)
-    {
-      /* The application doesn't want TLS/IA. */
-      if (servertlsia == GNUTLS_IA_DISABLED)
-	return 0;
+  /* The other side didn't advertise TLS/IA. */
+  if (ext->peer_mode == GNUTLS_IA_DISABLED)
+    return 0;
 
-      /* The client didn't support TLS/IA. */
-      if (clienttlsia == GNUTLS_IA_DISABLED)
-	return 0;
+  /* We don't consider the inner phase optional. */
+  if (!ext->inner_phase_optional)
+    return 1;
 
-      /* The client support TLS/IA, and the server application want an
-	 Inner Application phase. */
-      if (servertlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES)
-	return 1;
+  /* This is not a resumed session. always require an inner
+     application. */
+  if (!gnutls_session_is_resumed (session))
+    return 1;
 
-      /* This is not a resumed session, always require an inner
-	 application. */
-      if (!gnutls_session_is_resumed (session))
-	return 1;
-
-      /* The client support TLS/IA, this is a resumed session, and the
-	 server application has permitted the client to decide. */
-      return clienttlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES;
-    }
-  else
-    {
-      /* The server didn't support TLS/IA. */
-      if (servertlsia == GNUTLS_IA_DISABLED)
-	return 0;
-
-      /* Don't trick client into starting TLS/IA handshake if it
-	 didn't request it.  Buggy server. */
-      if (clienttlsia == GNUTLS_IA_DISABLED)
-	return 0;
-
-      /* This is not a resumed session, always require an inner
-	 application. */
-      if (!gnutls_session_is_resumed (session))
-	return 1;
-
-      /* The session is resumed, so if the server wants an inner
-	 phase, let it. */
-      if (servertlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES)
-	return 1;
-
-      /* The session is resumed, and we support TLS/IA, the server
-	 doesn't need an inner phase, so we decide. */
-      return clienttlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES;
-    }
+  /* Require an inner phase if the other end requested it. */
+  return ext->peer_mode == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES;
 }
 
 /**
@@ -704,6 +668,11 @@ gnutls_ia_handshake (gnutls_session_t session)
  *
  * This structure is complex enough to manipulate directly thus this
  * helper function is provided in order to allocate it.
+ *
+ * Adding this credential to a session will enable TLS/IA, and will
+ * require an Application Phase after the TLS handshake (if the server
+ * support TLS/IA).  Use gnutls_ia_require_inner_phase() to toggle the
+ * TLS/IA mode.
  *
  * Returns 0 on success.
  **/
@@ -808,6 +777,11 @@ gnutls_ia_get_client_avp_ptr (gnutls_ia_client_credentials_t cred)
  *
  * This structure is complex enough to manipulate directly thus this
  * helper function is provided in order to allocate it.
+ *
+ * Adding this credential to a session will enable TLS/IA, and will
+ * require an Application Phase after the TLS handshake (if the client
+ * support TLS/IA).  Use gnutls_ia_require_inner_phase() to toggle the
+ * TLS/IA mode.
  *
  * Returns 0 on success.
  **/
@@ -914,128 +888,30 @@ gnutls_ia_get_server_avp_ptr (gnutls_ia_server_credentials_t cred)
 }
 
 /**
- * gnutls_ia_client_get - Get Client TLS/IA preference
+ * gnutls_ia_require_inner_phase - Set if a TLS/IA inner phase is required
  * @session: is a #gnutls_session_t structure.
+ * @require: non-zero if an inner application phase should be required.
  *
- * For a client, this function return the value set by the application
- * itself with gnutls_ia_client_set() earlier.  If that function has
- * not been invoked, TLS/IA is disabled, and %GNUTLS_IA_DISABLED is
- * returned.
+ * Specify whether a TLS/IA Inner Application Phase will be required
+ * or not.  If the TLS session is resumed, it is possibly to optimize
+ * away the inner application phase by calling this function and
+ * specify a zero value for @require.
  *
- * For a server, after a successful call to gnutls_handshake(), this
- * will contain the client's TLS/IA preference.  A return value of
- * %GNUTLS_IA_DISABLED then means that the client did not support
- * TLS/IA.  A return value of %GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO
- * means that the client did not request an Inner Application phase if
- * the session is resumed.  If %GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES
- * is returned, the client requested an Inner Application phase
- * regardless of whether the session is resumed or not.
+ * For this function to have any effect, it must be called before
+ * gnutls_handshake().
  *
- * Note that the server should not use this function to decide whether
- * to invoke gnutls_ia_handshake(), instead use
- * gnutls_ia_handshake_p().  This return value only indicate the
- * client's preference, which may not be what the server wants to
- * follow.
- *
- * Returns: a #gnutls_ia_mode_t indicating client TLS/IA preference.
- **/
-gnutls_ia_mode_t
-gnutls_ia_client_get (gnutls_session_t session)
-{
-  return session->security_parameters.extensions.client_ia_mode;
-}
-
-/**
- * gnutls_ia_client_set - Request TLS/IA support from server
- * @session: is a #gnutls_session_t structure.
- * @state: a #gnutls_ia_mode_t value to indicate requested TLS/IA client mode.
- *
- * Set the TLS/IA mode that will be requested by the client in the TLS
- * handshake.  For this function to have any effect, it must be called
- * before gnutls_handshake().  This function does nothing if called in
- * a server.
- *
- * A @state value %GNUTLS_IA_DISABLED means that the client do not
- * wish to use TLS/IA (the default).
- * %GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO means that the client request
- * TLS/IA, and that if the TLS session is resumed, that there is no
- * Inner Application phase.  %GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES
- * means that the client request TLS/IA, and that if the TLS session
- * is resumed, there is an Inner Application phase.
- *
- * Note that the client has to check whether the server supported
- * TLS/IA before invoking gnutls_ia_handshake().  Specifically, the
- * client should use gnutls_ia_handshake_p(), after gnutls_handshake()
- * has finished, to decide whether to call gnutls_ia_handshake() or
- * not.
- **/
-void
-gnutls_ia_client_set (gnutls_session_t session, gnutls_ia_mode_t state)
-{
-  if (session->security_parameters.entity == GNUTLS_CLIENT)
-    session->security_parameters.extensions.client_ia_mode = state;
-}
-
-/**
- * gnutls_ia_server_get - Get Server TLS/IA preference
- * @session: is a #gnutls_session_t structure.
- *
- * For a server, this function return the value set by the application
- * itself with gnutls_ia_server_set() earlier.  If that function has
- * not been invoked, TLS/IA is disabled, and %GNUTLS_IA_DISABLED is
- * returned.
- *
- * For a client, after a successful call to gnutls_handshake(), this
- * will contain the server's TLS/IA preference.  A return value of
- * %GNUTLS_IA_DISABLED then means that the server did not support
- * TLS/IA, and the client cannot proceed with the
- * gnutls_ia_handshake().  The client may abort the session at that
- * point, if TLS/IA is required.  A return value of
- * %GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO means that TLS/IA is
- * supported by the server, and if the session is resumed, there will
- * be no Inner Application phase.  If
- * %GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES is returned, an Inner
- * Application phase is required.
- *
- * Note that clients is recommended to use gnutls_ia_handshake_p() to
- * decide whether to call gnutls_ia_handshake() or not.
- *
- * Returns: a #gnutls_ia_mode_t indicating server TLS/IA preference.
- **/
-gnutls_ia_mode_t
-gnutls_ia_server_get (gnutls_session_t session)
-{
-  return session->security_parameters.extensions.server_ia_mode;
-}
-
-/**
- * gnutls_ia_server_set - Indicate that server support TLS/IA
- * @session: is a #gnutls_session_t structure.
- * @state: a #gnutls_ia_mode_t value to indicate requested TLS/IA server mode.
- *
- * Call this function to decide which TLS/IA mode the server should
- * operate in.  This function does nothing if called in a client.
- * TLS/IA will only be enabled if the client requests this.
- *
- * A value of %GNUTLS_IA_DISABLED means that TLS/IA should be disabled
- * regardless of what the client requests (the default).  A value of
- * %GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO means that the server support
- * TLS/IA, and further that if the session is resumed, and if the
- * client did not request an Inner Application phase (i.e., the client
- * has set the AppPhaseOnResumption flag to no), then the server will
- * not require an Inner Application phase.  A value of
- * %GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES means that if the client
- * requests TLS/IA, the server will always require an Inner
- * Application phase, even if the session is resumed.
- *
- * Whether to start the TLS/IA handshake depend on whether the client
- * supports or requested TLS/IA.  A server should thus use
+ * Whether to invoke the TLS/IA handshake will also depend on whether
+ * the client supports or requested TLS/IA.  A server should thus use
  * gnutls_ia_handshake_p() to decide whether to call
  * gnutls_ia_handshake() or not.
+
  **/
 void
-gnutls_ia_server_set (gnutls_session_t session, gnutls_ia_mode_t state)
+gnutls_ia_require_inner_phase (gnutls_session_t session, int require)
 {
-  if (session->security_parameters.entity == GNUTLS_SERVER)
-    session->security_parameters.extensions.server_ia_mode = state;
+  /* XXX. This function should ideally take a TLS/IA credential, but
+     we can't do that, since we don't want the LGPL'd
+     lib/ext_inner_applicaiton.c to call/inspect GPL'd
+     functions/structures. */
+  session->security_parameters.extensions.inner_phase_optional = !require;
 }

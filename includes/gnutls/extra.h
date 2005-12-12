@@ -129,14 +129,6 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
   extern void *
   gnutls_ia_get_server_avp_ptr (gnutls_ia_server_credentials_t cred);
 
-  /* Set and extract TLS/IA mode. */
-  extern gnutls_ia_mode_t gnutls_ia_client_get (gnutls_session_t session);
-  extern void gnutls_ia_client_set(gnutls_session_t session,
-				   gnutls_ia_mode_t state);
-  extern gnutls_ia_mode_t gnutls_ia_server_get (gnutls_session_t session);
-  extern void gnutls_ia_server_set(gnutls_session_t session,
-				   gnutls_ia_mode_t state);
-
   /* TLS/IA handshake. */
   extern int gnutls_ia_handshake_p (gnutls_session_t session);
 
@@ -163,6 +155,10 @@ int gnutls_certificate_set_openpgp_keyring_file( gnutls_certificate_credentials_
   extern void
   gnutls_ia_extract_inner_secret (gnutls_session_t session,
 				  char *buffer);
+
+  /* Toggle whether inner phases are required. */
+  extern void
+  gnutls_ia_require_inner_phase (gnutls_session_t session, int require);
 
 /* Global stuff
  */
