@@ -171,7 +171,6 @@ client (void)
 
   /* Enable TLS/IA. */
   gnutls_ia_set_client_avp_function (iacred, client_avp);
-  gnutls_ia_client_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO);
 
   /* Perform the TLS handshake
    */
@@ -196,12 +195,10 @@ client (void)
   */
 
   if (!gnutls_ia_handshake_p (session))
-    fail ("client: No TLS/IA negotiation (client %d, server %d)\n",
-	  gnutls_ia_client_get (session), gnutls_ia_server_get (session));
+    fail ("client: No TLS/IA negotiation\n");
   else
     {
-      success ("client: TLS/IA handshake (client %d, server %d)\n",
-	       gnutls_ia_client_get (session), gnutls_ia_server_get (session));
+      success ("client: TLS/IA handshake\n");
 
       ret = gnutls_ia_handshake (session);
 
@@ -374,13 +371,13 @@ int server_avp (gnutls_session_t session, void *ptr,
 
   if (strcmp (p, "1") == 0)
     {
-      puts ("server: Sending IntermediatePhaseFinished...");
+      success ("server: Sending IntermediatePhaseFinished...\n");
       return 1;
     }
 
   if (strcmp (p, "2") == 0)
     {
-      puts ("server: Sending FinalPhaseFinished...");
+      success ("server: Sending FinalPhaseFinished...\n");
       return 2;
     }
 
@@ -443,7 +440,7 @@ server_start (void)
       return;
     }
 
-  success ("server: ready. Listening to port '%d'.\n", PORT);
+  success ("server: ready. Listening to port '%d'\n", PORT);
 }
 
 void
@@ -464,7 +461,6 @@ server (void)
   /* Enable TLS/IA. */
   gnutls_credentials_set (session, GNUTLS_CRD_IA, iacred);
   gnutls_ia_set_server_avp_function (iacred, server_avp);
-  gnutls_ia_server_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES);
 
   ret = gnutls_handshake (session);
   if (ret < 0)
@@ -477,12 +473,10 @@ server (void)
   success ("server: Handshake was completed\n");
 
   if (!gnutls_ia_handshake_p (session))
-    fail ("server: No TLS/IA negotiation (client %d, server %d)\n",
-	  gnutls_ia_client_get (session), gnutls_ia_server_get (session));
+    fail ("server: No TLS/IA negotiation\n");
   else
     {
-      success ("server: TLS/IA handshake (client %d, server %d)\n",
-	       gnutls_ia_client_get (session), gnutls_ia_server_get (session));
+      success ("server: TLS/IA handshake\n");
 
       ret = gnutls_ia_handshake (session);
 

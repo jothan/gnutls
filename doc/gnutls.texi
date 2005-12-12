@@ -2454,7 +2454,6 @@ int main ()
   gnutls_ia_allocate_client_credentials(&iacred);
   gnutls_ia_set_client_avp_function(iacred, client_avp);
   gnutls_credentials_set (session, GNUTLS_CRD_IA, iacred);
-  gnutls_ia_client_set (session, GNUTLS_IA_APP_PHASE_ON_RESUMPTION_NO);
 ...
   ret = gnutls_handshake (session);
   // Error handling...
