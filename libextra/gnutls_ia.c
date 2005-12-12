@@ -609,6 +609,74 @@ _gnutls_ia_server_handshake (gnutls_session_t session)
 }
 
 /**
+ * gnutls_ia_handshake_p:
+ * @session: is a #gnutls_session_t structure.
+ *
+ * Predicate to be used after gnutls_handshake() to decide whether to
+ * invoke gnutls_ia_handshake().  Usable by both clients and servers.
+ *
+ * Return value: non-zero if TLS/IA handshake is expected, zero
+ *   otherwise.
+ **/
+int
+gnutls_ia_handshake_p (gnutls_session_t session)
+{
+  tls_ext_st *ext = &session->security_parameters.extensions;
+  gnutls_ia_mode_t clienttlsia = ext->client_ia_mode;
+  gnutls_ia_mode_t servertlsia = ext->server_ia_mode;
+
+  if (session->security_parameters.entity == GNUTLS_SERVER)
+    {
+      /* The application doesn't want TLS/IA. */
+      if (servertlsia == GNUTLS_IA_DISABLED)
+	return 0;
+
+      /* The client didn't support TLS/IA. */
+      if (clienttlsia == GNUTLS_IA_DISABLED)
+	return 0;
+
+      /* The client support TLS/IA, and the server application want an
+	 Inner Application phase. */
+      if (servertlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES)
+	return 1;
+
+      /* This is not a resumed session, always require an inner
+	 application. */
+      if (!gnutls_session_is_resumed (session))
+	return 1;
+
+      /* The client support TLS/IA, this is a resumed session, and the
+	 server application has permitted the client to decide. */
+      return clienttlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES;
+    }
+  else
+    {
+      /* The server didn't support TLS/IA. */
+      if (servertlsia == GNUTLS_IA_DISABLED)
+	return 0;
+
+      /* Don't trick client into starting TLS/IA handshake if it
+	 didn't request it.  Buggy server. */
+      if (clienttlsia == GNUTLS_IA_DISABLED)
+	return 0;
+
+      /* This is not a resumed session, always require an inner
+	 application. */
+      if (!gnutls_session_is_resumed (session))
+	return 1;
+
+      /* The session is resumed, so if the server wants an inner
+	 phase, let it. */
+      if (servertlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES)
+	return 1;
+
+      /* The session is resumed, and we support TLS/IA, the server
+	 doesn't need an inner phase, so we decide. */
+      return clienttlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES;
+    }
+}
+
+/**
  * gnutls_ia_handshake:
  * @session: is a #gnutls_session_t structure.
  *
@@ -660,40 +728,6 @@ gnutls_ia_allocate_client_credentials (gnutls_ia_client_credentials_t * sc)
  **/
 void
 gnutls_ia_free_client_credentials (gnutls_ia_client_credentials_t sc)
-{
-  gnutls_free (sc);
-}
-
-/**
- * gnutls_ia_allocate_server_credentials - Used to allocate an gnutls_ia_server_credentials_t structure
- * @sc: is a pointer to an #gnutls_ia_server_credentials_t structure.
- *
- * This structure is complex enough to manipulate directly thus this
- * helper function is provided in order to allocate it.
- *
- * Returns 0 on success.
- **/
-int
-gnutls_ia_allocate_server_credentials (gnutls_ia_server_credentials_t * sc)
-{
-  *sc = gnutls_calloc (1, sizeof (**sc));
-
-  if (*sc == NULL)
-    return GNUTLS_E_MEMORY_ERROR;
-
-  return 0;
-}
-
-/**
- * gnutls_ia_free_server_credentials - Used to free an allocated #gnutls_ia_server_credentials_t structure
- * @sc: is an #gnutls_ia_server_credentials_t structure.
- *
- * This structure is complex enough to manipulate directly thus this
- * helper function is provided in order to free (deallocate) it.
- *
- **/
-void
-gnutls_ia_free_server_credentials (gnutls_ia_server_credentials_t sc)
 {
   gnutls_free (sc);
 }
@@ -766,6 +800,40 @@ void *
 gnutls_ia_get_client_avp_ptr (gnutls_ia_client_credentials_t cred)
 {
   return cred->avp_ptr;
+}
+
+/**
+ * gnutls_ia_allocate_server_credentials - Used to allocate an gnutls_ia_server_credentials_t structure
+ * @sc: is a pointer to an #gnutls_ia_server_credentials_t structure.
+ *
+ * This structure is complex enough to manipulate directly thus this
+ * helper function is provided in order to allocate it.
+ *
+ * Returns 0 on success.
+ **/
+int
+gnutls_ia_allocate_server_credentials (gnutls_ia_server_credentials_t * sc)
+{
+  *sc = gnutls_calloc (1, sizeof (**sc));
+
+  if (*sc == NULL)
+    return GNUTLS_E_MEMORY_ERROR;
+
+  return 0;
+}
+
+/**
+ * gnutls_ia_free_server_credentials - Used to free an allocated #gnutls_ia_server_credentials_t structure
+ * @sc: is an #gnutls_ia_server_credentials_t structure.
+ *
+ * This structure is complex enough to manipulate directly thus this
+ * helper function is provided in order to free (deallocate) it.
+ *
+ **/
+void
+gnutls_ia_free_server_credentials (gnutls_ia_server_credentials_t sc)
+{
+  gnutls_free (sc);
 }
 
 /**
@@ -970,72 +1038,4 @@ gnutls_ia_server_set (gnutls_session_t session, gnutls_ia_mode_t state)
 {
   if (session->security_parameters.entity == GNUTLS_SERVER)
     session->security_parameters.extensions.server_ia_mode = state;
-}
-
-/**
- * gnutls_ia_handshake_p:
- * @session: is a #gnutls_session_t structure.
- *
- * Predicate to be used after gnutls_handshake() to decide whether to
- * invoke gnutls_ia_handshake().  Usable by both clients and servers.
- *
- * Return value: non-zero if TLS/IA handshake is expected, zero
- *   otherwise.
- **/
-int
-gnutls_ia_handshake_p (gnutls_session_t session)
-{
-  tls_ext_st *ext = &session->security_parameters.extensions;
-  gnutls_ia_mode_t clienttlsia = ext->client_ia_mode;
-  gnutls_ia_mode_t servertlsia = ext->server_ia_mode;
-
-  if (session->security_parameters.entity == GNUTLS_SERVER)
-    {
-      /* The application doesn't want TLS/IA. */
-      if (servertlsia == GNUTLS_IA_DISABLED)
-	return 0;
-
-      /* The client didn't support TLS/IA. */
-      if (clienttlsia == GNUTLS_IA_DISABLED)
-	return 0;
-
-      /* The client support TLS/IA, and the server application want an
-         Inner Application phase. */
-      if (servertlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES)
-	return 1;
-
-      /* This is not a resumed session, always require an inner
-         application. */
-      if (!gnutls_session_is_resumed (session))
-	return 1;
-
-      /* The client support TLS/IA, this is a resumed session, and the
-         server application has permitted the client to decide. */
-      return clienttlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES;
-    }
-  else
-    {
-      /* The server didn't support TLS/IA. */
-      if (servertlsia == GNUTLS_IA_DISABLED)
-	return 0;
-
-      /* Don't trick client into starting TLS/IA handshake if it
-         didn't request it.  Buggy server. */
-      if (clienttlsia == GNUTLS_IA_DISABLED)
-	return 0;
-
-      /* This is not a resumed session, always require an inner
-         application. */
-      if (!gnutls_session_is_resumed (session))
-	return 1;
-
-      /* The session is resumed, so if the server wants an inner
-	 phase, let it. */
-      if (servertlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES)
-	return 1;
-
-      /* The session is resumed, and we support TLS/IA, the server
-	 doesn't need an inner phase, so we decide. */
-      return clienttlsia == GNUTLS_IA_APP_PHASE_ON_RESUMPTION_YES;
-    }
 }
