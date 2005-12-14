@@ -33,26 +33,20 @@ ChangeLog:
 	cvs2cl --tags --utc --fsf --FSF --usermap .cvsusers -I ChangeLog -I .cvs
 	cat .cvscopying >> ChangeLog
 
-tag = $(PACKAGE)_`echo $(VERSION) | sed 's/\./_/g'`
 htmldir = ../www-$(PACKAGE)
 
 release:
-	if cvs upd -p -r $(tag) NEWS > /dev/null; then false else true; fi
-	cvs rtag $(tag) gnutls
 	rm -f ChangeLog
 	make ChangeLog
 	cvs commit -m "" ChangeLog
-	cvs rtag -F $(tag) gnutls
 	make dist
 	gpg -b $(distdir).tar.bz2
 	gpg --verify $(distdir).tar.bz2.sig
-	scp $(distdir).tar.bz2{,.sig} igloo.linux.gr:~ftp/pub/gnutls/
-	ssh igloo.linux.gr 'cd ~ftp/pub/gnutls/ && md5sum *.tar.gz *.tar.bz2 > CHECKSUMS'
-	cd doc && ./gendocs.sh -o ../$(htmldir)/manual/ $(PACKAGE) "GNU TLS"
+	scp $(distdir).tar.bz2{,.sig} igloo.linux.gr:~ftp/pub/gnutls/devel/
+	ssh igloo.linux.gr 'cd ~ftp/pub/gnutls/devel/ && sha1sum *.tar.gz *.tar.bz2 > CHECKSUMS'
 	cp -v $(distdir).tar.bz2{,.sig} $(htmldir)/releases/
-	cp -v doc/reference/html/*.{html,png,css,devhelp} $(htmldir)/reference/
 	cd $(htmldir) && cvs add -kb releases/$(distdir).tar.bz2{,.sig} && \
-		cvs commit -m "Update." manual/ reference/ releases/
+		cvs commit -m "Update." releases/
 
 indent:
 	indent -i4 -kr `ls {lib,lib/x509,libextra,libextra/openpgp,src}/*.{c,h} | grep -v -- -gaa`
