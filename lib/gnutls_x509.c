@@ -1291,8 +1291,7 @@ int gnutls_certificate_set_x509_trust_mem(gnutls_certificate_credentials_t
 }
 
 /**
-  * gnutls_certificate_set_x509_trust
- - Used to add trusted CAs in a gnutls_certificate_credentials_t structure
+  * gnutls_certificate_set_x509_trust - Used to add trusted CAs in a gnutls_certificate_credentials_t structure
   * @res: is an #gnutls_certificate_credentials_t structure.
   * @ca_list: is a list of trusted CAs
   * @ca_list_size: holds the size of the CA list
