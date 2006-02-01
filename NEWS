@@ -8,6 +8,14 @@ See the end for copying conditions.
   Otto Maddox <ottomaddox@fastmail.fm> and Nozomu Ando <nand@mac.com>.
 - Corrected a bug in certtool for 64 bit machines. Reported
   by Max Kellermann <max@duempel.org>.
+- Corrected bugs in gnutls_certificate_set_x509_crl() and
+   gnutls_certificate_set_x509_trust(), that caused memory corruption if
+   more than one certificates were added. Report and patch by Max Kellermann.
+- Fixed bug in non-blocking gnutls_bye(). gnutls_record_send() will no 
+   longer invalidate a session if the underlying send fails, but it will 
+   prevent future writes. That is to allow reading the already received data.
+   Patches and bug reports by Yoann Vandoorselaere <yoann@prelude-ids.org>
+
 
 * Version 1.2.9 (2005-11-07)
 - Documentation was updated and improved.
