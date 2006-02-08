@@ -6,6 +6,8 @@ See the end for copying conditions.
 * Version 1.2.10
 - Fix read out bounds bug in DER parser.  Reported by Evgeny Legerov
   <admin@gleg.net>, and debugging help from Protover SSL.
+- Libtasn1 0.2.18 is now required (contains the previous bug fix).
+  The included version has been updated too.
 - Fix gnutls-cli STARTTLS hang when SIGINT is sent too quickly, thanks to
   Otto Maddox <ottomaddox@fastmail.fm> and Nozomu Ando <nand@mac.com>.
 - Corrected a bug in certtool for 64 bit machines. Reported
