@@ -1,9 +1,11 @@
 GNU TLS NEWS -- History of user-visible changes.                -*- outline -*-
-Copyright (C) 2004, 2005 Simon Josefsson
+Copyright (C) 2004, 2005, 2006 Simon Josefsson
 Copyright (C) 2000, 2001, 2002, 2003, 2004 Nikos Mavroyanopoulos
 See the end for copying conditions.
 
 * Version 1.2.10
+- Fix read out bounds bug in DER parser.  Reported by Evgeny Legerov
+  <admin@gleg.net>, and debugging help from Protover SSL.
 - Fix gnutls-cli STARTTLS hang when SIGINT is sent too quickly, thanks to
   Otto Maddox <ottomaddox@fastmail.fm> and Nozomu Ando <nand@mac.com>.
 - Corrected a bug in certtool for 64 bit machines. Reported
@@ -15,7 +17,6 @@ See the end for copying conditions.
   longer invalidate a session if the underlying send fails, but it will 
   prevent future writes. That is to allow reading the already received data.
   Patches and bug reports by Yoann Vandoorselaere <yoann@prelude-ids.org>
-
 
 * Version 1.2.9 (2005-11-07)
 - Documentation was updated and improved.
