@@ -1,6 +1,6 @@
 /*
+ *      Copyright (C) 2004, 2005, 2006 Free Software Foundation
  *      Copyright (C) 2002 Fabio Fiorina
- *      Copyright (C) 2004, 2005 Simon Josefsson
  *
  * This file is part of LIBTASN1.
  *
@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 
-#define LIBTASN1_VERSION "0.2.17"
+#define LIBTASN1_VERSION "0.2.18"
 
 #include <sys/types.h>
 #include <time.h>
@@ -108,6 +108,7 @@ typedef struct node_asn_struct{
   char *name;                    /* Node name */
   unsigned int type;             /* Node type */
   unsigned char *value;          /* Node value */
+  int value_len;
   struct node_asn_struct *down;  /* Pointer to the son node */
   struct node_asn_struct *right; /* Pointer to the brother node */
   struct node_asn_struct *left;  /* Pointer to the next list element */ 
