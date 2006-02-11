@@ -300,7 +300,7 @@ _asn1_objectid_der(unsigned char *str,unsigned char *der,int *der_len)
 }
 
 
-const char bit_mask[]={0xFF,0xFE,0xFC,0xF8,0xF0,0xE0,0xC0,0x80};
+char bit_mask[]={0xFF,0xFE,0xFC,0xF8,0xF0,0xE0,0xC0,0x80};
 
 /******************************************************/
 /* Function : _asn1_bit_der                           */

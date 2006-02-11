@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef LIBTASN1_H
-# define LIBTASN1_H
+#ifndef LIBASN1_H
+# define LIBASN1_H
 
 #include <stdio.h> /* for FILE* */
 
@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 
-#define LIBTASN1_VERSION "0.2.18"
+#define LIBTASN1_VERSION "0.2.17"
 
 #include <sys/types.h>
 #include <time.h>
@@ -42,10 +42,10 @@ extern "C" {
                                         /* (null character included)    */
 
 
-typedef int asn1_retCode;  /* type returned by libtasn1 functions */
+typedef int asn1_retCode;  /* type returned by libasn1 functions */
 
   /*****************************************/
-  /*  Errors returned by libtasn1 functions */
+  /*  Errors returned by libasn1 functions */
   /*****************************************/
 #define ASN1_SUCCESS               0
 #define ASN1_FILE_NOT_FOUND        1
@@ -197,4 +197,4 @@ void libtasn1_perror(asn1_retCode error);
 }
 #endif
 
-#endif /* LIBTASN1_H */
+#endif /* LIBASN1_H */
