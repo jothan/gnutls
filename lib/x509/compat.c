@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2002, 2003, 2004, 2005 Free Software Foundation
+ * Copyright (C) 2002, 2003, 2004, 2005, 2006 Free Software Foundation
  *
  * Author: Nikos Mavroyanopoulos
  *
@@ -38,28 +38,27 @@
   * Returns a (time_t) -1 in case of an error.
   *
   -*/
-time_t
-_gnutls_x509_get_raw_crt_activation_time (const gnutls_datum_t * cert)
+time_t _gnutls_x509_get_raw_crt_activation_time(const gnutls_datum_t *
+						cert)
 {
-  gnutls_x509_crt_t xcert;
-  time_t result;
+    gnutls_x509_crt_t xcert;
+    time_t result;
 
-  result = gnutls_x509_crt_init (&xcert);
-  if (result < 0)
-    return result;
+    result = gnutls_x509_crt_init(&xcert);
+    if (result < 0)
+      return (time_t) -1;
 
-  result = gnutls_x509_crt_import (xcert, cert, GNUTLS_X509_FMT_DER);
-  if (result < 0)
-    {
-      gnutls_x509_crt_deinit (xcert);
-      return result;
+    result = gnutls_x509_crt_import(xcert, cert, GNUTLS_X509_FMT_DER);
+    if (result < 0) {
+	gnutls_x509_crt_deinit(xcert);
+	return (time_t) -1;
     }
 
-  result = gnutls_x509_crt_get_activation_time (xcert);
+    result = gnutls_x509_crt_get_activation_time(xcert);
 
-  gnutls_x509_crt_deinit (xcert);
+    gnutls_x509_crt_deinit(xcert);
 
-  return result;
+    return result;
 }
 
 /*-
@@ -71,26 +70,25 @@ _gnutls_x509_get_raw_crt_activation_time (const gnutls_datum_t * cert)
   * Returns a (time_t) -1 in case of an error.
   *
   -*/
-time_t
-_gnutls_x509_get_raw_crt_expiration_time (const gnutls_datum_t * cert)
+time_t _gnutls_x509_get_raw_crt_expiration_time(const gnutls_datum_t *
+						cert)
 {
-  gnutls_x509_crt_t xcert;
-  time_t result;
+    gnutls_x509_crt_t xcert;
+    time_t result;
 
-  result = gnutls_x509_crt_init (&xcert);
-  if (result < 0)
-    return result;
+    result = gnutls_x509_crt_init(&xcert);
+    if (result < 0)
+      return (time_t) -1;
 
-  result = gnutls_x509_crt_import (xcert, cert, GNUTLS_X509_FMT_DER);
-  if (result < 0)
-    {
-      gnutls_x509_crt_deinit (xcert);
-      return result;
+    result = gnutls_x509_crt_import(xcert, cert, GNUTLS_X509_FMT_DER);
+    if (result < 0) {
+	gnutls_x509_crt_deinit(xcert);
+	return (time_t) -1;
     }
 
-  result = gnutls_x509_crt_get_expiration_time (xcert);
+    result = gnutls_x509_crt_get_expiration_time(xcert);
 
-  gnutls_x509_crt_deinit (xcert);
+    gnutls_x509_crt_deinit(xcert);
 
-  return result;
+    return result;
 }
