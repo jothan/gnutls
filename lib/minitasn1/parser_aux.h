@@ -47,8 +47,6 @@ char * _asn1_ltostr(long v,char *str);
 
 node_asn * _asn1_find_up(node_asn *node);
 
-node_asn * _asn1_find_node(node_asn *pointer,const char *name);
-
 asn1_retCode _asn1_change_integer_value(ASN1_TYPE node);
 
 asn1_retCode _asn1_expand_object_id(ASN1_TYPE node);

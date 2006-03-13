@@ -30,7 +30,6 @@
 #include <int.h>
 #include <errors.h>
 #include "parser_aux.h"
-#include "der.h"
 #include <gstr.h>
 #include "structure.h"
 
@@ -269,7 +268,7 @@ asn1_write_value(ASN1_TYPE node_root,const char *name,
   int len2,k,k2,negative;
   const unsigned char* value = ivalue;
 
-  node=_asn1_find_node(node_root,name);
+  node=asn1_find_node(node_root,name);
   if(node==NULL) return  ASN1_ELEMENT_NOT_FOUND;
 
   if((node->type & CONST_OPTION) && (value==NULL) && (len==0)){
@@ -355,11 +354,11 @@ asn1_write_value(ASN1_TYPE node_root,const char *name,
     if((negative && !(value_temp[k]&0x80)) ||
        (!negative && (value_temp[k]&0x80))) k--; 
 
-    _asn1_length_der(len-k,NULL,&len2);
+    asn1_length_der(len-k,NULL,&len2);
     temp=(unsigned char *)_asn1_alloca(len-k+len2);
     if (temp==NULL) return ASN1_MEM_ALLOC_ERROR;
 
-    _asn1_octet_der(value_temp+k,len-k,temp,&len2);
+    asn1_octet_der(value_temp+k,len-k,temp,&len2);
     _asn1_set_value(node,temp,len2);
 
     _asn1_afree(temp);
@@ -455,33 +454,33 @@ asn1_write_value(ASN1_TYPE node_root,const char *name,
   case  TYPE_OCTET_STRING:
     if(len==0)
       len=strlen(value);
-    _asn1_length_der(len,NULL,&len2);
+    asn1_length_der(len,NULL,&len2);
     temp=(unsigned char *)_asn1_alloca(len+len2);
     if (temp==NULL) return ASN1_MEM_ALLOC_ERROR;
 
-    _asn1_octet_der(value,len,temp,&len2);
+    asn1_octet_der(value,len,temp,&len2);
     _asn1_set_value(node,temp,len2);
     _asn1_afree(temp);
     break;
   case  TYPE_GENERALSTRING:
     if(len==0)
       len=strlen(value);
-    _asn1_length_der(len,NULL,&len2);
+    asn1_length_der(len,NULL,&len2);
     temp=(unsigned char *)_asn1_alloca(len+len2);
     if (temp==NULL) return ASN1_MEM_ALLOC_ERROR;
 
-    _asn1_octet_der(value,len,temp,&len2);
+    asn1_octet_der(value,len,temp,&len2);
     _asn1_set_value(node,temp,len2);
     _asn1_afree(temp);
     break;
   case  TYPE_BIT_STRING:
     if(len==0)
       len=strlen(value);
-    _asn1_length_der((len>>3)+2,NULL,&len2);
+    asn1_length_der((len>>3)+2,NULL,&len2);
     temp=(unsigned char *)_asn1_alloca((len>>3)+2+len2);
     if (temp==NULL) return ASN1_MEM_ALLOC_ERROR;
 
-    _asn1_bit_der(value,len,temp,&len2);
+    asn1_bit_der(value,len,temp,&len2);
     _asn1_set_value(node,temp,len2);
     _asn1_afree(temp);
     break;
@@ -501,11 +500,11 @@ asn1_write_value(ASN1_TYPE node_root,const char *name,
     if(!p) return ASN1_ELEMENT_NOT_FOUND;
     break;
   case TYPE_ANY:
-    _asn1_length_der(len,NULL,&len2);
+    asn1_length_der(len,NULL,&len2);
     temp=(unsigned char *)_asn1_alloca(len+len2);
     if (temp==NULL) return ASN1_MEM_ALLOC_ERROR;
 
-    _asn1_octet_der(value,len,temp,&len2);
+    asn1_octet_der(value,len,temp,&len2);
     _asn1_set_value(node,temp,len2);
     _asn1_afree(temp);
     break;
@@ -622,7 +621,7 @@ asn1_read_value(ASN1_TYPE root,const char *name,void* ivalue, int *len)
   int value_size = *len;
   unsigned char* value = ivalue;
 
-  node=_asn1_find_node(root,name);
+  node=asn1_find_node(root,name);
   if(node==NULL) return  ASN1_ELEMENT_NOT_FOUND;
 
   if((type_field(node->type)!=TYPE_NULL) && 
@@ -678,7 +677,7 @@ asn1_read_value(ASN1_TYPE root,const char *name,void* ivalue, int *len)
     }
     else{
       len2=-1;
-      if (_asn1_get_octet_der(node->value,node->value_len,&len2,value, value_size, len)!=ASN1_SUCCESS) return ASN1_MEM_ERROR;
+      if (asn1_get_octet_der(node->value,node->value_len,&len2,value, value_size, len)!=ASN1_SUCCESS) return ASN1_MEM_ERROR;
     }
     break;
   case TYPE_OBJECT_ID:
@@ -710,22 +709,22 @@ asn1_read_value(ASN1_TYPE root,const char *name,void* ivalue, int *len)
     break;
   case TYPE_OCTET_STRING:
     len2=-1;
-    if (_asn1_get_octet_der(node->value,node->value_len,&len2,value, value_size, len)!=ASN1_SUCCESS) return ASN1_MEM_ERROR;
+    if (asn1_get_octet_der(node->value,node->value_len,&len2,value, value_size, len)!=ASN1_SUCCESS) return ASN1_MEM_ERROR;
     break;
   case TYPE_GENERALSTRING:
     len2=-1;
-    if (_asn1_get_octet_der(node->value,node->value_len,&len2,value, value_size, len)!=ASN1_SUCCESS) return ASN1_MEM_ERROR;
+    if (asn1_get_octet_der(node->value,node->value_len,&len2,value, value_size, len)!=ASN1_SUCCESS) return ASN1_MEM_ERROR;
     break;
   case TYPE_BIT_STRING:
     len2=-1;
-    if (_asn1_get_bit_der(node->value,node->value_len,&len2,value,value_size,len)!=ASN1_SUCCESS) return ASN1_MEM_ERROR;
+    if (asn1_get_bit_der(node->value,node->value_len,&len2,value,value_size,len)!=ASN1_SUCCESS) return ASN1_MEM_ERROR;
     break;
   case TYPE_CHOICE:
     PUT_STR_VALUE( value, value_size, node->down->name);
     break; 
   case TYPE_ANY:
     len3=-1;
-    len2=_asn1_get_length_der(node->value,node->value_len,&len3);
+    len2=asn1_get_length_der(node->value,node->value_len,&len3);
     if (len2 < 0) return ASN1_DER_ERROR;
     PUT_VALUE( value, value_size, node->value+len3, len2);
     break;
@@ -761,7 +760,7 @@ asn1_read_tag(node_asn *root,const char *name,int *tagValue, int *classValue)
 {
   node_asn *node,*p,*pTag;
  
-  node=_asn1_find_node(root,name);
+  node=asn1_find_node(root,name);
   if(node==NULL) return  ASN1_ELEMENT_NOT_FOUND;
 
   p=node->down;

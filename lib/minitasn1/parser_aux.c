@@ -23,7 +23,6 @@
 #include <int.h>
 #include <errors.h>
 #include "parser_aux.h"
-#include "der.h"
 #include "gstr.h"
 #include "structure.h"
 #include "element.h"
@@ -82,21 +81,20 @@ _asn1_add_node(unsigned int type)
   return punt;
 }
 
-/******************************************************************/
-/* Function : _asn1_find_mode                                     */
-/* Description: searches an element called NAME starting from     */
-/*              POINTER. The name is composed by differents       */
-/*              identifiers separated by dots.When *POINTER has a */
-/*              name, the first identifier must be the name of    */
-/*              *POINTER, otherwise it must be the name of one    */
-/*              child of *POINTER.                                */
-/* Parameters:                                                    */
-/*   pointer: NODE_ASN element pointer.                           */
-/*   name: null terminated string with the element's name to find.*/
-/* Return: the searching result. NULL if not found.               */
-/******************************************************************/
-node_asn *
-_asn1_find_node(node_asn *pointer,const char *name)
+/**
+ * asn1_find_node:
+ * @pointer: NODE_ASN element pointer.
+ * @name: null terminated string with the element's name to find.
+ *
+ * Searches for an element called NAME starting from POINTER.  The
+ * name is composed by differents identifiers separated by dots.  When
+ * *POINTER has a name, the first identifier must be the name of
+ * *POINTER, otherwise it must be the name of one child of *POINTER.
+ *
+ * Return value: the searching result. NULL if not found.
+ **/
+ASN1_TYPE
+asn1_find_node(ASN1_TYPE pointer, const char *name)
 {
   node_asn *p;
   char *n_end,n[MAX_NAME_SIZE+1];
@@ -372,7 +370,7 @@ _asn1_remove_node(node_asn *node)
 /* Description: return the father of the NODE_ASN element.        */
 /* Parameters:                                                    */
 /*   node: NODE_ASN element pointer.                              */
-/* Return: Null if not found.                                     */ 
+/* Return: Null if not found.                                     */
 /******************************************************************/
 node_asn *
 _asn1_find_up(node_asn *node)
@@ -478,7 +476,7 @@ _asn1_change_integer_value(ASN1_TYPE node)
     if((type_field(p->type)==TYPE_INTEGER) && (p->type&CONST_ASSIGN)){
       if(p->value){
 	_asn1_convert_integer(p->value,val,sizeof(val), &len);	
-	_asn1_octet_der(val,len,val2,&len);
+	asn1_octet_der(val,len,val2,&len);
 	_asn1_set_value(p,val2,len);
       }
     }
@@ -541,7 +539,7 @@ _asn1_expand_object_id(ASN1_TYPE node)
 	    _asn1_str_cpy(name2, sizeof(name2), name_root);
 	    _asn1_str_cat(name2, sizeof(name2), ".");
 	    _asn1_str_cat(name2, sizeof(name2), p2->value);
-	    p3=_asn1_find_node(node,name2);
+	    p3=asn1_find_node(node,name2);
 	    if(!p3 || (type_field(p3->type)!=TYPE_OBJECT_ID) ||
 	       !(p3->type&CONST_ASSIGN)) return ASN1_ELEMENT_NOT_FOUND;
 	    _asn1_set_down(p,p2->right);
@@ -606,7 +604,7 @@ _asn1_expand_object_id(ASN1_TYPE node)
 	  _asn1_str_cpy(name2, sizeof(name2), name_root);
 	  _asn1_str_cat(name2, sizeof(name2), ".");
 	  _asn1_str_cat(name2, sizeof(name2), p2->value);
-	  p3=_asn1_find_node(node,name2);
+	  p3=asn1_find_node(node,name2);
 	  if(!p3 || (type_field(p3->type)!=TYPE_OBJECT_ID) ||
 	     !(p3->type&CONST_ASSIGN)) return ASN1_ELEMENT_NOT_FOUND;
 	  p4=p3->down;
@@ -725,7 +723,7 @@ _asn1_check_identifier(ASN1_TYPE node)
       _asn1_str_cpy(name2, sizeof(name2), node->name);
       _asn1_str_cat(name2, sizeof(name2), ".");
       _asn1_str_cat(name2, sizeof(name2), p->value);
-      p2=_asn1_find_node(node,name2);
+      p2=asn1_find_node(node,name2);
       if(p2==NULL){
 	strcpy(_asn1_identifierMissing,p->value);
 	return ASN1_IDENTIFIER_NOT_FOUND;
@@ -739,7 +737,7 @@ _asn1_check_identifier(ASN1_TYPE node)
 	_asn1_str_cat(name2, sizeof(name2), ".");
 	_asn1_str_cat(name2, sizeof(name2), p2->value);
 	strcpy(_asn1_identifierMissing,p2->value);
-	p2=_asn1_find_node(node,name2);
+	p2=asn1_find_node(node,name2);
 	if(!p2 || (type_field(p2->type)!=TYPE_OBJECT_ID) ||
 	   !(p2->type&CONST_ASSIGN))
 	  return ASN1_IDENTIFIER_NOT_FOUND;
@@ -756,7 +754,7 @@ _asn1_check_identifier(ASN1_TYPE node)
 	  _asn1_str_cat(name2, sizeof(name2), ".");
 	  _asn1_str_cat(name2, sizeof(name2), p2->value);
 	  strcpy(_asn1_identifierMissing,p2->value);
-	  p2=_asn1_find_node(node,name2);
+	  p2=asn1_find_node(node,name2);
 	  if(!p2 || (type_field(p2->type)!=TYPE_OBJECT_ID) ||
 	     !(p2->type&CONST_ASSIGN))
 	    return ASN1_IDENTIFIER_NOT_FOUND;

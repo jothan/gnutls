@@ -32,7 +32,6 @@
 #include <errors.h>
 #include <structure.h>
 #include "parser_aux.h"
-#include "der.h"
 #include <gstr.h>
 
 
@@ -321,7 +320,7 @@ asn1_delete_element(ASN1_TYPE structure,const char *element_name)
 {
   node_asn *p2,*p3,*source_node;
 
-  source_node=_asn1_find_node(structure,element_name);
+  source_node=asn1_find_node(structure,element_name);
 
   if(source_node==ASN1_TYPE_EMPTY) return ASN1_ELEMENT_NOT_FOUND;
 
@@ -338,7 +337,6 @@ asn1_delete_element(ASN1_TYPE structure,const char *element_name)
 
   return asn1_delete_structure(&source_node);
 }
-
 
 node_asn *
 _asn1_copy_structure3(node_asn *source_node)
@@ -363,7 +361,7 @@ _asn1_copy_structure3(node_asn *source_node)
 	case TYPE_OCTET_STRING: case TYPE_BIT_STRING: case TYPE_GENERALSTRING:
 	case TYPE_INTEGER:
 	  len2=-1;
-	  len=_asn1_get_length_der(p_s->value,p_s->value_len,&len2);
+	  len=asn1_get_length_der(p_s->value,p_s->value_len,&len2);
 	  if (len < 0) return NULL;
 	  _asn1_set_value(p_d,p_s->value,len+len2);
 	  break;
@@ -414,7 +412,7 @@ _asn1_copy_structure2(node_asn *root,const char *source_name)
 {
   node_asn *source_node;
 
-  source_node=_asn1_find_node(root,source_name);
+  source_node=asn1_find_node(root,source_name);
 
   return _asn1_copy_structure3(source_node);
 
@@ -624,7 +622,7 @@ asn1_print_structure(FILE *out,ASN1_TYPE structure,const char *name,int mode)
 
   if(out==NULL) return;
 
-  root=_asn1_find_node(structure,name);
+  root=asn1_find_node(structure,name);
 
   if(root==NULL) return;
 
@@ -728,7 +726,7 @@ asn1_print_structure(FILE *out,ASN1_TYPE structure,const char *name,int mode)
       case TYPE_INTEGER:
 	if(p->value){
 	  len2=-1;
-	  len=_asn1_get_length_der(p->value,p->value_len,&len2);
+	  len=asn1_get_length_der(p->value,p->value_len,&len2);
 	  fprintf(out,"  value:0x");
 	  if (len > 0)
 	    for(k=0;k<len;k++) fprintf(out,"%02x",(p->value)[k+len2]);
@@ -737,7 +735,7 @@ asn1_print_structure(FILE *out,ASN1_TYPE structure,const char *name,int mode)
       case TYPE_ENUMERATED:
 	if(p->value){
 	  len2=-1;
-	  len=_asn1_get_length_der(p->value,p->value_len,&len2);
+	  len=asn1_get_length_der(p->value,p->value_len,&len2);
 	  fprintf(out,"  value:0x");
 	  if (len > 0)
 	    for(k=0;k<len;k++) fprintf(out,"%02x",(p->value)[k+len2]);
@@ -755,7 +753,7 @@ asn1_print_structure(FILE *out,ASN1_TYPE structure,const char *name,int mode)
       case TYPE_BIT_STRING:
 	if(p->value){
 	  len2=-1;
-	  len=_asn1_get_length_der(p->value,p->value_len,&len2);
+	  len=asn1_get_length_der(p->value,p->value_len,&len2);
 	  if (len>0)
 	    {
 	      fprintf(out,"  value(%i):",(len-1)*8-(p->value[len2]));
@@ -766,7 +764,7 @@ asn1_print_structure(FILE *out,ASN1_TYPE structure,const char *name,int mode)
       case TYPE_OCTET_STRING:
 	if(p->value){
 	  len2=-1;
-	  len=_asn1_get_length_der(p->value,p->value_len,&len2);
+	  len=asn1_get_length_der(p->value,p->value_len,&len2);
 	  fprintf(out,"  value:");
 	  if (len>0)
 	    for(k=0;k<len;k++) fprintf(out,"%02x",(p->value)[k+len2]);
@@ -775,7 +773,7 @@ asn1_print_structure(FILE *out,ASN1_TYPE structure,const char *name,int mode)
       case TYPE_GENERALSTRING:
 	if(p->value){
 	  len2=-1;
-	  len=_asn1_get_length_der(p->value,p->value_len,&len2);
+	  len=asn1_get_length_der(p->value,p->value_len,&len2);
 	  fprintf(out,"  value:");
 	  if (len>0)
 	    for(k=0;k<len;k++) fprintf(out,"%02x",(p->value)[k+len2]);
@@ -787,7 +785,7 @@ asn1_print_structure(FILE *out,ASN1_TYPE structure,const char *name,int mode)
       case TYPE_ANY:
 	if(p->value){
 	  len3=-1;
-	  len2=_asn1_get_length_der(p->value,p->value_len,&len3);
+	  len2=asn1_get_length_der(p->value,p->value_len,&len3);
 	  fprintf(out,"  value:");
 	  if (len2>0)
 	    for(k=0;k<len2;k++) fprintf(out,"%02x",(p->value)[k+len3]);
@@ -901,7 +899,7 @@ asn1_number_of_elements(ASN1_TYPE element,const char *name,int *num)
 
   *num=0;
 
-  node=_asn1_find_node(element,name);
+  node=asn1_find_node(element,name);
   if(node==NULL) return ASN1_ELEMENT_NOT_FOUND;
 
   p=node->down;
@@ -968,3 +966,56 @@ asn1_find_structure_from_oid (ASN1_TYPE definitions,
 
   return NULL;  /* ASN1_ELEMENT_NOT_FOUND; */
 }
+
+/**
+ * asn1_copy_node:
+ * @dst: Destination ASN1_TYPE node.
+ * @dst_name: Field name in destination node.
+ * @src: Source ASN1_TYPE node.
+ * @src_name: Field name in source node.
+ *
+ * Create a deep copy of a ASN1_TYPE variable.
+ *
+ * Return value: Return ASN1_SUCCESS on success.
+ **/
+asn1_retCode
+asn1_copy_node (ASN1_TYPE dst, const char *dst_name,
+		ASN1_TYPE src, const char *src_name)
+{
+/* FIXME: rewrite using copy_structure().
+ * It seems quite hard to do.
+ */
+  int result;
+  ASN1_TYPE dst_node;
+  void *data = NULL;
+  int size = 0;
+
+  result = asn1_der_coding (src, src_name, NULL, &size, NULL);
+  if (result != ASN1_MEM_ERROR)
+    return result;
+
+  data = _asn1_malloc (size);
+  if (data == NULL)
+    return ASN1_MEM_ERROR;
+
+  result = asn1_der_coding (src, src_name, data, &size, NULL);
+  if (result != ASN1_SUCCESS)
+    {
+      _asn1_free (data);
+      return result;
+    }
+
+  dst_node = asn1_find_node (dst, dst_name);
+  if (dst_node == NULL)
+    {
+      _asn1_free (data);
+      return ASN1_ELEMENT_NOT_FOUND;
+    }
+
+  result = asn1_der_decoding (&dst_node, data, size, NULL);
+
+  _asn1_free (data);
+
+  return result;
+}
+
