@@ -4,9 +4,12 @@ Copyright (C) 2000, 2001, 2002, 2003, 2004 Nikos Mavroyanopoulos
 See the end for copying conditions.
 
 * Version 1.2.11 (unreleased)
+- The function gnutls_x509_crt_to_xml is not supported any more, and
+  return an internal error.  The function called internal libtasn1
+  functions.
+- Updated libtasn1 requirement to 0.3.2 and refreshed internal mintiasn1.
 - Fixed _gnutls_x509_get_raw_crt_expiration_time and
   _gnutls_x509_get_raw_crt_activation_time to return (time_t)-1 on errors.
-- Updated libtasn1 requirement to 0.3.2 and refreshed internal mintiasn1.
 - API and ABI modifications:
   No changes since last version.
 
