@@ -29,6 +29,25 @@
 
 #include <defines.h>
 
+#if 1
+
+#include <gnutls_int.h>
+
+/* The function below rely on some internal libtasn1 functions.  While
+   it would be easy to export them (or copy them) we prefer not to at
+   this point.  If you need the XML functionality, simply build with
+   --with-included-libtasn1 and change the '1' above to '0', or help
+   us add XML export functions to libtasn1 proper. */
+
+int
+gnutls_x509_crt_to_xml (gnutls_x509_crt_t cert, gnutls_datum_t * res,
+			int detail)
+{
+  return GNUTLS_E_INTERNAL_ERROR;
+}
+
+#else
+
 #ifdef ENABLE_PKI
 
 #include <int.h>
@@ -660,4 +679,5 @@ static int _gnutls_x509_expand_extensions(ASN1_TYPE * rasn)
 	return _gnutls_asn2err(result);
 }
 
+#endif
 #endif
