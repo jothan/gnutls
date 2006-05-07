@@ -18,6 +18,7 @@
 # any checks for libraries, header files, types and library functions.
 AC_DEFUN([gl_EARLY],
 [
+  AC_REQUIRE([AC_PROG_RANLIB])
   AC_REQUIRE([AC_GNU_SOURCE])
 ])
 
@@ -25,7 +26,7 @@ AC_DEFUN([gl_EARLY],
 # "Check for header files, types and library functions".
 AC_DEFUN([gl_INIT],
 [
-AM_CONDITIONAL([GL_COND_LIBTOOL], [true])
+  AM_CONDITIONAL([GL_COND_LIBTOOL], [true])
   gl_FUNC_ALLOCA
   gl_GC
   gl_GC_ARCFOUR
@@ -51,9 +52,10 @@ AM_CONDITIONAL([GL_COND_LIBTOOL], [true])
   gl_C_RESTRICT
   gl_SIZE_MAX
   gl_FUNC_SNPRINTF
-  gl_SOCKLEN_T
+  gl_TYPE_SOCKLEN_T
   AM_STDBOOL_H
   gl_STDINT_H
+  gl_HEADER_SYS_SOCKET
   gl_FUNC_VASNPRINTF
   gl_XSIZE
 ])
@@ -70,6 +72,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/asnprintf.c
   lib/des.c
   lib/des.h
+  lib/dummy.c
   lib/gc-gnulib.c
   lib/gc-libgcrypt.c
   lib/gc-pbkdf2-sha1.c
@@ -112,6 +115,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/size_max.h
   lib/snprintf.c
   lib/snprintf.h
+  lib/socket_.h
   lib/stdbool_.h
   lib/stdint_.h
   lib/vasnprintf.c
@@ -168,6 +172,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/stdbool.m4
   m4/stdint.m4
   m4/stdint_h.m4
+  m4/sys_socket_h.m4
   m4/vasnprintf.m4
   m4/wchar_t.m4
   m4/wint_t.m4

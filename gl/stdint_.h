@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2002, 2004-2005 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2002, 2004-2006 Free Software Foundation, Inc.
    Written by Bruno Haible, Sam Steingold, Peter Burwood.
    This file is part of gnulib.
 
@@ -21,7 +21,7 @@
 
 /*
  * ISO C 99 <stdint.h> for platforms that lack it.
- * <http://www.opengroup.org/onlinepubs/007904975/basedefs/stdint.h.html>
+ * <http://www.opengroup.org/susv3xbd/stdint.h.html>
  */
 
 /* Get wchar_t, WCHAR_MIN, WCHAR_MAX.  */
@@ -32,6 +32,22 @@
 /* Get those types that are already defined in other system include files.  */
 #if defined(__FreeBSD__)
 # include <sys/inttypes.h>
+#endif
+#if defined(__OpenBSD__)
+  /* In OpenBSD 3.8, <sys/types.h> includes <machine/types.h>, which defines
+     int{8,16,32,64}_t, uint{8,16,32,64}_t and __BIT_TYPES_DEFINED__.
+     <inttypes.h> includes <machine/types.h> and also defines intptr_t and
+     uintptr_t.  */
+# include <sys/types.h>
+# if HAVE_INTTYPES_H
+#  include <inttypes.h>
+# endif
+#endif
+#if defined(__linux__) && HAVE_SYS_BITYPES_H
+  /* Linux libc4 >= 4.6.7 and libc5 have a <sys/bitypes.h> that defines
+     int{8,16,32,64}_t and __BIT_TYPES_DEFINED__.  In libc5 >= 5.2.2 it is
+     included by <sys/types.h>.  */
+# include <sys/bitypes.h>
 #endif
 #if defined(__sun) && HAVE_SYS_INTTYPES_H
 # include <sys/inttypes.h>
@@ -48,7 +64,7 @@
      UINTPTR_MAX, PTRDIFF_MIN, PTRDIFF_MAX.  */
 # define _STDINT_H_HAVE_SYSTEM_INTTYPES
 #endif
-#if !(defined(UNIX_CYGWIN32) && defined(__BIT_TYPES_DEFINED__))
+#if !((defined(UNIX_CYGWIN32) || defined(__linux__)) && defined(__BIT_TYPES_DEFINED__))
 # define _STDINT_H_NEED_SIGNED_INT_TYPES
 #endif
 
@@ -56,7 +72,7 @@
 
 /* 7.18.1.1. Exact-width integer types */
 
-#if !defined(__FreeBSD__)
+#if !(defined(__FreeBSD__) || defined(__OpenBSD__))
 
 #ifdef _STDINT_H_NEED_SIGNED_INT_TYPES
 typedef signed char    int8_t;
@@ -91,7 +107,7 @@ typedef unsigned __int64 uint64_t;
 #define _STDINT_H_HAVE_INT64
 #endif
 
-#endif /* !FreeBSD */
+#endif /* !(FreeBSD || OpenBSD) */
 
 /* 7.18.1.2. Minimum-width integer types */
 
@@ -121,23 +137,31 @@ typedef uint64_t uint_fast64_t;
 
 /* 7.18.1.4. Integer types capable of holding object pointers */
 
-#if !defined(__FreeBSD__)
+#if !(defined(__FreeBSD__) || (defined(__OpenBSD__) && HAVE_INTTYPES_H))
 
 /* On some platforms (like IRIX6 MIPS with -n32) sizeof(void*) < sizeof(long),
    but this doesn't matter here.  */
 typedef long          intptr_t;
 typedef unsigned long uintptr_t;
 
-#endif /* !FreeBSD */
+#endif /* !(FreeBSD || (OpenBSD && HAVE_INTTYPES_H)) */
 
 /* 7.18.1.5. Greatest-width integer types */
 
 #ifdef _STDINT_H_HAVE_INT64
+# ifndef intmax_t
 typedef int64_t  intmax_t;
+# endif
+# ifndef uintmax_t
 typedef uint64_t uintmax_t;
+# endif
 #else
+# ifndef intmax_t
 typedef int32_t  intmax_t;
+# endif
+# ifndef uintmax_t
 typedef uint32_t uintmax_t;
+# endif
 #endif
 
 /* 7.18.2. Limits of specified-width integer types */
@@ -230,7 +254,9 @@ typedef uint32_t uintmax_t;
 #define SIG_ATOMIC_MIN 0
 #define SIG_ATOMIC_MAX 127
 
-#define SIZE_MAX (~(size_t)0)
+#ifndef SIZE_MAX /* SIZE_MAX may also be defined in config.h. */
+# define SIZE_MAX ((size_t)~(size_t)0)
+#endif
 
 /* wchar_t limits already defined in <stddef.h>.  */
 /* wint_t limits already defined in <wchar.h>.  */

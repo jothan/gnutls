@@ -1,5 +1,5 @@
-# readline.m4 serial 2
-dnl Copyright (C) 2005 Free Software Foundation, Inc.
+# readline.m4 serial 4
+dnl Copyright (C) 2005, 2006 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -29,7 +29,12 @@ AC_DEFUN([gl_FUNC_READLINE],
   AC_CACHE_CHECK(for readline, gl_cv_lib_readline, [
     gl_cv_lib_readline=no
     am_save_LIBS="$LIBS"
-    for extra_lib in "" termcap curses ncurses; do
+    dnl On some systems, -lreadline doesn't link without an additional
+    dnl -lncurses or -ltermcap.
+    dnl Try -lncurses before -ltermcap, because libtermcap is unsecure
+    dnl by design and obsolete since 1994. Try -lcurses last, because
+    dnl libcurses is unusable on some old Unices.
+    for extra_lib in "" ncurses termcap curses; do
       LIBS="$am_save_LIBS $LIBREADLINE"
       if test -n "$extra_lib"; then
         LIBS="$LIBS -l$extra_lib"
@@ -37,23 +42,20 @@ AC_DEFUN([gl_FUNC_READLINE],
       AC_TRY_LINK([#include <stdio.h>
 #include <readline/readline.h>],
         [readline((char*)0);],
-        gl_cv_lib_readline=yes)
-      if test "$gl_cv_lib_readline" = yes; then
-        if test -n "$extra_lib"; then
-          LIBREADLINE="$LIBREADLINE -l$extra_lib"
-          LTLIBREADLINE="$LTLIBREADLINE -l$extra_lib"
-        fi
-        break
+        [gl_cv_lib_readline=" -l$extra_lib"])
+      if test "$gl_cv_lib_readline" != no; then
+	break
       fi
     done
     LIBS="$am_save_LIBS"
   ])
 
-  if test "$gl_cv_lib_readline" = yes; then
+  if test "$gl_cv_lib_readline" != no; then
     AC_DEFINE(HAVE_READLINE, 1, [Define if you have the readline library.])
-  fi
-
-  if test "$gl_cv_lib_readline" = yes; then
+    if test "$gl_cv_lib_readline" != " -l"; then
+      LIBREADLINE="$LIBREADLINE$gl_cv_lib_readline"
+      LTLIBREADLINE="$LTLIBREADLINE$gl_cv_lib_readline"
+    fi
     AC_MSG_CHECKING([how to link with libreadline])
     AC_MSG_RESULT([$LIBREADLINE])
   else
