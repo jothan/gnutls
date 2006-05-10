@@ -8,7 +8,7 @@ See the end for copying conditions.
   return an internal error.  The reason is that the function called
   internal libtasn1 functions which are no longer exported from
   libtasn1.
-- Updated libtasn1 requirement to 0.3.3 and refreshed internal mintiasn1.
+- Updated libtasn1 requirement to 0.3.4 and refreshed internal mintiasn1.
 - Updated gnulib compatibility files.
 - Fixed _gnutls_x509_get_raw_crt_expiration_time and
   _gnutls_x509_get_raw_crt_activation_time to return (time_t)-1 on errors.
