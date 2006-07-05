@@ -5,6 +5,7 @@ See the end for copying conditions.
 
 * Version 1.2.12 (unreleased)
 - Replaced inactive ifdefs to enable openpgp support in test programs.
+- OpenPGP support conforms to the latest draft.
 - API and ABI modifications:
   No changes since last version.
 
