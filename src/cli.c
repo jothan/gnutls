@@ -216,7 +216,7 @@ static void load_keys(void)
 	
 	fprintf(stderr, "Processed %d client X.509 certificates...\n", x509_crt_size);
     }
-#ifdef USE_OPENPGP
+#ifdef ENABLE_OPENPGP
     if (pgp_certfile != NULL && pgp_keyfile != NULL) {
 	data = load_file(pgp_certfile);
 	if (data.data == NULL) {
@@ -958,7 +958,7 @@ static void init_global_tls_stuff(void)
 
     load_keys();
 
-#ifdef USE_OPENPGP
+#ifdef ENABLE_OPENPGP
     if (pgp_keyring != NULL) {
 	ret =
 	    gnutls_certificate_set_openpgp_keyring_file(xcred,
