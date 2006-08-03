@@ -1,5 +1,5 @@
 ## Process this file with automake to produce Makefile.in
-# Copyright (C) 2004, 2005 Free Software Foundation
+# Copyright (C) 2004, 2005, 2006 Free Software Foundation
 #
 # Author: Simon Josefsson
 #
@@ -29,8 +29,9 @@ libutils_la_SOURCES = utils.h utils.c
 EXTRA_DIST = client.p12 noclient.p12 unclient.p12
 
 openssl_LDADD = $(LDADD) ../libextra/libgnutls-openssl.la
+gc_LDADD = $(LDADD) $(LIBGCRYPT_LIBS)
 
-ctests = simple anonself pskself openssl gc dhepskself
+ctests = simple anonself openssl gc
 TESTS = pkcs12_neon $(ctests)
 check_PROGRAMS = $(ctests)
 dist_check_SCRIPTS = pkcs12_neon
