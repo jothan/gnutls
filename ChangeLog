@@ -1,3 +1,75 @@
+2007-05-11  Simon Josefsson <simon@josefsson.org>
+
+	* NEWS: Version 1.7.8.p11.2.
+
+2007-05-11  Simon Josefsson <simon@josefsson.org>
+
+	* includes/gnutls/pkcs11.h: Typo.
+
+2007-05-11  Simon Josefsson <simon@josefsson.org>
+
+	* src/cli.c: Fix.
+
+2007-05-11  Simon Josefsson <simon@josefsson.org>
+
+	* Makefile.am, src/Makefile.am, src/cli.c: Fix.
+
+2007-05-11  Simon Josefsson <simon@josefsson.org>
+
+	* NEWS: Fix.
+
+2007-05-11  Simon Josefsson <simon@josefsson.org>
+
+	* NEWS, THANKS: Add.
+
+2007-05-11  Simon Josefsson <simon@josefsson.org>
+
+	* configure.in: Bump versions.
+
+2007-05-11  Simon Josefsson <simon@josefsson.org>
+
+	* lib/gnutls_sig.c: Use userdata.
+
+2007-05-10  Simon Josefsson <simon@josefsson.org>
+
+	* includes/gnutls/gnutls.h.in: Typos.
+
+2007-05-10  Simon Josefsson <simon@josefsson.org>
+
+	* lib/gnutls_int.h: Add.
+
+2007-05-10  Simon Josefsson <simon@josefsson.org>
+
+	* NEWS: Fixed.
+
+2007-05-10  Simon Josefsson <simon@josefsson.org>
+
+	* NEWS: Add.
+
+2007-05-10  Simon Josefsson <simon@josefsson.org>
+
+	* includes/gnutls/gnutls.h.in: Add void*userdata to sign_func.
+
+2007-05-09  Simon Josefsson <simon@josefsson.org>
+
+	* src/cli.c: Use PKCS#11 stuff optionally.
+
+2007-05-09  Simon Josefsson <simon@josefsson.org>
+
+	* src/Makefile.am: Make gnutls-pkcs11 optional.
+
+2007-05-09  Simon Josefsson <simon@josefsson.org>
+
+	* configure.in: Need #define too.
+
+2007-05-09  Simon Josefsson <simon@josefsson.org>
+
+	* Makefile.am, configure.in: Make scute optional.
+
+2007-05-08  Simon Josefsson <simon@josefsson.org>
+
+	* pkcs11/gnutls_pkcs11.c: Remove.
+
 2007-05-08  Simon Josefsson <simon@josefsson.org>
 
 	* NEWS: Version 1.7.8.p11.1.
