@@ -10,6 +10,9 @@ Reported by Marc Haber <mh+debian-bugs@zugschlus.de> and Andreas
 Metzler <ametzler@downhill.at.eu.org> via Debian BTS #429183, see
 <http://bugs.debian.org/429183>.
 
+** API and ABI modifications:
+No changes since last version.
+
 * Version 1.6.3 (released 2007-05-26)
 
 ** New API functions to extract DER encoded X.509 Subject/Issuer DN.
