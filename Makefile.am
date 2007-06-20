@@ -34,24 +34,22 @@ update-po: refresh-po
 	cvs commit -m "Sync with TP." po/LINGUAS `ls po/*.po | grep -v quot.po`
 
 ChangeLog:
-	cvs2cl --utc --fsf --FSF --usermap .cvsusers -I ChangeLog -I .cvs --window 120 -l "-d"">2005-11-07;today<"""
+	git log --pretty --numstat --summary --since="2005 November 07" -- | git2cl > ChangeLog
 	cat .cvscopying >> ChangeLog
 
 tag = $(PACKAGE)_`echo $(VERSION) | sed 's/\./_/g'`
 htmldir = ../www-$(PACKAGE)
 
 release:
-	if cvs upd -p -r $(tag) NEWS > /dev/null; then false else true; fi
-	cvs rtag -r gnutls_1_6_x $(tag) gnutls
+	! git-tag -l $(tag) > /dev/null
 	rm -f ChangeLog
-	make ChangeLog
-	cvs commit -m "" ChangeLog
-	cvs rtag -F -r gnutls_1_6_x $(tag) gnutls
-	make dist
+	$(MAKE) ChangeLog distcheck
+	git commit -m Generated. ChangeLog
+	git-tag -u b565716f! -m $(VERSION) $(tag)
 	gpg -b $(distdir).tar.bz2
 	gpg --verify $(distdir).tar.bz2.sig
 	scp $(distdir).tar.bz2{,.sig} igloo.linux.gr:~ftp/pub/gnutls/
-	ssh igloo.linux.gr 'cd ~ftp/pub/gnutls/ && sha1sum *.tar.bz2 > CHECKSUMS'
+	ssh igloo.linux.gr 'cd ~ftp/pub/gnutls/devel/ && sha1sum *.tar.bz2 > CHECKSUMS'
 	cp -v $(distdir).tar.bz2{,.sig} $(htmldir)/releases/
 	cd $(htmldir) && cvs add -kb releases/$(distdir).tar.bz2{,.sig} && \
 		cvs commit -m "Update." manual/ reference/ releases/
