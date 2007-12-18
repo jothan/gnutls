@@ -40,9 +40,9 @@
 #include <gnutls_state.h>
 #include <gnutls_auth_int.h>
 #include <gnutls_x509.h>
-#include <gnutls_extra_hooks.h>
 #include "x509/x509.h"
 #include "x509/mpi.h"
+#include "openpgp/gnutls_openpgp.h"
 
 /**
   * gnutls_certificate_free_keys - Used to free all the keys from a gnutls_certificate_credentials_t structure
@@ -485,13 +485,8 @@ _gnutls_openpgp_crt_verify_peers (gnutls_session_t session,
 
   /* Verify certificate 
    */
-  if (_E_gnutls_openpgp_verify_key == NULL)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_INIT_LIBEXTRA;
-    }
   ret =
-    _E_gnutls_openpgp_verify_key (cred, &info->raw_certificate_list[0],
+    _gnutls_openpgp_verify_key (cred, &info->raw_certificate_list[0],
 				  peer_certificate_list_size, status);
 
   if (ret < 0)
@@ -626,9 +621,7 @@ gnutls_certificate_expiration_time_peers (gnutls_session_t session)
 						       raw_certificate_list
 						       [0]);
     case GNUTLS_CRT_OPENPGP:
-      if (_E_gnutls_openpgp_get_raw_key_expiration_time == NULL)
-	return (time_t) - 1;
-      return _E_gnutls_openpgp_get_raw_key_expiration_time (&info->
+      return _gnutls_openpgp_get_raw_key_expiration_time (&info->
 							    raw_certificate_list
 							    [0]);
     default:
@@ -671,9 +664,7 @@ gnutls_certificate_activation_time_peers (gnutls_session_t session)
 						       raw_certificate_list
 						       [0]);
     case GNUTLS_CRT_OPENPGP:
-      if (_E_gnutls_openpgp_get_raw_key_creation_time == NULL)
-	return (time_t) - 1;
-      return _E_gnutls_openpgp_get_raw_key_creation_time (&info->
+      return _gnutls_openpgp_get_raw_key_creation_time (&info->
 							  raw_certificate_list
 							  [0]);
     default:
@@ -692,12 +683,7 @@ _gnutls_raw_cert_to_gcert (gnutls_cert * gcert,
     case GNUTLS_CRT_X509:
       return _gnutls_x509_raw_cert_to_gcert (gcert, raw_cert, flags);
     case GNUTLS_CRT_OPENPGP:
-      if (_E_gnutls_openpgp_raw_key_to_gcert == NULL)
-	{
-	  gnutls_assert ();
-	  return GNUTLS_E_INIT_LIBEXTRA;
-	}
-      return _E_gnutls_openpgp_raw_key_to_gcert (gcert, raw_cert);
+      return _gnutls_openpgp_raw_key_to_gcert (gcert, raw_cert);
     default:
       gnutls_assert ();
       return GNUTLS_E_INTERNAL_ERROR;
@@ -715,12 +701,7 @@ _gnutls_raw_privkey_to_gkey (gnutls_privkey * key,
     case GNUTLS_CRT_X509:
       return _gnutls_x509_raw_privkey_to_gkey (key, raw_key, key_enc);
     case GNUTLS_CRT_OPENPGP:
-      if (_E_gnutls_openpgp_raw_privkey_to_gkey == NULL)
-	{
-	  gnutls_assert ();
-	  return GNUTLS_E_INIT_LIBEXTRA;
-	}
-      return _E_gnutls_openpgp_raw_privkey_to_gkey (key, raw_key,
+      return _gnutls_openpgp_raw_privkey_to_gkey (key, raw_key,
 						    (gnutls_openpgp_crt_fmt_t)
 						    key_enc);
     default:
