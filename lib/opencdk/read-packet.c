@@ -78,40 +78,7 @@ read_16 (cdk_stream_t s)
 static int
 read_s2k (cdk_stream_t inp, cdk_s2k_t s2k)
 {
-  size_t nread;
-
-  if (!inp || !s2k)
-    return CDK_Inv_Value;
-
-  if (DEBUG_PKT)
-    _cdk_log_debug ("read_s2k:\n");
-
-  s2k->mode = cdk_stream_getc (inp);
-  if (cdk_stream_eof (inp))
-    return CDK_Inv_Packet;
-  if (s2k->mode != CDK_S2K_SIMPLE && s2k->mode != CDK_S2K_SALTED &&
-      s2k->mode != CDK_S2K_ITERSALTED)
-    return CDK_Inv_Packet;
-  s2k->hash_algo = cdk_stream_getc (inp);
-  if (s2k->mode == CDK_S2K_SIMPLE) /* No additional elements. */
-    memset (s2k->salt, 0, sizeof (s2k->salt));
-  else if (s2k->mode == CDK_S2K_SALTED || 
-	   s2k->mode == CDK_S2K_ITERSALTED)
-    {
-      if (stream_read (inp, s2k->salt, DIM (s2k->salt), &nread))
-	return CDK_Inv_Packet;
-      if (nread != DIM (s2k->salt))
-	return CDK_Inv_Packet;
-      if (s2k->mode == CDK_S2K_ITERSALTED)
-	{
-	  s2k->count = cdk_stream_getc (inp);
-	  if (cdk_stream_eof (inp))
-	    return CDK_Inv_Packet;
-	}
-    }
-  else
-    return CDK_Inv_Mode;
-  return 0;
+  return CDK_Not_Implemented;
 }
 
 
