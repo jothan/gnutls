@@ -458,10 +458,11 @@ call_get_cert_callback (gnutls_session_t session,
 	  goto cleanup;
 	}
 
+#ifdef ENABLE_OPENPGP
       local_certs = alloc_and_load_pgp_certs (st.cert.pgp);
       if (local_certs != NULL)
 	local_key = alloc_and_load_pgp_key (st.key.pgp);
-
+#endif
     }
 
   _gnutls_selected_certs_set (session, local_certs,
