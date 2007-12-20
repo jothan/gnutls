@@ -23,7 +23,6 @@
 #include <gnutls_errors.h>
 #include <gnutls_extensions.h>
 #include <gnutls_extra.h>
-#include <gnutls_extra_hooks.h>
 #include <gnutls_algorithms.h>
 #ifdef USE_LZO
 # ifdef USE_MINILZO
