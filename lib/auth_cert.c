@@ -44,14 +44,19 @@
 #include <gnutls_pk.h>
 #include <gnutls_x509.h>
 #include "debug.h"
-#include "openpgp/gnutls_openpgp.h"
+
+#ifdef ENABLE_OPENPGP
+# include "openpgp/gnutls_openpgp.h"
+
+static gnutls_cert *alloc_and_load_pgp_certs (gnutls_openpgp_crt_t cert);
+static gnutls_privkey *alloc_and_load_pgp_key (const gnutls_openpgp_privkey_t
+					       key);
+#endif
 
 static gnutls_cert *alloc_and_load_x509_certs (gnutls_x509_crt_t * certs,
 					       unsigned);
 static gnutls_privkey *alloc_and_load_x509_key (gnutls_x509_privkey_t key);
-static gnutls_cert *alloc_and_load_pgp_certs (gnutls_openpgp_crt_t cert);
-static gnutls_privkey *alloc_and_load_pgp_key (const gnutls_openpgp_privkey_t
-					       key);
+
 
 
 /* Copies data from a internal certificate struct (gnutls_cert) to 
@@ -255,6 +260,7 @@ _find_x509_cert (const gnutls_certificate_credentials_t cred,
 
 }
 
+#ifdef ENABLE_OPENPGP
 /* Locates the most appropriate openpgp cert
  */
 static int
@@ -289,6 +295,7 @@ _find_openpgp_cert (const gnutls_certificate_credentials_t cred,
 
   return 0;
 }
+#endif
 
 /* Returns the number of issuers in the server's
  * certificate request packet.
@@ -479,11 +486,13 @@ cleanup:
     }
   else
     {
+#ifdef ENABLE_OPENPGP
       if (st.deinit_all)
 	{
 	  gnutls_openpgp_crt_deinit (st.cert.pgp);
 	  gnutls_openpgp_privkey_deinit (st.key.pgp);
 	}
+#endif
     }
 
   return ret;
@@ -571,9 +580,10 @@ _select_client_cert (gnutls_session_t session,
 	  _find_x509_cert (cred, _data, _data_size,
 			   pk_algos, pk_algos_length, &indx);
 
+#ifdef ENABLE_OPENPGP
       if (session->security_parameters.cert_type == GNUTLS_CRT_OPENPGP)
 	result = _find_openpgp_cert (cred, pk_algos, pk_algos_length, &indx);
-
+#endif
 
       if (result < 0)
 	{
@@ -663,6 +673,7 @@ _gnutls_gen_x509_crt (gnutls_session_t session, opaque ** data)
 enum PGPKeyDescriptorType
 { PGP_KEY_FINGERPRINT, PGP_KEY };
 
+#ifdef ENABLE_OPENPGP
 int
 _gnutls_gen_openpgp_certificate (gnutls_session_t session, opaque ** data)
 {
@@ -770,7 +781,7 @@ _gnutls_gen_openpgp_certificate_fpr (gnutls_session_t session, opaque ** data)
 
   return packet_size;
 }
-
+#endif
 
 
 int
@@ -778,12 +789,13 @@ _gnutls_gen_cert_client_certificate (gnutls_session_t session, opaque ** data)
 {
   switch (session->security_parameters.cert_type)
     {
+#ifdef ENABLE_OPENPGP
     case GNUTLS_CRT_OPENPGP:
       if (_gnutls_openpgp_send_fingerprint (session) == 0)
 	return _gnutls_gen_openpgp_certificate (session, data);
       else
 	return _gnutls_gen_openpgp_certificate_fpr (session, data);
-
+#endif
     case GNUTLS_CRT_X509:
       return _gnutls_gen_x509_crt (session, data);
 
@@ -798,8 +810,10 @@ _gnutls_gen_cert_server_certificate (gnutls_session_t session, opaque ** data)
 {
   switch (session->security_parameters.cert_type)
     {
+#ifdef ENABLE_OPENPGP
     case GNUTLS_CRT_OPENPGP:
       return _gnutls_gen_openpgp_certificate (session, data);
+#endif
     case GNUTLS_CRT_X509:
       return _gnutls_gen_x509_crt (session, data);
     default:
@@ -954,6 +968,7 @@ cleanup:
 }
 
 #define CLEAR_CERTS for(x=0;x<peer_certificate_list_size;x++) _gnutls_gcert_deinit(&peer_certificate_list[x])
+#ifdef ENABLE_OPENPGP
 int
 _gnutls_proc_openpgp_server_certificate (gnutls_session_t session,
 					 opaque * data, size_t data_size)
@@ -1120,6 +1135,7 @@ cleanup:
   return ret;
 
 }
+#endif
 
 int
 _gnutls_proc_cert_server_certificate (gnutls_session_t session,
@@ -1127,9 +1143,11 @@ _gnutls_proc_cert_server_certificate (gnutls_session_t session,
 {
   switch (session->security_parameters.cert_type)
     {
+#ifdef ENABLE_OPENPGP
     case GNUTLS_CRT_OPENPGP:
       return _gnutls_proc_openpgp_server_certificate (session,
 						      data, data_size);
+#endif
     case GNUTLS_CRT_X509:
       return _gnutls_proc_x509_server_certificate (session, data, data_size);
     default:
@@ -1557,6 +1575,7 @@ alloc_and_load_x509_key (gnutls_x509_privkey_t key)
 /* converts the given pgp certificate to gnutls_cert* and allocates
  * space for them.
  */
+#ifdef ENABLE_OPENPGP
 static gnutls_cert *
 alloc_and_load_pgp_certs (gnutls_openpgp_crt_t cert)
 {
@@ -1619,7 +1638,7 @@ alloc_and_load_pgp_key (const gnutls_openpgp_privkey_t key)
 
   return local_key;
 }
-
+#endif
 
 void
 _gnutls_selected_certs_deinit (gnutls_session_t session)

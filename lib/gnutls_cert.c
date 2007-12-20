@@ -42,7 +42,9 @@
 #include <gnutls_x509.h>
 #include "x509/x509.h"
 #include "x509/mpi.h"
-#include "openpgp/gnutls_openpgp.h"
+#ifdef ENABLE_OPENPGP
+# include "openpgp/gnutls_openpgp.h"
+#endif
 
 /**
   * gnutls_certificate_free_keys - Used to free all the keys from a gnutls_certificate_credentials_t structure
@@ -191,11 +193,13 @@ gnutls_certificate_free_credentials (gnutls_certificate_credentials_t sc)
   gnutls_certificate_free_crls (sc);
 #endif
 
+#ifdef ENABLE_OPENPGP
 #ifndef KEYRING_HACK
   if (_E_gnutls_openpgp_keyring_deinit)
     _E_gnutls_openpgp_keyring_deinit( sc->keyring);
 #else
   _gnutls_free_datum( &sc->keyring);
+#endif
 #endif
 
   gnutls_free (sc);
@@ -436,6 +440,7 @@ _gnutls_x509_get_raw_crt_expiration_time (const gnutls_datum_t * cert)
   return result;
 }
 
+#ifdef ENABLE_OPENPGP
 /*-
   * _gnutls_openpgp_crt_verify_peers - This function returns the peer's certificate status
   * @session: is a gnutls session
@@ -497,7 +502,7 @@ _gnutls_openpgp_crt_verify_peers (gnutls_session_t session,
 
   return 0;
 }
-
+#endif
 
 /**
   * gnutls_certificate_verify_peers2 - This function returns the peer's certificate verification status
@@ -546,8 +551,10 @@ gnutls_certificate_verify_peers2 (gnutls_session_t session,
     {
     case GNUTLS_CRT_X509:
       return _gnutls_x509_cert_verify_peers (session, status);
+#ifdef ENABLE_OPENPGP
     case GNUTLS_CRT_OPENPGP:
       return _gnutls_openpgp_crt_verify_peers (session, status);
+#endif
     default:
       return GNUTLS_E_INVALID_REQUEST;
     }
@@ -620,10 +627,12 @@ gnutls_certificate_expiration_time_peers (gnutls_session_t session)
       return _gnutls_x509_get_raw_crt_expiration_time (&info->
 						       raw_certificate_list
 						       [0]);
+#ifdef ENABLE_OPENPGP
     case GNUTLS_CRT_OPENPGP:
       return _gnutls_openpgp_get_raw_key_expiration_time (&info->
 							    raw_certificate_list
 							    [0]);
+#endif
     default:
       return (time_t) - 1;
     }
@@ -663,10 +672,12 @@ gnutls_certificate_activation_time_peers (gnutls_session_t session)
       return _gnutls_x509_get_raw_crt_activation_time (&info->
 						       raw_certificate_list
 						       [0]);
+#ifdef ENABLE_OPENPGP
     case GNUTLS_CRT_OPENPGP:
       return _gnutls_openpgp_get_raw_key_creation_time (&info->
 							  raw_certificate_list
 							  [0]);
+#endif
     default:
       return (time_t) - 1;
     }
@@ -682,8 +693,10 @@ _gnutls_raw_cert_to_gcert (gnutls_cert * gcert,
     {
     case GNUTLS_CRT_X509:
       return _gnutls_x509_raw_cert_to_gcert (gcert, raw_cert, flags);
+#ifdef ENABLE_OPENPGP
     case GNUTLS_CRT_OPENPGP:
       return _gnutls_openpgp_raw_key_to_gcert (gcert, raw_cert);
+#endif
     default:
       gnutls_assert ();
       return GNUTLS_E_INTERNAL_ERROR;
@@ -700,10 +713,12 @@ _gnutls_raw_privkey_to_gkey (gnutls_privkey * key,
     {
     case GNUTLS_CRT_X509:
       return _gnutls_x509_raw_privkey_to_gkey (key, raw_key, key_enc);
+#ifdef ENABLE_OPENPGP
     case GNUTLS_CRT_OPENPGP:
       return _gnutls_openpgp_raw_privkey_to_gkey (key, raw_key,
 						    (gnutls_openpgp_crt_fmt_t)
 						    key_enc);
+#endif
     default:
       gnutls_assert ();
       return GNUTLS_E_INTERNAL_ERROR;
