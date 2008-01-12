@@ -160,6 +160,8 @@ openpgp_pk_to_gnutls_cert (gnutls_cert * cert, cdk_pkt_pubkey_t pk)
  * GnuTLS specific data which is need to perform secret key operations.
  *
  * This function can read both BASE64 and RAW keys.
+ *
+ * FIXME: use the internal API
  -*/
 int
 _gnutls_openpgp_raw_privkey_to_gkey (gnutls_privkey * pkey,
@@ -208,10 +210,10 @@ _gnutls_openpgp_raw_privkey_to_gkey (gnutls_privkey * pkey,
       goto leave;
     }
 
-  pkt = cdk_kbnode_find_packet (snode, CDK_PKT_SECRET_SUBKEY);
+  pkt = _gnutls_get_valid_subkey( snode, CDK_PKT_SECRET_SUBKEY);
   if (!pkt)
     {
-      rc = GNUTLS_E_OPENPGP_GETKEY_FAILED;
+      rc = GNUTLS_E_OPENPGP_SUBKEY_ERROR;
       goto leave;
     }
   sk = pkt->pkt.secret_key;
@@ -283,12 +285,12 @@ _gnutls_openpgp_raw_key_to_gcert (gnutls_cert * cert,
 
   rc = cdk_kbnode_read_from_mem (&knode, raw->data, raw->size);
   if (!(rc = _gnutls_map_cdk_rc (rc))) {
-    pkt = cdk_kbnode_find_packet (knode, CDK_PKT_PUBLIC_SUBKEY);
+    pkt = _gnutls_get_valid_subkey( knode, CDK_PKT_PUBLIC_SUBKEY);
   }
   if (!pkt)
     {
       gnutls_assert ();
-      rc = _gnutls_map_cdk_rc (rc);
+      rc = GNUTLS_E_OPENPGP_SUBKEY_ERROR;
     }
   if (!rc)
     rc = _gnutls_set_datum (&cert->raw, raw->data, raw->size);
@@ -431,9 +433,9 @@ gnutls_openpgp_get_key (gnutls_datum_t * key,
       goto leave;
     }
 
-  if (!cdk_kbnode_find (knode, CDK_PKT_PUBLIC_SUBKEY))
+  if (!cdk_kbnode_find (knode, CDK_PKT_PUBLIC_KEY))
     {
-      rc = GNUTLS_E_OPENPGP_SUBKEY_ERROR;
+      rc = GNUTLS_E_OPENPGP_GETKEY_FAILED;
       goto leave;
     }
   
