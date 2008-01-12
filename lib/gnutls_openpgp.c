@@ -433,7 +433,7 @@ gnutls_openpgp_get_key (gnutls_datum_t * key,
 
   if (!cdk_kbnode_find (knode, CDK_PKT_PUBLIC_SUBKEY))
     {
-      rc = GNUTLS_E_OPENPGP_GETSUBKEY_FAILED;
+      rc = GNUTLS_E_OPENPGP_SUBKEY_ERROR;
       goto leave;
     }
   
