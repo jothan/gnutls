@@ -53,6 +53,10 @@ extern "C"
 				 void *output_data,
 				 size_t * output_data_size);
 
+  int gnutls_openpgp_crt_print (gnutls_openpgp_crt_t cert,
+		       gnutls_certificate_print_formats_t format,
+		       gnutls_datum_t *out);
+
 /* The key_usage flags are defined in gnutls.h. They are
  * the GNUTLS_KEY_* definitions.
  */
@@ -78,6 +82,18 @@ extern "C"
 
   int gnutls_openpgp_crt_check_hostname (gnutls_openpgp_crt_t key,
 					 const char *hostname);
+
+  int gnutls_openpgp_crt_get_revoked_status (gnutls_openpgp_crt_t key);
+
+  int gnutls_openpgp_crt_get_subkey_count (gnutls_openpgp_crt_t key);
+  int gnutls_openpgp_crt_get_subkey_revoked_status (gnutls_openpgp_crt_t key, unsigned int idx);
+  gnutls_pk_algorithm_t gnutls_openpgp_crt_get_subkey_pk_algorithm (gnutls_openpgp_crt_t key,
+    unsigned int idx, unsigned int *bits);
+  time_t gnutls_openpgp_crt_get_subkey_creation_time (gnutls_openpgp_crt_t key, unsigned int idx);
+  time_t gnutls_openpgp_crt_get_subkey_expiration_time (gnutls_openpgp_crt_t key, unsigned int idx);
+  int gnutls_openpgp_crt_get_subkey_id (gnutls_openpgp_crt_t key, unsigned int idx, unsigned char keyid[8]);
+  int gnutls_openpgp_crt_get_subkey_usage (gnutls_openpgp_crt_t key, unsigned int idx,
+				  unsigned int *key_usage);
 
 /* privkey stuff.
  */
