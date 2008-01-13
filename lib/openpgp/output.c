@@ -133,21 +133,20 @@ print_key_usage (gnutls_string * str, gnutls_openpgp_crt_t cert, unsigned int id
 static void
 print_key_id (gnutls_string * str, gnutls_openpgp_crt_t cert, int idx)
 {
-    char fpr[8];
-    size_t fpr_size = sizeof (fpr);
+    gnutls_openpgp_keyid_t id;
     int err;
 
     if (idx < 0)
-      err = gnutls_openpgp_crt_get_id (cert, fpr);
+      err = gnutls_openpgp_crt_get_id (cert, &id);
     else
-      err = gnutls_openpgp_crt_get_subkey_id( cert, idx, fpr);
+      err = gnutls_openpgp_crt_get_subkey_id( cert, idx, &id);
 
     if (err < 0)
       addf (str, "error: get_id: %s\n", gnutls_strerror (err));
     else
       {
 	addf (str, _("\tID (hex): "));
-	hexprint (str, fpr, fpr_size);
+	hexprint (str, id.keyid, sizeof(id.keyid));
 	addf (str, "\n");
       }
 }

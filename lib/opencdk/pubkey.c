@@ -605,14 +605,15 @@ _cdk_pk_algo_usage (int algo)
   return usage;  
 }
 
-
+/* You can use a NULL buf to get the output size only
+ */
 static cdk_error_t
 mpi_to_buffer (gcry_mpi_t a, byte *buf, size_t buflen,
 	       size_t *r_nwritten, size_t *r_nbits)
 {
   size_t nbits;
   
-  if (!a || !buf || !r_nwritten)
+  if (!a || !r_nwritten)
     return CDK_Inv_Value;
   
   nbits = gcry_mpi_get_nbits (a);
@@ -621,6 +622,7 @@ mpi_to_buffer (gcry_mpi_t a, byte *buf, size_t buflen,
   if ((nbits+7)/8+2 > buflen)
     return CDK_Too_Short;
   *r_nwritten = (nbits+7)/8+2;
+
   if (gcry_mpi_print (GCRYMPI_FMT_PGP, buf, buflen, r_nwritten, a))
     return CDK_Wrong_Format;
   return 0;

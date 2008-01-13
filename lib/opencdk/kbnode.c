@@ -529,7 +529,10 @@ cdk_kbnode_write_to_mem (cdk_kbnode_t node, byte *buf, size_t *r_nbytes)
       return 0;
     }
   if (*r_nbytes < len)
-    rc = CDK_Too_Short;
+    { 
+      *r_nbytes = len;
+      rc = CDK_Too_Short;
+    }
   if (!rc)
     *r_nbytes = cdk_stream_read (s, buf, len);
   cdk_stream_close (s);

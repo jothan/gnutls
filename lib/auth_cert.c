@@ -48,9 +48,11 @@
 #ifdef ENABLE_OPENPGP
 # include "openpgp/gnutls_openpgp.h"
 
-static gnutls_cert *alloc_and_load_pgp_certs (gnutls_openpgp_crt_t cert);
-static gnutls_privkey *alloc_and_load_pgp_key (const gnutls_openpgp_privkey_t
-					       key);
+static gnutls_privkey *
+alloc_and_load_pgp_key (const gnutls_openpgp_privkey_t key, gnutls_openpgp_keyid_t keyid);
+static gnutls_cert *
+alloc_and_load_pgp_certs (gnutls_openpgp_crt_t cert, gnutls_openpgp_keyid_t* keyid);
+
 #endif
 
 static gnutls_cert *alloc_and_load_x509_certs (gnutls_x509_crt_t * certs,
@@ -445,8 +447,16 @@ call_get_cert_callback (gnutls_session_t session,
   if (type == GNUTLS_CRT_X509)
     {
       local_certs = alloc_and_load_x509_certs (st.cert.x509, st.ncerts);
-      if (local_certs != NULL)
-	local_key = alloc_and_load_x509_key (st.key.x509);
+      if (local_certs != NULL) 
+        {
+	  local_key = alloc_and_load_x509_key (st.key.x509);
+ 	  if (local_key == NULL)
+ 	    {
+ 	      gnutls_assert();
+  	      ret = GNUTLS_E_INTERNAL_ERROR;
+	      goto cleanup;
+ 	    }
+        } 
 
     }
   else
@@ -459,9 +469,21 @@ call_get_cert_callback (gnutls_session_t session,
 	}
 
 #ifdef ENABLE_OPENPGP
-      local_certs = alloc_and_load_pgp_certs (st.cert.pgp);
-      if (local_certs != NULL)
-	local_key = alloc_and_load_pgp_key (st.key.pgp);
+      {
+        gnutls_openpgp_keyid_t selected_keyid;
+        
+        local_certs = alloc_and_load_pgp_certs (st.cert.pgp, &selected_keyid);
+        if (local_certs != NULL)
+          {
+ 	    local_key = alloc_and_load_pgp_key (st.key.pgp, selected_keyid);
+ 	    if (local_key == NULL)
+ 	      {
+ 	        gnutls_assert();
+       	        ret = GNUTLS_E_INTERNAL_ERROR;
+	        goto cleanup;
+ 	      }
+          }
+      }
 #endif
     }
 
@@ -1102,7 +1124,7 @@ _gnutls_proc_openpgp_server_certificate (gnutls_session_t session,
 	  peer_certificate_list_size);
 
   if ((ret =
-       _gnutls_openpgp_raw_key_to_gcert (&peer_certificate_list[0],
+       _gnutls_openpgp_raw_crt_to_gcert (&peer_certificate_list[0],
 					   &tmp)) < 0)
     {
       gnutls_assert ();
@@ -1578,7 +1600,7 @@ alloc_and_load_x509_key (gnutls_x509_privkey_t key)
  */
 #ifdef ENABLE_OPENPGP
 static gnutls_cert *
-alloc_and_load_pgp_certs (gnutls_openpgp_crt_t cert)
+alloc_and_load_pgp_certs (gnutls_openpgp_crt_t cert, gnutls_openpgp_keyid_t* keyid)
 {
   gnutls_cert *local_certs;
   int ret = 0;
@@ -1593,7 +1615,14 @@ alloc_and_load_pgp_certs (gnutls_openpgp_crt_t cert)
       return NULL;
     }
 
-  ret = _gnutls_openpgp_crt_to_gcert (local_certs, cert);
+  ret = _gnutls_openpgp_find_valid_subkey( cert, keyid);
+  if (ret < 0)
+    {
+      gnutls_assert();
+      return NULL;
+    }
+
+  ret = _gnutls_openpgp_crt_to_gcert (local_certs, cert, *keyid);
   if (ret < 0)
     {
       gnutls_assert ();
@@ -1615,7 +1644,7 @@ alloc_and_load_pgp_certs (gnutls_openpgp_crt_t cert)
  * space for it.
  */
 static gnutls_privkey *
-alloc_and_load_pgp_key (const gnutls_openpgp_privkey_t key)
+alloc_and_load_pgp_key (const gnutls_openpgp_privkey_t key, gnutls_openpgp_keyid_t keyid)
 {
   gnutls_privkey *local_key;
   int ret = 0;
@@ -1630,7 +1659,7 @@ alloc_and_load_pgp_key (const gnutls_openpgp_privkey_t key)
       return NULL;
     }
 
-  ret = _gnutls_openpgp_privkey_to_gkey (local_key, key);
+  ret = _gnutls_openpgp_privkey_to_gkey (local_key, key, keyid);
   if (ret < 0)
     {
       gnutls_assert ();

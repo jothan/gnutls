@@ -695,36 +695,13 @@ _gnutls_raw_cert_to_gcert (gnutls_cert * gcert,
       return _gnutls_x509_raw_cert_to_gcert (gcert, raw_cert, flags);
 #ifdef ENABLE_OPENPGP
     case GNUTLS_CRT_OPENPGP:
-      return _gnutls_openpgp_raw_key_to_gcert (gcert, raw_cert);
+      return _gnutls_openpgp_raw_crt_to_gcert (gcert, raw_cert);
 #endif
     default:
       gnutls_assert ();
       return GNUTLS_E_INTERNAL_ERROR;
     }
 }
-
-int
-_gnutls_raw_privkey_to_gkey (gnutls_privkey * key,
-			     gnutls_certificate_type_t type,
-			     const gnutls_datum_t * raw_key,
-			     int key_enc /* DER or PEM */ )
-{
-  switch (type)
-    {
-    case GNUTLS_CRT_X509:
-      return _gnutls_x509_raw_privkey_to_gkey (key, raw_key, key_enc);
-#ifdef ENABLE_OPENPGP
-    case GNUTLS_CRT_OPENPGP:
-      return _gnutls_openpgp_raw_privkey_to_gkey (key, raw_key,
-						    (gnutls_openpgp_crt_fmt_t)
-						    key_enc);
-#endif
-    default:
-      gnutls_assert ();
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-}
-
 
 /* This function will convert a der certificate to a format
  * (structure) that gnutls can understand and use. Actually the

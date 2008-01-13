@@ -1504,12 +1504,20 @@ keydb_merge_selfsig (cdk_kbnode_t key, u32 *keyid)
       s = cdk_subpkt_find (sig->hashed, CDK_SIGSUBPKT_KEY_FLAGS);
       if (s) 
 	{
-	  if (s->d[0] & 0x03) /* cert + sign data */
-	    key_usage |= CDK_KEY_USG_SIGN;
-	  if (s->d[0] & 0x0C) /* encrypt comm. + storage */
-	    key_usage |= CDK_KEY_USG_ENCR;
+	  if (s->d[0] & 0x01) /* cert + sign data */
+	    key_usage |= CDK_KEY_USG_CERT_SIGN;
+	  if (s->d[0] & 0x02) /* cert + sign data */
+	    key_usage |= CDK_KEY_USG_DATA_SIGN;
+	  if (s->d[0] & 0x04) /* encrypt comm. + storage */
+	    key_usage |= CDK_KEY_USG_COMM_ENCR;
+	  if (s->d[0] & 0x08) /* encrypt comm. + storage */
+	    key_usage |= CDK_KEY_USG_STORAGE_ENCR;
+	  if (s->d[0] & 0x10) /* encrypt comm. + storage */
+	    key_usage |= CDK_KEY_USG_SPLIT_KEY;
 	  if (s->d[0] & 0x20)
 	    key_usage |= CDK_KEY_USG_AUTH;
+	  if (s->d[0] & 0x80) /* encrypt comm. + storage */
+	    key_usage |= CDK_KEY_USG_SHARED_KEY;
         }
       s = cdk_subpkt_find (sig->hashed, CDK_SIGSUBPKT_PREFS_SYM);
       if (s) 
