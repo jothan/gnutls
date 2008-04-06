@@ -48,6 +48,15 @@ _pkcs12_check_pass (const char *pass, size_t plen)
   return 0;
 }
 
+static void clear_highbit( mpi_t m, int bit)
+{
+int highest = _gnutls_mpi_get_nbits(m);
+register int i;
+
+    for (i=bit;i<highest;i++)
+      _gnutls_mpi_clear_bit(m, i);
+}
+
 /* ID should be:
  * 3 for MAC
  * 2 for IV
@@ -61,7 +70,7 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
 {
   int rc;
   unsigned int i, j;
-  gc_hash_handle md;
+  digest_hd_st md;
   mpi_t num_b1 = NULL;
   unsigned int pwlen;
   opaque hash[20], buf_b[64], buf_i[128], *p;
@@ -106,27 +115,35 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
 
   for (;;)
     {
-      rc = gc_hash_open (GC_SHA1, 0, &md);
-      if (rc)
+      rc = gnutls_hash_init (&md, GNUTLS_MAC_SHA1);
+      if (rc < 0)
 	{
 	  gnutls_assert ();
-	  return GNUTLS_E_DECRYPTION_FAILED;
+	  return rc;
 	}
       for (i = 0; i < 64; i++)
 	{
 	  unsigned char lid = id & 0xFF;
-	  gc_hash_write (md, 1, &lid);
+	  _gnutls_hash (&md, &lid, 1);
 	}
-      gc_hash_write (md, pw ? 128 : 64, buf_i);
-      memcpy (hash, gc_hash_read (md), 20);
-      gc_hash_close (md);
+      _gnutls_hash( &md, buf_i, pw ? 128 : 64);
+      _gnutls_hash_deinit( &md, hash);
       for (i = 1; i < iter; i++)
-	gc_hash_buffer (GC_SHA1, hash, 20, hash);
+        {
+          rc = gnutls_hash_init (&md, GNUTLS_MAC_SHA1);
+          if (rc < 0)
+            {
+              gnutls_assert();
+              return rc;
+            }
+          _gnutls_hash( &md, hash, 20);
+          _gnutls_hash_deinit( &md, hash);
+        }
       for (i = 0; i < 20 && cur_keylen < req_keylen; i++)
 	keybuf[cur_keylen++] = hash[i];
       if (cur_keylen == req_keylen)
 	{
-	  gcry_mpi_release (num_b1);
+	  _gnutls_mpi_release (&num_b1);
 	  return 0;		/* ready */
 	}
 
@@ -140,7 +157,7 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
 	  gnutls_assert ();
 	  return rc;
 	}
-      gcry_mpi_add_ui (num_b1, num_b1, 1);
+      _gnutls_mpi_add_ui (num_b1, num_b1, 1);
       for (i = 0; i < 128; i += 64)
 	{
 	  mpi_t num_ij;
@@ -152,8 +169,8 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
 	      gnutls_assert ();
 	      return rc;
 	    }
-	  gcry_mpi_add (num_ij, num_ij, num_b1);
-	  gcry_mpi_clear_highbit (num_ij, 64 * 8);
+	  _gnutls_mpi_add (num_ij, num_ij, num_b1);
+	  clear_highbit (num_ij, 64 * 8);
 	  n = 64;
 	  rc = _gnutls_mpi_print (buf_i + i, &n, num_ij);
 	  if (rc < 0)
@@ -161,7 +178,7 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
 	      gnutls_assert ();
 	      return rc;
 	    }
-	  gcry_mpi_release (num_ij);
+	  _gnutls_mpi_release (&num_ij);
 	}
     }
 }
