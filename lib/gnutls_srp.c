@@ -48,7 +48,7 @@ _gnutls_srp_gx (opaque * text, size_t textsize, opaque ** result,
   mpi_t x, e;
   size_t result_size;
 
-  if (_gnutls_mpi_scan_nz (&x, text, &textsize))
+  if (_gnutls_mpi_scan_nz (&x, text, textsize))
     {
       gnutls_assert ();
       return GNUTLS_E_MPI_SCAN_FAILED;
@@ -66,14 +66,14 @@ _gnutls_srp_gx (opaque * text, size_t textsize, opaque ** result,
   _gnutls_mpi_powm (e, g, x, prime);
   _gnutls_mpi_release (&x);
 
-  _gnutls_mpi_print (NULL, &result_size, e);
+  _gnutls_mpi_print (e, NULL, &result_size);
   if (result != NULL)
     {
       *result = galloc_func (result_size);
       if ((*result) == NULL)
 	return GNUTLS_E_MEMORY_ERROR;
 
-      _gnutls_mpi_print (*result, &result_size, e);
+      _gnutls_mpi_print (e, *result, &result_size);
     }
 
   _gnutls_mpi_release (&e);
@@ -99,12 +99,6 @@ _gnutls_calc_srp_B (mpi_t * ret_b, mpi_t g, mpi_t n, mpi_t v)
   /* calculate:  B = (k*v + g^b) % N 
    */
   bits = _gnutls_mpi_get_nbits (n);
-  b = _gnutls_mpi_snew (bits);
-  if (b == NULL)
-    {
-      gnutls_assert ();
-      return NULL;
-    }
 
   tmpV = _gnutls_mpi_alloc_like (n);
 
@@ -114,16 +108,16 @@ _gnutls_calc_srp_B (mpi_t * ret_b, mpi_t g, mpi_t n, mpi_t v)
       goto error;
     }
 
-  _gnutls_mpi_randomize (b, bits, GCRY_STRONG_RANDOM);
+  b = _gnutls_mpi_randomize (NULL, bits, GNUTLS_RND_KEY);
 
-  tmpB = _gnutls_mpi_snew (bits);
+  tmpB = _gnutls_mpi_new (bits);
   if (tmpB == NULL)
     {
       gnutls_assert ();
       goto error;
     }
 
-  B = _gnutls_mpi_snew (bits);
+  B = _gnutls_mpi_new (bits);
   if (B == NULL)
     {
       gnutls_assert ();
@@ -177,10 +171,10 @@ _gnutls_calc_srp_u (mpi_t A, mpi_t B, mpi_t n)
   mpi_t res;
 
   /* get the size of n in bytes */
-  _gnutls_mpi_print (NULL, &n_size, n);
+  _gnutls_mpi_print (n, NULL, &n_size);
 
-  _gnutls_mpi_print (NULL, &a_size, A);
-  _gnutls_mpi_print (NULL, &b_size, B);
+  _gnutls_mpi_print (A, NULL, &a_size);
+  _gnutls_mpi_print (B, NULL, &b_size);
 
   if (a_size > n_size || b_size > n_size)
     {
@@ -194,8 +188,8 @@ _gnutls_calc_srp_u (mpi_t A, mpi_t B, mpi_t n)
   if (holder == NULL)
     return NULL;
 
-  _gnutls_mpi_print (&holder[n_size - a_size], &a_size, A);
-  _gnutls_mpi_print (&holder[n_size + n_size - b_size], &b_size, B);
+  _gnutls_mpi_print (A, &holder[n_size - a_size], &a_size);
+  _gnutls_mpi_print (B, &holder[n_size + n_size - b_size], &b_size);
 
   ret = _gnutls_hash_init (&td, GNUTLS_MAC_SHA1);
   if (ret < 0)
@@ -210,7 +204,7 @@ _gnutls_calc_srp_u (mpi_t A, mpi_t B, mpi_t n)
   /* convert the bytes of hd to integer
    */
   hash_size = 20;		/* SHA */
-  ret = _gnutls_mpi_scan_nz (&res, hd, &hash_size);
+  ret = _gnutls_mpi_scan_nz (&res, hd, hash_size);
   gnutls_free (holder);
 
   if (ret < 0)
@@ -267,16 +261,9 @@ _gnutls_calc_srp_A (mpi_t * a, mpi_t g, mpi_t n)
   int bits;
 
   bits = _gnutls_mpi_get_nbits (n);
-  tmpa = _gnutls_mpi_snew (bits);
-  if (tmpa == NULL)
-    {
-      gnutls_assert ();
-      return NULL;
-    }
+  tmpa = _gnutls_mpi_randomize (NULL, bits, GNUTLS_RND_KEY);
 
-  _gnutls_mpi_randomize (tmpa, bits, GCRY_STRONG_RANDOM);
-
-  A = _gnutls_mpi_snew (bits);
+  A = _gnutls_mpi_new (bits);
   if (A == NULL)
     {
       gnutls_assert ();
@@ -710,14 +697,14 @@ gnutls_srp_verifier (const char *username, const char *password,
     }
 
   size = prime->size;
-  if (_gnutls_mpi_scan_nz (&_n, prime->data, &size))
+  if (_gnutls_mpi_scan_nz (&_n, prime->data, size))
     {
       gnutls_assert ();
       return GNUTLS_E_MPI_SCAN_FAILED;
     }
 
   size = generator->size;
-  if (_gnutls_mpi_scan_nz (&_g, generator->data, &size))
+  if (_gnutls_mpi_scan_nz (&_g, generator->data, size))
     {
       gnutls_assert ();
       return GNUTLS_E_MPI_SCAN_FAILED;

@@ -49,7 +49,7 @@
 mpi_t
 gnutls_calc_dh_secret (mpi_t * ret_x, mpi_t g, mpi_t prime)
 {
-  mpi_t e, x;
+  mpi_t e, x = NULL;
   int x_size = _gnutls_mpi_get_nbits (prime) - 1;
   /* The size of the secret key is less than
    * prime/2
@@ -61,26 +61,12 @@ gnutls_calc_dh_secret (mpi_t * ret_x, mpi_t g, mpi_t prime)
       return NULL;
     }
 
-  x = _gnutls_mpi_new (x_size);
+  x = _gnutls_mpi_randomize( NULL, x_size, GNUTLS_RND_KEY);
   if (x == NULL)
     {
-      gnutls_assert ();
-      if (ret_x)
-	*ret_x = NULL;
-
+      gnutls_assert();
       return NULL;
     }
-
-  /* FIXME: (x_size/8)*8 is there to overcome a bug in libgcrypt
-   * which does not really check the bits given but the bytes.
-   */
-  do
-    {
-      _gnutls_mpi_randomize (x, (x_size / 8) * 8, GCRY_STRONG_RANDOM);
-      /* Check whether x is zero. 
-       */
-    }
-  while (_gnutls_mpi_cmp_ui (x, 0) == 0);
 
   e = _gnutls_mpi_alloc_like (prime);
   if (e == NULL)

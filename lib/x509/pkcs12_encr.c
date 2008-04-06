@@ -25,8 +25,7 @@
 
 #ifdef ENABLE_PKI
 
-#include <gcrypt.h>
-#include <gc.h>
+#include <gnutls_mpi.h>
 #include <gnutls_errors.h>
 
 /* Returns 0 if the password is ok, or a negative error
@@ -115,7 +114,7 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
 
   for (;;)
     {
-      rc = gnutls_hash_init (&md, GNUTLS_MAC_SHA1);
+      rc = _gnutls_hash_init (&md, GNUTLS_MAC_SHA1);
       if (rc < 0)
 	{
 	  gnutls_assert ();
@@ -130,7 +129,7 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
       _gnutls_hash_deinit( &md, hash);
       for (i = 1; i < iter; i++)
         {
-          rc = gnutls_hash_init (&md, GNUTLS_MAC_SHA1);
+          rc = _gnutls_hash_init (&md, GNUTLS_MAC_SHA1);
           if (rc < 0)
             {
               gnutls_assert();
@@ -151,7 +150,7 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
       for (i = 0; i < 64; i++)
 	buf_b[i] = hash[i % 20];
       n = 64;
-      rc = _gnutls_mpi_scan (&num_b1, buf_b, &n);
+      rc = _gnutls_mpi_scan (&num_b1, buf_b, n);
       if (rc < 0)
 	{
 	  gnutls_assert ();
@@ -163,7 +162,7 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
 	  mpi_t num_ij;
 
 	  n = 64;
-	  rc = _gnutls_mpi_scan (&num_ij, buf_i + i, &n);
+	  rc = _gnutls_mpi_scan (&num_ij, buf_i + i, n);
 	  if (rc < 0)
 	    {
 	      gnutls_assert ();
@@ -172,7 +171,7 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
 	  _gnutls_mpi_add (num_ij, num_ij, num_b1);
 	  clear_highbit (num_ij, 64 * 8);
 	  n = 64;
-	  rc = _gnutls_mpi_print (buf_i + i, &n, num_ij);
+	  rc = _gnutls_mpi_print (num_ij, buf_i + i, &n);
 	  if (rc < 0)
 	    {
 	      gnutls_assert ();

@@ -41,6 +41,7 @@
 #include <gnutls_sig.h>
 #include <gnutls_x509.h>
 #include <random.h>
+#include <gnutls_mpi.h>
 
 int _gnutls_gen_rsa_client_kx (gnutls_session_t, opaque **);
 int _gnutls_proc_rsa_client_kx (gnutls_session_t, opaque *, size_t);
@@ -98,8 +99,7 @@ _gnutls_get_public_rsa_params (gnutls_session_t session,
 
   /* EXPORT case: */
   if (_gnutls_cipher_suite_get_kx_algo
-      (&session->security_parameters.current_cipher_suite)
-      == GNUTLS_KX_RSA_EXPORT
+      (&session->security_parameters.current_cipher_suite) == GNUTLS_KX_RSA_EXPORT
       && _gnutls_mpi_get_nbits (peer_cert.params[0]) > 512)
     {
 

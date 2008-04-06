@@ -30,43 +30,104 @@
 #include <libtasn1.h>
 #include <gnutls_errors.h>
 #include <gnutls_num.h>
+#include <gnutls_mpi.h>
+#include <random.h>
 
-/* Functions that refer to the libgcrypt library.
+/* Functions that refer to the mpi library.
  */
+
+#define clearbit(n, v)    ((unsigned char)(v) & ~( (unsigned char)(1U) << (unsigned)(n)))
+
+/* FIXME: test this function */
+mpi_t _gnutls_mpi_random( mpi_t r, unsigned int bits, gnutls_rnd_level_t level)
+{
+opaque * buf = NULL;
+int size = 1+(bits/8), ret;
+int rem, i;
+
+  if (r == NULL) {
+    r = _gnutls_mpi_new(bits);
+  }
+  
+  if (r == NULL)
+    {
+      gnutls_assert();
+      return NULL;
+    }
+
+  buf = gnutls_alloca( size);
+  if (buf == NULL)
+    {
+      gnutls_assert();
+      return NULL;
+    }
+
+  ret = _gnutls_rnd( level, buf, size);
+  if (ret < 0)
+    {
+      gnutls_assert();
+      goto cleanup;
+    }
+  
+  /* mask the bits that weren't requested */
+  rem = bits % 8;
+  if (rem == 0) {
+    buf[size-1]=0;
+  } else {
+    for (i=8;i>rem;i--)
+      clearbit(buf[size-1], i);
+  }
+
+  ret = _gnutls_mpi_scan ( &r, buf, size);
+  if (ret < 0) 
+    {
+      gnutls_assert();
+      goto cleanup;
+    }
+
+  return r;
+  
+cleanup:
+  gnutls_afree(buf);
+  return NULL;
+}
 
 void
 _gnutls_mpi_release (mpi_t * x)
 {
   if (*x == NULL)
     return;
-  gcry_mpi_release (*x);
+  
+  mpi_ops.bigint_release (*x);
   *x = NULL;
 }
 
 /* returns zero on success
  */
 int
-_gnutls_mpi_scan (mpi_t * ret_mpi, const opaque * buffer, size_t * nbytes)
+_gnutls_mpi_scan (mpi_t * ret_mpi, const void * buffer, size_t nbytes)
 {
-  int ret;
-
-  ret = gcry_mpi_scan (ret_mpi, GCRYMPI_FMT_USG, buffer, *nbytes, nbytes);
-  if (ret)
-    return GNUTLS_E_MPI_SCAN_FAILED;
-
+  *ret_mpi = mpi_ops.bigint_scan (buffer, nbytes, GNUTLS_MPI_FORMAT_USG);
+  
+  if (*ret_mpi == NULL)
+    {
+      gnutls_assert();
+      return GNUTLS_E_MPI_SCAN_FAILED;
+    }
+  
   return 0;
 }
 
 /* returns zero on success. Fails if the number is zero.
  */
 int
-_gnutls_mpi_scan_nz (mpi_t * ret_mpi, const opaque * buffer, size_t * nbytes)
+_gnutls_mpi_scan_nz (mpi_t *ret_mpi, const void * buffer, size_t nbytes)
 {
-  int ret;
+int ret;
 
-  ret = gcry_mpi_scan (ret_mpi, GCRYMPI_FMT_USG, buffer, *nbytes, nbytes);
-  if (ret)
-    return GNUTLS_E_MPI_SCAN_FAILED;
+  ret = _gnutls_mpi_scan(ret_mpi, buffer, nbytes);
+  if (ret < 0)
+    return ret;
 
   /* MPIs with 0 bits are illegal
    */
@@ -79,59 +140,39 @@ _gnutls_mpi_scan_nz (mpi_t * ret_mpi, const opaque * buffer, size_t * nbytes)
   return 0;
 }
 
+
+/* Always has the first bit zero */
 int
-_gnutls_mpi_scan_pgp (mpi_t * ret_mpi, const opaque * buffer, size_t * nbytes)
+_gnutls_mpi_dprint_lz (const mpi_t a, gnutls_datum_t * dest)
 {
   int ret;
-  ret = gcry_mpi_scan (ret_mpi, GCRYMPI_FMT_PGP, buffer, *nbytes, nbytes);
-  if (ret)
-    return GNUTLS_E_MPI_SCAN_FAILED;
+  opaque *buf = NULL;
+  size_t bytes = 0;
 
-  /* MPIs with 0 bits are illegal
-   */
-  if (_gnutls_mpi_get_nbits (*ret_mpi) == 0)
+  if (dest == NULL || a == NULL)
+    return GNUTLS_E_INVALID_REQUEST;
+
+  _gnutls_mpi_print_lz (a, NULL, &bytes);
+
+  if (bytes != 0)
+    buf = gnutls_malloc (bytes);
+  if (buf == NULL)
+    return GNUTLS_E_MEMORY_ERROR;
+
+  ret = _gnutls_mpi_print_lz (a, buf, &bytes);
+  if (ret < 0)
     {
-      _gnutls_mpi_release (ret_mpi);
-      return GNUTLS_E_MPI_SCAN_FAILED;
+      gnutls_free (buf);
+      return ret;
     }
 
+  dest->data = buf;
+  dest->size = bytes;
   return 0;
 }
 
 int
-_gnutls_mpi_print (void *buffer, size_t * nbytes, const mpi_t a)
-{
-  int ret;
-
-  if (nbytes == NULL || a == NULL)
-    return GNUTLS_E_INVALID_REQUEST;
-
-  ret = gcry_mpi_print (GCRYMPI_FMT_USG, buffer, *nbytes, nbytes, a);
-  if (!ret)
-    return 0;
-
-  return GNUTLS_E_MPI_PRINT_FAILED;
-}
-
-/* Always has the first bit zero */
-int
-_gnutls_mpi_print_lz (void *buffer, size_t * nbytes, const mpi_t a)
-{
-  int ret;
-
-  if (nbytes == NULL || a == NULL)
-    return GNUTLS_E_INVALID_REQUEST;
-
-  ret = gcry_mpi_print (GCRYMPI_FMT_STD, buffer, *nbytes, nbytes, a);
-  if (!ret)
-    return 0;
-
-  return GNUTLS_E_MPI_PRINT_FAILED;
-}
-
-/* Always has the first bit zero */
-int
-_gnutls_mpi_dprint_lz (gnutls_datum_t * dest, const mpi_t a)
+_gnutls_mpi_dprint (const mpi_t a, gnutls_datum_t * dest)
 {
   int ret;
   opaque *buf = NULL;
@@ -140,52 +181,28 @@ _gnutls_mpi_dprint_lz (gnutls_datum_t * dest, const mpi_t a)
   if (dest == NULL || a == NULL)
     return GNUTLS_E_INVALID_REQUEST;
 
-  gcry_mpi_print (GCRYMPI_FMT_STD, NULL, 0, &bytes, a);
+  _gnutls_mpi_print (a, NULL, &bytes);
 
   if (bytes != 0)
     buf = gnutls_malloc (bytes);
   if (buf == NULL)
     return GNUTLS_E_MEMORY_ERROR;
 
-  ret = gcry_mpi_print (GCRYMPI_FMT_STD, buf, bytes, &bytes, a);
-  if (!ret)
+  ret = _gnutls_mpi_print (a, NULL, &bytes);
+  if (ret < 0)
     {
-      dest->data = buf;
-      dest->size = bytes;
-      return 0;
+      gnutls_free (buf);
+      return ret;
     }
 
-  gnutls_free (buf);
-  return GNUTLS_E_MPI_PRINT_FAILED;
+  dest->data = buf;
+  dest->size = bytes;
+  return 0;
 }
 
-int
-_gnutls_mpi_dprint (gnutls_datum_t * dest, const mpi_t a)
+mpi_t _gnutls_mpi_copy( mpi_t a)
 {
-  int ret;
-  opaque *buf = NULL;
-  size_t bytes = 0;
-
-  if (dest == NULL || a == NULL)
-    return GNUTLS_E_INVALID_REQUEST;
-
-  gcry_mpi_print (GCRYMPI_FMT_USG, NULL, 0, &bytes, a);
-
-  if (bytes != 0)
-    buf = gnutls_malloc (bytes);
-  if (buf == NULL)
-    return GNUTLS_E_MEMORY_ERROR;
-
-  ret = gcry_mpi_print (GCRYMPI_FMT_USG, buf, bytes, &bytes, a);
-  if (!ret)
-    {
-      dest->data = buf;
-      dest->size = bytes;
-      return 0;
-    }
-
-  gnutls_free (buf);
-  return GNUTLS_E_MPI_PRINT_FAILED;
+  return _gnutls_mpi_set( NULL, a);
 }
 
 
@@ -225,7 +242,7 @@ _gnutls_x509_read_int (ASN1_TYPE node, const char *value, mpi_t * ret_mpi)
     }
 
   s_len = tmpstr_size;
-  if (_gnutls_mpi_scan (ret_mpi, tmpstr, &s_len) != 0)
+  if (_gnutls_mpi_scan (ret_mpi, tmpstr, s_len) != 0)
     {
       gnutls_assert ();
       gnutls_afree (tmpstr);
@@ -248,9 +265,9 @@ _gnutls_x509_write_int (ASN1_TYPE node, const char *value, mpi_t mpi, int lz)
 
   s_len = 0;
   if (lz)
-    result = _gnutls_mpi_print_lz (NULL, &s_len, mpi);
+    result = _gnutls_mpi_print_lz (mpi, NULL, &s_len);
   else
-    result = _gnutls_mpi_print (NULL, &s_len, mpi);
+    result = _gnutls_mpi_print (mpi, NULL, &s_len);
 
   tmpstr = gnutls_alloca (s_len);
   if (tmpstr == NULL)
@@ -260,9 +277,9 @@ _gnutls_x509_write_int (ASN1_TYPE node, const char *value, mpi_t mpi, int lz)
     }
 
   if (lz)
-    result = _gnutls_mpi_print_lz (tmpstr, &s_len, mpi);
+    result = _gnutls_mpi_print_lz (mpi, tmpstr, &s_len);
   else
-    result = _gnutls_mpi_print (tmpstr, &s_len, mpi);
+    result = _gnutls_mpi_print (mpi, tmpstr, &s_len);
 
   if (result != 0)
     {

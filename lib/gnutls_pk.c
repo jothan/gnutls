@@ -37,16 +37,7 @@
 #include <x509/x509_int.h>
 #include <x509/common.h>
 #include <random.h>
-
-static int _gnutls_pk_encrypt (int algo, mpi_t * resarr, mpi_t data,
-			       mpi_t * pkey, int pkey_len);
-static int _gnutls_pk_sign (int algo, mpi_t * data, mpi_t hash,
-			    mpi_t * pkey, int);
-static int _gnutls_pk_verify (int algo, mpi_t hash, mpi_t * data,
-			      mpi_t * pkey, int);
-static int _gnutls_pk_decrypt (int algo, mpi_t * resarr, mpi_t data,
-			       mpi_t * pkey, int);
-
+#include <pk-generic.h>
 
 /* Do PKCS-1 RSA encryption. 
  * params is modulus, public exp.
@@ -143,7 +134,7 @@ _gnutls_pkcs1_rsa_encrypt (gnutls_datum_t * ciphertext,
   ps[psize] = 0;
   memcpy (&ps[psize + 1], plaintext->data, plaintext->size);
 
-  if (_gnutls_mpi_scan_nz (&m, edata, &k) != 0)
+  if (_gnutls_mpi_scan_nz (&m, edata, k) != 0)
     {
       gnutls_assert ();
       gnutls_afree (edata);
@@ -152,9 +143,9 @@ _gnutls_pkcs1_rsa_encrypt (gnutls_datum_t * ciphertext,
   gnutls_afree (edata);
 
   if (btype == 2)		/* encrypt */
-    ret = _gnutls_pk_encrypt (GCRY_PK_RSA, &res, m, params, params_len);
+    ret = _gnutls_pk_encrypt (GNUTLS_PK_RSA, &res, m, params, params_len);
   else				/* sign */
-    ret = _gnutls_pk_sign (GCRY_PK_RSA, &res, m, params, params_len);
+    ret = _gnutls_pk_sign (GNUTLS_PK_RSA, &res, m, params, params_len);
 
   _gnutls_mpi_release (&m);
 
@@ -164,7 +155,7 @@ _gnutls_pkcs1_rsa_encrypt (gnutls_datum_t * ciphertext,
       return ret;
     }
 
-  _gnutls_mpi_print (NULL, &psize, res);
+  _gnutls_mpi_print (res, NULL, &psize);
 
   if (psize < k)
     {
@@ -191,7 +182,7 @@ _gnutls_pkcs1_rsa_encrypt (gnutls_datum_t * ciphertext,
       _gnutls_mpi_release (&res);
       return GNUTLS_E_MEMORY_ERROR;
     }
-  _gnutls_mpi_print (&ciphertext->data[pad], &psize, res);
+  _gnutls_mpi_print (res, &ciphertext->data[pad], &psize);
   for (i = 0; i < pad; i++)
     ciphertext->data[i] = 0;
 
@@ -232,7 +223,7 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
       return GNUTLS_E_PK_DECRYPTION_FAILED;
     }
 
-  if (_gnutls_mpi_scan_nz (&c, ciphertext->data, &esize) != 0)
+  if (_gnutls_mpi_scan_nz (&c, ciphertext->data, esize) != 0)
     {
       gnutls_assert ();
       return GNUTLS_E_MPI_SCAN_FAILED;
@@ -242,10 +233,10 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
    * available.
    */
   if (btype == 2)
-    ret = _gnutls_pk_decrypt (GCRY_PK_RSA, &res, c, params, params_len);
+    ret = _gnutls_pk_decrypt (GNUTLS_PK_RSA, &res, c, params, params_len);
   else
     {
-      ret = _gnutls_pk_encrypt (GCRY_PK_RSA, &res, c, params, params_len);
+      ret = _gnutls_pk_encrypt (GNUTLS_PK_RSA, &res, c, params, params_len);
     }
   _gnutls_mpi_release (&c);
 
@@ -255,7 +246,7 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
       return ret;
     }
 
-  _gnutls_mpi_print (NULL, &esize, res);
+  _gnutls_mpi_print (res, NULL, &esize);
   edata = gnutls_alloca (esize + 1);
   if (edata == NULL)
     {
@@ -263,7 +254,7 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
       _gnutls_mpi_release (&res);
       return GNUTLS_E_MEMORY_ERROR;
     }
-  _gnutls_mpi_print (&edata[1], &esize, res);
+  _gnutls_mpi_print (res, &edata[1], &esize);
 
   _gnutls_mpi_release (&res);
 
@@ -448,13 +439,13 @@ _gnutls_dsa_sign (gnutls_datum_t * signature,
       return GNUTLS_E_PK_SIGN_FAILED;
     }
 
-  if (_gnutls_mpi_scan_nz (&mdata, hash->data, &k) != 0)
+  if (_gnutls_mpi_scan_nz (&mdata, hash->data, k) != 0)
     {
       gnutls_assert ();
       return GNUTLS_E_MPI_SCAN_FAILED;
     }
 
-  ret = _gnutls_pk_sign (GCRY_PK_DSA, rs, mdata, params, params_len);
+  ret = _gnutls_pk_sign (GNUTLS_PK_DSA, rs, mdata, params, params_len);
   /* rs[0], rs[1] now hold r,s */
   _gnutls_mpi_release (&mdata);
 
@@ -552,7 +543,7 @@ _gnutls_dsa_verify (const gnutls_datum_t * vdata,
     }
 
   k = vdata->size;
-  if (_gnutls_mpi_scan_nz (&mdata, vdata->data, &k) != 0)
+  if (_gnutls_mpi_scan_nz (&mdata, vdata->data, k) != 0)
     {
       gnutls_assert ();
       _gnutls_mpi_release (&rs[0]);
@@ -561,7 +552,7 @@ _gnutls_dsa_verify (const gnutls_datum_t * vdata,
     }
 
   /* decrypt signature */
-  ret = _gnutls_pk_verify (GCRY_PK_DSA, mdata, rs, params, params_len);
+  ret = _gnutls_pk_verify (GNUTLS_PK_DSA, mdata, rs, params, params_len);
   _gnutls_mpi_release (&mdata);
   _gnutls_mpi_release (&rs[0]);
   _gnutls_mpi_release (&rs[1]);
@@ -579,337 +570,3 @@ _gnutls_dsa_verify (const gnutls_datum_t * vdata,
 /* this is taken from gnupg 
  */
 
-/****************
- * Emulate our old PK interface here - sometime in the future we might
- * change the internal design to directly fit to libgcrypt.
- */
-static int
-_gnutls_pk_encrypt (int algo, mpi_t * resarr, mpi_t data,
-		    mpi_t * pkey, int pkey_len)
-{
-  gcry_sexp_t s_ciph, s_data, s_pkey;
-  int rc = -1;
-
-  /* make a sexp from pkey */
-  switch (algo)
-    {
-    case GCRY_PK_RSA:
-      if (pkey_len >= 2)
-	rc = gcry_sexp_build (&s_pkey, NULL,
-			      "(public-key(rsa(n%m)(e%m)))",
-			      pkey[0], pkey[1]);
-      break;
-
-    default:
-      gnutls_assert ();
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  if (rc != 0)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  /* put the data into a simple list */
-  if (gcry_sexp_build (&s_data, NULL, "%m", data))
-    {
-      gnutls_assert ();
-      gcry_sexp_release (s_pkey);
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  /* pass it to libgcrypt */
-  rc = gcry_pk_encrypt (&s_ciph, s_data, s_pkey);
-  gcry_sexp_release (s_data);
-  gcry_sexp_release (s_pkey);
-
-  if (rc != 0)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_PK_ENCRYPTION_FAILED;
-
-    }
-  else
-    {				/* add better error handling or make gnupg use S-Exp directly */
-      gcry_sexp_t list = gcry_sexp_find_token (s_ciph, "a", 0);
-      if (list == NULL)
-	{
-	  gnutls_assert ();
-	  gcry_sexp_release (s_ciph);
-	  return GNUTLS_E_INTERNAL_ERROR;
-	}
-
-      resarr[0] = gcry_sexp_nth_mpi (list, 1, 0);
-      gcry_sexp_release (list);
-
-      if (resarr[0] == NULL)
-	{
-	  gnutls_assert ();
-	  gcry_sexp_release (s_ciph);
-	  return GNUTLS_E_INTERNAL_ERROR;
-	}
-    }
-
-  gcry_sexp_release (s_ciph);
-  return rc;
-}
-
-static int
-_gnutls_pk_decrypt (int algo, mpi_t * resarr, mpi_t data, mpi_t * pkey,
-		    int pkey_len)
-{
-  gcry_sexp_t s_plain, s_data, s_pkey;
-  int rc = -1;
-
-  /* make a sexp from pkey */
-  switch (algo)
-    {
-    case GCRY_PK_RSA:
-      if (pkey_len >= 6)
-	rc = gcry_sexp_build (&s_pkey, NULL,
-			      "(private-key(rsa((n%m)(e%m)(d%m)(p%m)(q%m)(u%m))))",
-			      pkey[0], pkey[1], pkey[2], pkey[3],
-			      pkey[4], pkey[5]);
-      break;
-
-    default:
-      gnutls_assert ();
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  if (rc != 0)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  /* put the data into a simple list */
-  if (gcry_sexp_build (&s_data, NULL, "(enc-val(rsa(a%m)))", data))
-    {
-      gnutls_assert ();
-      gcry_sexp_release (s_pkey);
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  /* pass it to libgcrypt */
-  rc = gcry_pk_decrypt (&s_plain, s_data, s_pkey);
-  gcry_sexp_release (s_data);
-  gcry_sexp_release (s_pkey);
-
-  if (rc != 0)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_PK_DECRYPTION_FAILED;
-
-    }
-  else
-    {				/* add better error handling or make gnupg use S-Exp directly */
-      resarr[0] = gcry_sexp_nth_mpi (s_plain, 0, 0);
-
-      if (resarr[0] == NULL)
-	{
-	  gnutls_assert ();
-	  gcry_sexp_release (s_plain);
-	  return GNUTLS_E_INTERNAL_ERROR;
-	}
-    }
-
-  gcry_sexp_release (s_plain);
-  return rc;
-}
-
-
-/* in case of DSA puts into data, r,s
- */
-static int
-_gnutls_pk_sign (int algo, mpi_t * data, mpi_t hash, mpi_t * pkey,
-		 int pkey_len)
-{
-  gcry_sexp_t s_hash, s_key, s_sig;
-  int rc = -1;
-
-  /* make a sexp from pkey */
-  switch (algo)
-    {
-    case GCRY_PK_DSA:
-      if (pkey_len >= 5)
-	rc = gcry_sexp_build (&s_key, NULL,
-			      "(private-key(dsa(p%m)(q%m)(g%m)(y%m)(x%m)))",
-			      pkey[0], pkey[1], pkey[2], pkey[3], pkey[4]);
-      else
-	{
-	  gnutls_assert ();
-	}
-
-      break;
-    case GCRY_PK_RSA:
-      if (pkey_len >= 6)
-	rc = gcry_sexp_build (&s_key, NULL,
-			      "(private-key(rsa((n%m)(e%m)(d%m)(p%m)(q%m)(u%m))))",
-			      pkey[0], pkey[1], pkey[2], pkey[3],
-			      pkey[4], pkey[5]);
-      else
-	{
-	  gnutls_assert ();
-	}
-      break;
-
-    default:
-      gnutls_assert ();
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  if (rc != 0)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  /* put the data into a simple list */
-  if (gcry_sexp_build (&s_hash, NULL, "%m", hash))
-    {
-      gnutls_assert ();
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  /* pass it to libgcrypt */
-  rc = gcry_pk_sign (&s_sig, s_hash, s_key);
-  gcry_sexp_release (s_hash);
-  gcry_sexp_release (s_key);
-
-  if (rc != 0)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_PK_SIGN_FAILED;
-
-    }
-  else
-    {
-      gcry_sexp_t list;
-
-      if (algo == GCRY_PK_DSA)
-	{
-	  list = gcry_sexp_find_token (s_sig, "r", 0);
-	  if (list == NULL)
-	    {
-	      gnutls_assert ();
-	      gcry_sexp_release (s_sig);
-	      return GNUTLS_E_INTERNAL_ERROR;
-	    }
-
-	  data[0] = gcry_sexp_nth_mpi (list, 1, 0);
-	  gcry_sexp_release (list);
-
-	  list = gcry_sexp_find_token (s_sig, "s", 0);
-	  if (list == NULL)
-	    {
-	      gnutls_assert ();
-	      gcry_sexp_release (s_sig);
-	      return GNUTLS_E_INTERNAL_ERROR;
-	    }
-
-	  data[1] = gcry_sexp_nth_mpi (list, 1, 0);
-	  gcry_sexp_release (list);
-	}
-      else
-	{			/* GCRY_PK_RSA */
-	  list = gcry_sexp_find_token (s_sig, "s", 0);
-	  if (list == NULL)
-	    {
-	      gnutls_assert ();
-	      gcry_sexp_release (s_sig);
-	      return GNUTLS_E_INTERNAL_ERROR;
-	    }
-
-	  data[0] = gcry_sexp_nth_mpi (list, 1, 0);
-	  gcry_sexp_release (list);
-	}
-    }
-
-  gcry_sexp_release (s_sig);
-  return 0;
-}
-
-
-static int
-_gnutls_pk_verify (int algo, mpi_t hash, mpi_t * data,
-		   mpi_t * pkey, int pkey_len)
-{
-  gcry_sexp_t s_sig, s_hash, s_pkey;
-  int rc = -1;
-
-  /* make a sexp from pkey */
-  switch (algo)
-    {
-    case GCRY_PK_DSA:
-      if (pkey_len >= 4)
-	rc = gcry_sexp_build (&s_pkey, NULL,
-			      "(public-key(dsa(p%m)(q%m)(g%m)(y%m)))",
-			      pkey[0], pkey[1], pkey[2], pkey[3]);
-      break;
-    case GCRY_PK_RSA:
-      if (pkey_len >= 2)
-	rc = gcry_sexp_build (&s_pkey, NULL,
-			      "(public-key(rsa(n%m)(e%m)))",
-			      pkey[0], pkey[1]);
-      break;
-
-    default:
-      gnutls_assert ();
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  if (rc != 0)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  /* put the data into a simple list */
-  if (gcry_sexp_build (&s_hash, NULL, "%m", hash))
-    {
-      gnutls_assert ();
-      gcry_sexp_release (s_pkey);
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  switch (algo)
-    {
-    case GCRY_PK_DSA:
-      rc = gcry_sexp_build (&s_sig, NULL,
-			    "(sig-val(dsa(r%m)(s%m)))", data[0], data[1]);
-      break;
-    case GCRY_PK_RSA:
-      rc = gcry_sexp_build (&s_sig, NULL, "(sig-val(rsa(s%m)))", data[0]);
-      break;
-
-    default:
-      gnutls_assert ();
-      gcry_sexp_release (s_pkey);
-      gcry_sexp_release (s_hash);
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  if (rc != 0)
-    {
-      gnutls_assert ();
-      gcry_sexp_release (s_pkey);
-      gcry_sexp_release (s_hash);
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
-  rc = gcry_pk_verify (s_sig, s_hash, s_pkey);
-
-  gcry_sexp_release (s_sig);
-  gcry_sexp_release (s_hash);
-  gcry_sexp_release (s_pkey);
-
-  if (rc != 0)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_PK_SIG_VERIFY_FAILED;
-    }
-
-  return 0;
-}

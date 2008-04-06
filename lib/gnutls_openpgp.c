@@ -34,7 +34,6 @@
 #include <gnutls_str.h>
 #include <gnutls_sig.h>
 #include <stdio.h>
-#include <gcrypt.h>
 #include <time.h>
 #include <sys/stat.h>
 

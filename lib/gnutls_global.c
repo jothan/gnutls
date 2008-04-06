@@ -27,6 +27,7 @@
 #include <libtasn1.h>
 #include <gnutls_dh.h>
 #include <random.h>
+#include <gcrypt.h>
 
 #ifdef HAVE_WINSOCK
 # include <winsock2.h>
