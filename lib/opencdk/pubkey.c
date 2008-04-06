@@ -625,7 +625,7 @@ mpi_to_buffer (gcry_mpi_t a, byte *buf, size_t buflen,
     return CDK_Too_Short;
   *r_nwritten = (nbits+7)/8+2;
 
-  if (gcry_mpi_print (GCRYMPI_FMT_PGP, buf, buflen, r_nwritten, a))
+  if (gcry_mpi_print (GCRYMPI_FMT_USG, buf, buflen, r_nwritten, a))
     return CDK_Wrong_Format;
   return 0;
 }

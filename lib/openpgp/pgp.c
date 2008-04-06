@@ -1039,7 +1039,7 @@ int max_pub_params = 0;
       return _gnutls_map_cdk_rc( err);
     }
   
-  err = _gnutls_mpi_scan_pgp (m, buf, &buf_size);
+  err = _gnutls_mpi_scan (m, buf, &buf_size);
   gnutls_free( buf);
   
   if (err < 0)
