@@ -59,8 +59,6 @@ mpi_t _gnutls_mpi_randomize( mpi_t, unsigned int bits, gnutls_rnd_level_t level)
 #define _gnutls_mpi_sub_ui(x,y,z) mpi_ops.bigint_sub_ui(x,y,z)
 #define _gnutls_mpi_mul_ui(x,y,z) mpi_ops.bigint_mul_ui(x,y,z)
 #define _gnutls_prime_check(z) mpi_ops.bigint_prime_check(z)
-#define _gnutls_mpi_set_bit(x,y) mpi_ops.bigint_set_bit(x,y)
-#define _gnutls_mpi_clear_bit(x,y) mpi_ops.bigint_clear_bit(x,y)
 #define _gnutls_mpi_print(x,y,z) mpi_ops.bigint_print(x,y,z,GNUTLS_MPI_FORMAT_USG)
 #define _gnutls_mpi_print_lz(x,y,z) mpi_ops.bigint_print(x,y,z,GNUTLS_MPI_FORMAT_STD)
 
