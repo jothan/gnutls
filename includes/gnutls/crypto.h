@@ -56,6 +56,47 @@ typedef struct gnutls_crypto_rnd {
   void (*deinit)( void* ctx);
 } gnutls_crypto_rnd_st;
 
+typedef void* bigint_t;
+
+typedef enum gnutls_bigint_format
+{
+  GNUTLS_MPI_FORMAT_USG = 0, /* raw unsigned integer format */ 
+  GNUTLS_MPI_FORMAT_STD = 1, /* raw signed integer format - always a leading zero */
+} gnutls_bigint_format_t;
+
+/* Multi precision integer arithmetic */
+typedef struct gnutls_crypto_bigint {
+  bigint_t (*bigint_new)( int nbits);
+  void (*bigint_release)( bigint_t n);
+  int (*bigint_cmp)(const bigint_t m1, const bigint_t m2); /* 0 for equality, > 0 for m1>m2, < 0 for m1<m2 */
+  int (*bigint_cmp_ui)(const bigint_t m1, unsigned long m2); /* as bigint_cmp */
+  bigint_t (*bigint_mod) (const bigint_t a, const bigint_t b); /* ret = a % b */
+  bigint_t (*bigint_set) (bigint_t a, const bigint_t b); /* a = b -> ret == a */
+  bigint_t (*bigint_set_ui) (bigint_t a, unsigned long b); /* a = b -> ret == a */
+  unsigned int (*bigint_get_nbits)(const bigint_t a);
+  bigint_t (*bigint_powm) (bigint_t w, const bigint_t b, const bigint_t e,const bigint_t m); /* w = b ^ e mod m */
+  bigint_t (*bigint_addm) (bigint_t w, const bigint_t a, const bigint_t b, const bigint_t m); /* w = a + b mod m */
+  bigint_t (*bigint_subm) (bigint_t w, const bigint_t a, const bigint_t b, const bigint_t m); /* w = a - b mod m */
+  bigint_t (*bigint_mulm) (bigint_t w, const bigint_t a, const bigint_t b, const bigint_t m); /* w = a * b mod m */
+  bigint_t (*bigint_add) (bigint_t w, const bigint_t a, const bigint_t b); /* w = a + b */
+  bigint_t (*bigint_sub) (bigint_t w, const bigint_t a, const bigint_t b); /* w = a - b */
+  bigint_t (*bigint_mul) (bigint_t w, const bigint_t a, const bigint_t b); /* w = a * b */
+  bigint_t (*bigint_add_ui) (bigint_t w, const bigint_t a, unsigned long b); /* w = a + b */
+  bigint_t (*bigint_sub_ui) (bigint_t w, const bigint_t a, unsigned long b); /* w = a - b */
+  bigint_t (*bigint_mul_ui) (bigint_t w, const bigint_t a, unsigned long b); /* w = a * b */
+  bigint_t (*bigint_div) (bigint_t q, const bigint_t a, const bigint_t b); /* q = a / b */
+  int (*bigint_prime_check) (const bigint_t pp); /* 0 if prime */
+  
+  bigint_t (*bigint_scan) ( const void* buf, size_t buf_size, gnutls_bigint_format_t format); /* reads an bigint from a buffer */
+  int (*bigint_print)( const bigint_t a, void* buf, size_t* buf_size, gnutls_bigint_format_t format); /* stores an bigint into the buffer.
+    * returns GNUTLS_E_SHORT_MEMORY_BUFFER if buf_size is not sufficient to store this integer,
+    * and updates the buf_size;
+    */
+  
+} gnutls_crypto_bigint_st;
+
+/* REMOVE: invm should be handled internally only by libgcrypt in pk */
+
 /* the same... setkey should be null */
 typedef gnutls_crypto_mac_st gnutls_crypto_digest_st;
 
@@ -65,5 +106,6 @@ int gnutls_crypto_cipher_register( gnutls_cipher_algorithm_t algorithm, int prio
 int gnutls_crypto_mac_register( gnutls_mac_algorithm_t algorithm, int priority, gnutls_crypto_mac_st* s);
 int gnutls_crypto_digest_register( gnutls_digest_algorithm_t algorithm, int priority, gnutls_crypto_digest_st* s);
 int gnutls_crypto_rnd_register( int priority, gnutls_crypto_rnd_st* s);
+int gnutls_crypto_bigint_register( int priority, gnutls_crypto_bigint_st* s);
 
 #endif

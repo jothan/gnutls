@@ -47,15 +47,6 @@ _pkcs12_check_pass (const char *pass, size_t plen)
   return 0;
 }
 
-static void clear_highbit( mpi_t m, int bit)
-{
-int highest = _gnutls_mpi_get_nbits(m);
-register int i;
-
-    for (i=bit;i<highest;i++)
-      _gnutls_mpi_clear_bit(m, i);
-}
-
 /* ID should be:
  * 3 for MAC
  * 2 for IV
@@ -71,6 +62,7 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
   unsigned int i, j;
   digest_hd_st md;
   mpi_t num_b1 = NULL;
+  mpi_t mpi512 = NULL;
   unsigned int pwlen;
   opaque hash[20], buf_b[64], buf_i[128], *p;
   size_t cur_keylen;
@@ -95,6 +87,13 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
       return rc;
     }
 
+  mpi512 = _gnutls_mpi_set_ui( NULL, 512);
+  if (mpi512 == NULL)
+    {
+      gnutls_assert();
+      return GNUTLS_E_MEMORY_ERROR;
+    } 
+
   /* Store salt and password in BUF_I */
   p = buf_i;
   for (i = 0; i < 64; i++)
@@ -118,7 +117,7 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
       if (rc < 0)
 	{
 	  gnutls_assert ();
-	  return rc;
+	  goto cleanup;
 	}
       for (i = 0; i < 64; i++)
 	{
@@ -133,7 +132,7 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
           if (rc < 0)
             {
               gnutls_assert();
-              return rc;
+              goto cleanup;
             }
           _gnutls_hash( &md, hash, 20);
           _gnutls_hash_deinit( &md, hash);
@@ -142,8 +141,8 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
 	keybuf[cur_keylen++] = hash[i];
       if (cur_keylen == req_keylen)
 	{
-	  _gnutls_mpi_release (&num_b1);
-	  return 0;		/* ready */
+	  rc = 0;		/* ready */
+	  goto cleanup;
 	}
 
       /* need more bytes. */
@@ -154,7 +153,7 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
       if (rc < 0)
 	{
 	  gnutls_assert ();
-	  return rc;
+	  goto cleanup;
 	}
       _gnutls_mpi_add_ui (num_b1, num_b1, 1);
       for (i = 0; i < 128; i += 64)
@@ -166,20 +165,24 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
 	  if (rc < 0)
 	    {
 	      gnutls_assert ();
-	      return rc;
+	      goto cleanup;
 	    }
-	  _gnutls_mpi_add (num_ij, num_ij, num_b1);
-	  clear_highbit (num_ij, 64 * 8);
+	  _gnutls_mpi_addm (num_ij, num_ij, num_b1, mpi512);
 	  n = 64;
 	  rc = _gnutls_mpi_print (num_ij, buf_i + i, &n);
 	  if (rc < 0)
 	    {
 	      gnutls_assert ();
-	      return rc;
+	      goto cleanup;
 	    }
 	  _gnutls_mpi_release (&num_ij);
 	}
     }
+cleanup:
+  _gnutls_mpi_release (&num_ij);
+  _gnutls_mpi_release (&mpi512);
+  
+  return rc;
 }
 
 #endif /* ENABLE_PKI */
