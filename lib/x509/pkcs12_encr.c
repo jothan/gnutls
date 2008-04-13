@@ -61,12 +61,19 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
   int rc;
   unsigned int i, j;
   digest_hd_st md;
-  mpi_t num_b1 = NULL;
+  mpi_t num_b1 = NULL, num_ij = NULL;
   mpi_t mpi512 = NULL;
   unsigned int pwlen;
   opaque hash[20], buf_b[64], buf_i[128], *p;
   size_t cur_keylen;
   size_t n;
+  const opaque buf_512[] = /* 2^64 */
+  { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
   cur_keylen = 0;
 
@@ -87,11 +94,11 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
       return rc;
     }
 
-  mpi512 = _gnutls_mpi_set_ui( NULL, 512);
-  if (mpi512 == NULL)
+  rc = _gnutls_mpi_scan (&mpi512, buf_512, sizeof(buf_512));
+  if (rc < 0)
     {
       gnutls_assert();
-      return GNUTLS_E_MEMORY_ERROR;
+      return rc;
     } 
 
   /* Store salt and password in BUF_I */
@@ -158,8 +165,6 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
       _gnutls_mpi_add_ui (num_b1, num_b1, 1);
       for (i = 0; i < 128; i += 64)
 	{
-	  mpi_t num_ij;
-
 	  n = 64;
 	  rc = _gnutls_mpi_scan (&num_ij, buf_i + i, n);
 	  if (rc < 0)
@@ -180,6 +185,7 @@ _pkcs12_string_to_key (unsigned int id, const opaque * salt,
     }
 cleanup:
   _gnutls_mpi_release (&num_ij);
+  _gnutls_mpi_release (&num_b1);
   _gnutls_mpi_release (&mpi512);
   
   return rc;
