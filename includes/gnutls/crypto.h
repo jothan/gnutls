@@ -45,9 +45,9 @@ typedef struct gnutls_crypto_mac {
 
 typedef enum gnutls_rnd_level
 {
-  GNUTLS_RND_KEY = 0,
-  GNUTLS_RND_RANDOM = 1, /* unpredictable */
-  GNUTLS_RND_NONCE = 2,
+  GNUTLS_RND_KEY = 0, /* fatal in many sessions if broken */
+  GNUTLS_RND_RANDOM = 1, /* fatal in session if broken */
+  GNUTLS_RND_NONCE = 2, /* fatal in parts of session if broken - i.e. vulnerable to statistical analysis */
 } gnutls_rnd_level_t;
 
 typedef struct gnutls_crypto_rnd {
@@ -61,7 +61,7 @@ typedef void* bigint_t;
 typedef enum gnutls_bigint_format
 {
   GNUTLS_MPI_FORMAT_USG = 0, /* raw unsigned integer format */ 
-  GNUTLS_MPI_FORMAT_STD = 1, /* raw signed integer format - always a leading zero */
+  GNUTLS_MPI_FORMAT_STD = 1, /* raw signed integer format - always a leading zero when positive */
 } gnutls_bigint_format_t;
 
 /* Multi precision integer arithmetic */
@@ -88,14 +88,60 @@ typedef struct gnutls_crypto_bigint {
   int (*bigint_prime_check) (const bigint_t pp); /* 0 if prime */
   
   bigint_t (*bigint_scan) ( const void* buf, size_t buf_size, gnutls_bigint_format_t format); /* reads an bigint from a buffer */
-  int (*bigint_print)( const bigint_t a, void* buf, size_t* buf_size, gnutls_bigint_format_t format); /* stores an bigint into the buffer.
+   /* stores an bigint into the buffer.
     * returns GNUTLS_E_SHORT_MEMORY_BUFFER if buf_size is not sufficient to store this integer,
     * and updates the buf_size;
     */
+  int (*bigint_print)( const bigint_t a, void* buf, size_t* buf_size, gnutls_bigint_format_t format); 
   
 } gnutls_crypto_bigint_st;
 
-/* REMOVE: invm should be handled internally only by libgcrypt in pk */
+typedef struct pk_params {
+  bigint_t * params;
+  unsigned int params_nr; /* the number of parameters */
+  unsigned int flags;
+} pk_params_t;
+
+/* params are:
+ * RSA: 
+ *  [0] is modulus
+ *  [1] is public exponent 
+ *  [2] is private exponent (private key only)
+ *  [3] is prime1 (p) (private key only)
+ *  [4] is prime2 (q) (private key only)
+ *  [5] is coefficient (u == inverse of p mod q) (private key only)
+ *   
+ *  note that other packages use inverse of q mod p,
+ *  so we need to perform conversions using fixup_params().
+ *
+ * DSA: 
+ *  [0] is p
+ *  [1] is q
+ *  [2] is g
+ *  [3] is y (public key) 
+ *  [4] is x (private key only)
+ */
+
+/* Public key algorithms */
+typedef struct gnutls_crypto_pk {
+  /* The params structure should contain the private or public key
+   * parameters, depending on the operation */
+  int (*encrypt)( gnutls_pk_algorithm_t, gnutls_datum_t* ciphertext, 
+    const gnutls_datum_t* plaintext, const pk_params_t* /* public */);
+  int (*decrypt)( gnutls_pk_algorithm_t, gnutls_datum_t* plaintext, 
+    const gnutls_datum_t* ciphertext, const pk_params_t* /* private */);
+
+  int (*sign)( gnutls_pk_algorithm_t, gnutls_datum_t* signature, 
+    const gnutls_datum_t* data, const pk_params_t* /* private */);
+  int (*verify)( gnutls_pk_algorithm_t, const gnutls_datum_t* data, 
+    const gnutls_datum_t* signature, const pk_params_t* /* public */);
+
+  /* this function should convert params to ones suitable
+   * for the above functions
+   */
+  int (*pk_fixup_private_params)( gnutls_pk_algorithm_t, pk_params_t*);
+  
+} gnutls_crypto_pk_st;
 
 /* the same... setkey should be null */
 typedef gnutls_crypto_mac_st gnutls_crypto_digest_st;
@@ -107,5 +153,6 @@ int gnutls_crypto_mac_register( gnutls_mac_algorithm_t algorithm, int priority, 
 int gnutls_crypto_digest_register( gnutls_digest_algorithm_t algorithm, int priority, gnutls_crypto_digest_st* s);
 int gnutls_crypto_rnd_register( int priority, gnutls_crypto_rnd_st* s);
 int gnutls_crypto_bigint_register( int priority, gnutls_crypto_bigint_st* s);
+int gnutls_crypto_pk_register( int priority, gnutls_crypto_bigint_st* s);
 
 #endif
