@@ -92,7 +92,7 @@ _gnutls_x509_crt_cpy (gnutls_x509_crt_t dest, gnutls_x509_crt_t src)
       return ret;
     }
 
-  der = gnutls_alloca (der_size);
+  der = gnutls_malloc (der_size);
   if (der == NULL)
     {
       gnutls_assert ();
@@ -103,7 +103,7 @@ _gnutls_x509_crt_cpy (gnutls_x509_crt_t dest, gnutls_x509_crt_t src)
   if (ret < 0)
     {
       gnutls_assert ();
-      gnutls_afree (der);
+      gnutls_free (der);
       return ret;
     }
 
@@ -111,7 +111,7 @@ _gnutls_x509_crt_cpy (gnutls_x509_crt_t dest, gnutls_x509_crt_t src)
   tmp.size = der_size;
   ret = gnutls_x509_crt_import (dest, &tmp, GNUTLS_X509_FMT_DER);
 
-  gnutls_afree (der);
+  gnutls_free (der);
 
   if (ret < 0)
     {
@@ -1336,22 +1336,22 @@ gnutls_x509_crt_get_ca_status (gnutls_x509_crt_t cert, unsigned int *critical)
 }
 
 /**
-  * gnutls_x509_crt_get_key_usage - This function returns the certificate's key usage
+  * gnutls_x509_crt_get_key_usage - return the certificate's key usage
   * @cert: should contain a gnutls_x509_crt_t structure
   * @key_usage: where the key usage bits will be stored
   * @critical: will be non zero if the extension is marked as critical
   *
-  * This function will return certificate's key usage, by reading the 
-  * keyUsage X.509 extension (2.5.29.15). The key usage value will ORed values of the:
-  * GNUTLS_KEY_DIGITAL_SIGNATURE, GNUTLS_KEY_NON_REPUDIATION,
-  * GNUTLS_KEY_KEY_ENCIPHERMENT, GNUTLS_KEY_DATA_ENCIPHERMENT,
-  * GNUTLS_KEY_KEY_AGREEMENT, GNUTLS_KEY_KEY_CERT_SIGN,
-  * GNUTLS_KEY_CRL_SIGN, GNUTLS_KEY_ENCIPHER_ONLY,
-  * GNUTLS_KEY_DECIPHER_ONLY.
+  * This function will return certificate's key usage, by reading the
+  * keyUsage X.509 extension (2.5.29.15). The key usage value will
+  * ORed values of the: %GNUTLS_KEY_DIGITAL_SIGNATURE,
+  * %GNUTLS_KEY_NON_REPUDIATION, %GNUTLS_KEY_KEY_ENCIPHERMENT,
+  * %GNUTLS_KEY_DATA_ENCIPHERMENT, %GNUTLS_KEY_KEY_AGREEMENT,
+  * %GNUTLS_KEY_KEY_CERT_SIGN, %GNUTLS_KEY_CRL_SIGN,
+  * %GNUTLS_KEY_ENCIPHER_ONLY, %GNUTLS_KEY_DECIPHER_ONLY.
   *
-  * A negative value may be returned in case of parsing error.
-  * If the certificate does not contain the keyUsage extension
-  * GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE will be returned.
+  * Returns: the certificate key usage, or a negative value in case of
+  * parsing error.  If the certificate does not contain the keyUsage
+  * extension %GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE will be returned.
   *
   **/
 int
@@ -1962,7 +1962,7 @@ gnutls_x509_crt_get_fingerprint (gnutls_x509_crt_t cert,
   cert_buf_size = 0;
   asn1_der_coding (cert->cert, "", NULL, &cert_buf_size, NULL);
 
-  cert_buf = gnutls_alloca (cert_buf_size);
+  cert_buf = gnutls_malloc (cert_buf_size);
   if (cert_buf == NULL)
     {
       gnutls_assert ();
@@ -1974,7 +1974,7 @@ gnutls_x509_crt_get_fingerprint (gnutls_x509_crt_t cert,
   if (result != ASN1_SUCCESS)
     {
       gnutls_assert ();
-      gnutls_afree (cert_buf);
+      gnutls_free (cert_buf);
       return _gnutls_asn2err (result);
     }
 
@@ -1982,7 +1982,7 @@ gnutls_x509_crt_get_fingerprint (gnutls_x509_crt_t cert,
   tmp.size = cert_buf_size;
 
   result = gnutls_fingerprint (algo, &tmp, buf, sizeof_buf);
-  gnutls_afree (cert_buf);
+  gnutls_free (cert_buf);
 
   return result;
 }
@@ -2157,7 +2157,7 @@ gnutls_x509_crt_get_key_id (gnutls_x509_crt_t crt, unsigned int flags,
       return _gnutls_asn2err (result);
     }
 
-  pubkey.data = gnutls_alloca (pubkey.size);
+  pubkey.data = gnutls_malloc (pubkey.size);
   if (pubkey.data == NULL)
     {
       gnutls_assert ();
@@ -2169,14 +2169,14 @@ gnutls_x509_crt_get_key_id (gnutls_x509_crt_t crt, unsigned int flags,
   if (result != ASN1_SUCCESS)
     {
       gnutls_assert ();
-      gnutls_afree (pubkey.data);
+      gnutls_free (pubkey.data);
       return _gnutls_asn2err (result);
     }
 
   result = gnutls_fingerprint (GNUTLS_DIG_SHA1, &pubkey,
 			       output_data, output_data_size);
 
-  gnutls_afree (pubkey.data);
+  gnutls_free (pubkey.data);
 
   return result;
 }

@@ -33,15 +33,12 @@ AM_CPPFLAGS = -DLOCALEDIR=\"$(localedir)\"				\
 	-I$(top_srcdir)/includes -I../includes				\
 	-I$(srcdir)/x509						\
 	-I$(top_srcdir)/libextra -I$(top_srcdir)/lib/openpgp/	\
-	-I$(top_srcdir)/lib/opencdk 				\
-	$(LIBOPENCDK_CFLAGS) $(LIBGCRYPT_CFLAGS)
+	$(LIBGCRYPT_CFLAGS)
 
 if ENABLE_OPENPGP
-if ENABLE_INCLUDED_OPENCDK
 SUBDIRS += opencdk
-AM_CPPFLAGS += -I$(srcdir)/opencdk
-endif
 SUBDIRS += openpgp
+AM_CPPFLAGS += -I$(srcdir)/opencdk -I$(top_srcdir)/lib/opencdk
 endif
 
 if ENABLE_MINITASN1
@@ -119,14 +116,14 @@ libgnutls_la_LDFLAGS = -no-undefined \
 libgnutls_la_LIBADD = ../lgl/liblgnu.la x509/libgnutls_x509.la \
 	@LTLIBZ@ $(LIBGCRYPT_LIBS) @LTLIBINTL@
 
+if NEED_WS2_32
+libgnutls_la_LIBADD += -lws2_32
+endif
+
 if ENABLE_OPENPGP
 libgnutls_la_SOURCES += gnutls_openpgp.c
 libgnutls_la_LIBADD += openpgp/libgnutls_openpgp.la
-if ENABLE_INCLUDED_OPENCDK
 libgnutls_la_LIBADD += opencdk/libminiopencdk.la
-else
-libgnutls_la_LDFLAGS += $(LTLIBOPENCDK) 
-endif
 endif
 
 if HAVE_LD_VERSION_SCRIPT

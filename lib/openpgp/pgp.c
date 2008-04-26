@@ -92,7 +92,13 @@ gnutls_openpgp_crt_import (gnutls_openpgp_crt_t key,
   cdk_stream_t inp;
   cdk_packet_t pkt;
   int rc;
-  
+
+  if (data->data == NULL || data->size == 0)
+    {
+      gnutls_assert();
+      return GNUTLS_E_OPENPGP_GETKEY_FAILED;
+    }
+
   if (format == GNUTLS_OPENPGP_FMT_RAW)
     rc = cdk_kbnode_read_from_mem (&key->knode, data->data, data->size);
   else
@@ -111,7 +117,10 @@ gnutls_openpgp_crt_import (gnutls_openpgp_crt_t key,
       cdk_stream_close (inp);
       if (rc)
 	{
-	  rc = _gnutls_map_cdk_rc (rc);
+	  if (rc == CDK_Inv_Packet)
+	    rc = GNUTLS_E_OPENPGP_GETKEY_FAILED;
+	  else
+	    rc = _gnutls_map_cdk_rc (rc);
 	  gnutls_assert ();
 	  return rc;
 	}
@@ -549,9 +558,12 @@ gnutls_openpgp_crt_check_hostname (gnutls_openpgp_crt_t key,
     {
       dnsnamesize = sizeof (dnsname);
       ret = gnutls_openpgp_crt_get_name (key, i, dnsname, &dnsnamesize);
-      /* FIXME: ret is not used */
-      if (_gnutls_hostname_compare (dnsname, hostname))
-	return 1;
+      
+      if (ret == 0)
+        {
+          if (_gnutls_hostname_compare (dnsname, hostname))
+            return 1;
+        }
     }
 
   /* not found a matching name */
@@ -1465,12 +1477,15 @@ int ret;
  * gnutls_openpgp_crt_get_auth_subkey - Gets the keyID of an authentication subkey
  * @key: the structure that contains the OpenPGP public key.
  * @keyid: the struct to save the keyid.
+ * @flag: Non zero indicates that a valid subkey is always returned.
  *
  * Returns the 64-bit keyID of the first valid OpenPGP subkey marked for authentication. 
+ * If flag is non zero and no authentication subkey exists, then a valid subkey will 
+ * be returned even if it is not marked for authentication.
  * 
  * Returns zero on success.
  **/
-int gnutls_openpgp_crt_get_auth_subkey( gnutls_openpgp_crt_t crt, gnutls_openpgp_keyid_t keyid)
+int gnutls_openpgp_crt_get_auth_subkey( gnutls_openpgp_crt_t crt, gnutls_openpgp_keyid_t keyid, unsigned int flag)
 {
   int ret, subkeys, i;
   unsigned int usage;
@@ -1521,9 +1536,10 @@ int gnutls_openpgp_crt_get_auth_subkey( gnutls_openpgp_crt_t crt, gnutls_openpgp
               return ret;
             }
 
-          break;
+          return 0;
         }
     }
 
-  return 0;
+  if (flag && keyid_init) return 0;
+  else return GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE;
 }

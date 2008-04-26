@@ -42,7 +42,7 @@ typedef struct algo_list {
 static int _algo_register( algo_list* al, int algorithm, int priority, void* s)
 {
 algo_list* cl;
-algo_list* last_cl = NULL;
+algo_list* last_cl = al;
 
   /* look if there is any cipher with lowest priority. In that case do not add.
    */
@@ -77,7 +77,6 @@ algo_list* last_cl = NULL;
   cl->next = NULL;
 
   last_cl->next = cl;
-  
   return 0;
 
 }
@@ -88,7 +87,7 @@ cipher_list* cl;
 
   /* look if there is any cipher with lowest priority. In that case do not add.
    */
-  cl = al;
+  cl = al->next;
   while( cl && cl->alg_data) {
     if (cl->algorithm == algo) {
       return cl->alg_data;
@@ -104,6 +103,29 @@ static mac_list glob_ml = { GNUTLS_MAC_NULL, 0, NULL, NULL };
 static digest_list glob_dl = { GNUTLS_MAC_NULL, 0, NULL, NULL };
 static rnd_list glob_rnd = { 0, 0, NULL, NULL };
 
+static void _deregister(algo_list* cl)
+{
+algo_list* next;
+
+  next = cl->next;
+  cl->next = NULL;
+  cl = next;
+
+  while( cl) 
+    {
+      next = cl->next;
+      gnutls_free(cl);
+      cl = next;
+    }
+}
+
+void _gnutls_crypto_deregister(void)
+{
+  _deregister( &glob_cl);
+  _deregister( &glob_ml);
+  _deregister( &glob_dl);
+  _deregister( &glob_rnd);
+}
 
 /**
   * gnutls_crypto_cipher_register - register a cipher algorithm
@@ -116,6 +138,8 @@ static rnd_list glob_rnd = { 0, 0, NULL, NULL };
   * the included algorithms and by convention kernel implemented
   * algorithms have priority of 90. The algorithm with the lowest
   * priority will be used by gnutls.
+  *
+  * This function should be called before gnutls_global_init().
   *
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
@@ -140,6 +164,8 @@ gnutls_crypto_cipher_st *_gnutls_get_crypto_cipher( gnutls_cipher_algorithm_t al
   * the included generator and by convention kernel implemented
   * generators have priority of 90. The generator with the lowest
   * priority will be used by gnutls.
+  *
+  * This function should be called before gnutls_global_init().
   *
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
@@ -166,6 +192,8 @@ gnutls_crypto_rnd_st *_gnutls_get_crypto_rnd()
   * algorithms have priority of 90. The algorithm with the lowest
   * priority will be used by gnutls.
   *
+  * This function should be called before gnutls_global_init().
+  *
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
   **/
@@ -190,6 +218,8 @@ gnutls_crypto_mac_st *_gnutls_get_crypto_mac( gnutls_mac_algorithm_t algo)
   * the included algorithms and by convention kernel implemented
   * algorithms have priority of 90. The algorithm with the lowest
   * priority will be used by gnutls.
+  *
+  * This function should be called before gnutls_global_init().
   *
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
