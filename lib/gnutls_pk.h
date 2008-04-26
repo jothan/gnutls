@@ -43,4 +43,10 @@ int _gnutls_dsa_verify (const gnutls_datum_t * vdata,
 			const gnutls_datum_t * sig_value, mpi_t * params,
 			int params_len);
 
+int
+_gnutls_encode_ber_rs (gnutls_datum_t * sig_value, mpi_t r, mpi_t s);
+
+int
+_gnutls_decode_ber_rs (const gnutls_datum_t * sig_value, mpi_t * r, mpi_t * s);
+
 #endif /* GNUTLS_PK_H */

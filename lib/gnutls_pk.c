@@ -374,8 +374,8 @@ _gnutls_rsa_verify (const gnutls_datum_t * vdata,
 
 /* encodes the Dss-Sig-Value structure
  */
-static int
-encode_ber_rs (gnutls_datum_t * sig_value, mpi_t r, mpi_t s)
+int
+_gnutls_encode_ber_rs (gnutls_datum_t * sig_value, mpi_t r, mpi_t s)
 {
   ASN1_TYPE sig;
   int result, tot_len;
@@ -455,7 +455,7 @@ _gnutls_dsa_sign (gnutls_datum_t * signature,
       return ret;
     }
 
-  ret = encode_ber_rs (signature, rs[0], rs[1]);
+  ret = _gnutls_encode_ber_rs (signature, rs[0], rs[1]);
 
   /* free r,s */
   _gnutls_mpi_release (&rs[0]);
@@ -472,8 +472,8 @@ _gnutls_dsa_sign (gnutls_datum_t * signature,
 
 /* decodes the Dss-Sig-Value structure
  */
-static int
-decode_ber_rs (const gnutls_datum_t * sig_value, mpi_t * r, mpi_t * s)
+int
+_gnutls_decode_ber_rs (const gnutls_datum_t * sig_value, mpi_t * r, mpi_t * s)
 {
   ASN1_TYPE sig;
   int result;
@@ -536,7 +536,7 @@ _gnutls_dsa_verify (const gnutls_datum_t * vdata,
       return GNUTLS_E_PK_SIG_VERIFY_FAILED;
     }
 
-  if (decode_ber_rs (sig_value, &rs[0], &rs[1]) != 0)
+  if (_gnutls_decode_ber_rs (sig_value, &rs[0], &rs[1]) != 0)
     {
       gnutls_assert ();
       return GNUTLS_E_MPI_SCAN_FAILED;
@@ -565,8 +565,3 @@ _gnutls_dsa_verify (const gnutls_datum_t * vdata,
 
   return 0;			/* ok */
 }
-
-
-/* this is taken from gnupg 
- */
-

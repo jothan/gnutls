@@ -61,7 +61,7 @@ mpi_t _gnutls_mpi_randomize( mpi_t, unsigned int bits, gnutls_rnd_level_t level)
 #define _gnutls_prime_check(z) mpi_ops.bigint_prime_check(z)
 #define _gnutls_mpi_print(x,y,z) mpi_ops.bigint_print(x,y,z,GNUTLS_MPI_FORMAT_USG)
 #define _gnutls_mpi_print_lz(x,y,z) mpi_ops.bigint_print(x,y,z,GNUTLS_MPI_FORMAT_STD)
-
+#define _gnutls_mpi_copy( a) _gnutls_mpi_set( NULL, a)
 
 void _gnutls_mpi_release (mpi_t * x);
 
@@ -70,6 +70,5 @@ int _gnutls_mpi_scan_nz (mpi_t * ret_mpi, const void * buffer, size_t nbytes);
 
 int _gnutls_mpi_dprint_lz (const mpi_t a, gnutls_datum_t * dest);
 int _gnutls_mpi_dprint (const mpi_t a, gnutls_datum_t * dest);
-mpi_t _gnutls_mpi_copy( mpi_t a);
 
 #endif

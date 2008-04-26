@@ -200,12 +200,6 @@ _gnutls_mpi_dprint (const mpi_t a, gnutls_datum_t * dest)
   return 0;
 }
 
-mpi_t _gnutls_mpi_copy( mpi_t a)
-{
-  return _gnutls_mpi_set( NULL, a);
-}
-
-
 /* this function reads an integer
  * from asn1 structs. Combines the read and mpi_scan
  * steps.
