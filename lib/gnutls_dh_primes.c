@@ -181,14 +181,17 @@ int
 gnutls_dh_params_generate2 (gnutls_dh_params_t params, unsigned int bits)
 {
   int ret;
+  gnutls_group_t group;
 
-  ret = _gnutls_dh_generate_prime (&params->params[1],
-				   &params->params[0], bits);
+  ret = _gnutls_mpi_generate_group (&group, bits);
   if (ret < 0)
     {
       gnutls_assert ();
       return ret;
     }
+  
+  params->params[0] = group.g;
+  params->params[1] = group.p;
 
   return 0;
 }

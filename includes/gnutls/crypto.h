@@ -64,6 +64,12 @@ typedef enum gnutls_bigint_format
   GNUTLS_MPI_FORMAT_STD = 1, /* raw signed integer format - always a leading zero when positive */
 } gnutls_bigint_format_t;
 
+typedef struct
+{
+  mpi_t g; /* group generator */
+  mpi_t p; /* prime */
+} gnutls_group_t;
+
 /* Multi precision integer arithmetic */
 typedef struct gnutls_crypto_bigint {
   bigint_t (*bigint_new)( int nbits);
@@ -86,6 +92,7 @@ typedef struct gnutls_crypto_bigint {
   bigint_t (*bigint_mul_ui) (bigint_t w, const bigint_t a, unsigned long b); /* w = a * b */
   bigint_t (*bigint_div) (bigint_t q, const bigint_t a, const bigint_t b); /* q = a / b */
   int (*bigint_prime_check) (const bigint_t pp); /* 0 if prime */
+  int (*bigint_generate_group) (gnutls_group_t* gg, unsigned int bits);
   
   bigint_t (*bigint_scan) ( const void* buf, size_t buf_size, gnutls_bigint_format_t format); /* reads an bigint from a buffer */
    /* stores an bigint into the buffer.
@@ -136,6 +143,7 @@ typedef struct gnutls_crypto_pk {
   int (*verify)( gnutls_pk_algorithm_t, const gnutls_datum_t* data, 
     const gnutls_datum_t* signature, const pk_params_t* /* public */);
 
+  int (*generate)( gnutls_pk_algorithm_t, pk_params_t*);
   /* this function should convert params to ones suitable
    * for the above functions
    */

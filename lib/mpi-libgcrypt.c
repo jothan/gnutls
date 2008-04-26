@@ -230,6 +230,88 @@ int wrap_gcry_prime_check( mpi_t pp)
   return gcry_prime_check( pp, 0);
 }
 
+int wrap_gcry_generate_group( gnutls_group_t *group, unsigned int bits)
+{
+  mpi_t g = NULL, prime = NULL;
+  gcry_error_t err;
+  int result, times = 0, qbits;
+  mpi_t *factors = NULL;
+
+  /* Calculate the size of a prime factor of (prime-1)/2.
+   * This is an emulation of the values in "Selecting Cryptographic Key Sizes" paper.
+   */
+  if (bits < 256)
+    qbits = bits / 2;
+  else
+    {
+      qbits = (bits/40) + 105;
+    }
+
+  if (qbits & 1)		/* better have an even number */
+    qbits++;
+
+  /* find a prime number of size bits.
+   */
+  do
+    {
+
+      if (times)
+	{
+	  _gnutls_mpi_release (&prime);
+	  gcry_prime_release_factors (factors);
+	}
+
+      err = gcry_prime_generate (&prime, bits, qbits,
+				 &factors, NULL, NULL, GCRY_STRONG_RANDOM,
+				 GCRY_PRIME_FLAG_SPECIAL_FACTOR);
+
+      if (err != 0)
+	{
+	  gnutls_assert ();
+	  result = GNUTLS_E_INTERNAL_ERROR;
+	  goto cleanup;
+	}
+
+      err = gcry_prime_check (prime, 0);
+
+      times++;
+    }
+  while (err != 0 && times < 10);
+
+  if (err != 0)
+    {
+      gnutls_assert ();
+      result = GNUTLS_E_INTERNAL_ERROR;
+      goto cleanup;
+    }
+
+  /* generate the group generator.
+   */
+  err = gcry_prime_group_generator (&g, prime, factors, NULL);
+  if (err != 0)
+    {
+      gnutls_assert ();
+      result = GNUTLS_E_INTERNAL_ERROR;
+      goto cleanup;
+    }
+
+  gcry_prime_release_factors (factors);
+  factors = NULL;
+
+  group->g = g;
+  group->p = prime;
+
+  return 0;
+
+cleanup:
+  gcry_prime_release_factors (factors);
+  _gnutls_mpi_release (&g);
+  _gnutls_mpi_release (&prime);
+
+  return result;
+
+}
+
 gnutls_crypto_mpi_st mpi_ops = {
   .bigint_new = gcry_mpi_new,
   .bigint_cmp = gcry_mpi_cmp,
@@ -254,5 +336,6 @@ gnutls_crypto_mpi_st mpi_ops = {
   .bigint_set_bit = gcry_mpi_set_bit,
   .bigint_clear_bit = gcry_mpi_clear_bit,
   .bigint_print = wrap_gcry_mpi_print,
-  .bigint_scan = wrap_gcry_mpi_scan
+  .bigint_scan = wrap_gcry_mpi_scan,
+  .bigint_generate_group = wrap_gcry_generate_group
 };
