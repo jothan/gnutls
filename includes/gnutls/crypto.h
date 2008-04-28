@@ -66,8 +66,8 @@ typedef enum gnutls_bigint_format
 
 typedef struct
 {
-  mpi_t g; /* group generator */
-  mpi_t p; /* prime */
+  bigint_t g; /* group generator */
+  bigint_t p; /* prime */
 } gnutls_group_t;
 
 /* Multi precision integer arithmetic */
