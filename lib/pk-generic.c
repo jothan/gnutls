@@ -22,16 +22,71 @@
  *
  */
 
-int _gnutls_rsa_generate_params (mpi_t * resarr, int *resarr_len, int bits);
-int _gnutls_dsa_generate_params (mpi_t * resarr, int *resarr_len, int bits);
+#include <pk-generic.h>
 
-int _gnutls_dh_generate_prime (mpi_t * ret_g, mpi_t * ret_n, unsigned int bits);
+typedef struct pk_params {
+  bigint_t * params;
+  unsigned int params_nr; /* the number of parameters */
+  unsigned int flags;
+} gnutls_pk_params_st;
 
-int _gnutls_pk_encrypt (int algo, mpi_t * resarr, mpi_t data,
-    mpi_t * pkey, int pkey_len);
-int _gnutls_pk_decrypt (int algo, mpi_t * resarr, mpi_t data, mpi_t * pkey,
-    int pkey_len);
-int _gnutls_pk_sign (int algo, mpi_t * data, mpi_t hash, mpi_t * pkey,
-    int pkey_len);
-int _gnutls_pk_verify (int algo, mpi_t hash, mpi_t * data,
-    mpi_t * pkey, int pkey_len);
+static
+int _generate_params(int algo, mpi_t * resarr, int *resarr_len, int bits)
+{
+gnutls_pk_params_st params;
+int ret, i;
+	
+	ret = pk_ops.generate( GNUTLS_PK_RSA, bits, &params);
+
+	if (ret < 0) {
+		gnutls_assert();
+		return ret;
+	}
+
+	if (resarr && resarr_len && *resarr_len > params.params_nr) {
+		*resarr_len = params.params_nr;
+		for (i=0;i<params.params_nr;i++)
+			resarr[i] = params.params[i];
+	} else {
+		gnutls_assert();
+		return GNUTLS_E_INVALID_REQUEST;
+	}
+	return 0;
+}
+
+
+
+int _gnutls_rsa_generate_params (mpi_t * resarr, int *resarr_len, int bits)
+{
+	return _generate_params( GNUTLS_PK_RSA, resarr, resarr_len, bits);
+}
+
+int _gnutls_dsa_generate_params (mpi_t * resarr, int *resarr_len, int bits)
+{
+	return _generate_params( GNUTLS_PK_DSA, resarr, resarr_len, bits);
+}
+
+int _gnutls_pk_params_copy( gnutls_pk_params_st* dst, mpi_t* params, int params_len)
+{
+int i,j;
+	dst->params_nr = 0;
+	for (i=0;i<MIN(params_len, MAX_PARAMS);i++) {
+		dst->params[i] = _gnutls_mpi_set( NULL, params[i]);
+		if (dst->params[i] == NULL) {
+			for (j=0;j<i;j++)
+				_gnutls_mpi_release( &dst->params[j]);
+			return GNUTLS_E_MEMORY_ERROR;
+		}
+		dst->params_nr++;
+	}
+}
+
+void _gnutls_pk_params_release( gnutls_pk_params_st* p)
+{
+int i;
+	for (i=0;i<p->params_nr;i++) {
+		_gnutls_mpi_release( &p->params[i]);
+	}
+}
+
+
