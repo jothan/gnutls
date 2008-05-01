@@ -29,6 +29,7 @@
 #include <gnutls_global.h>
 #include <gnutls_dh.h>
 #include <pk-generic.h>
+#include <gnutls/crypto.h>
 #include "x509/x509_int.h"
 #include "debug.h"
 
@@ -181,7 +182,7 @@ int
 gnutls_dh_params_generate2 (gnutls_dh_params_t params, unsigned int bits)
 {
   int ret;
-  gnutls_group_t group;
+  gnutls_group_st group;
 
   ret = _gnutls_mpi_generate_group (&group, bits);
   if (ret < 0)

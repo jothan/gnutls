@@ -50,10 +50,14 @@ _gnutls_pkcs1_rsa_encrypt (gnutls_datum_t * ciphertext,
 {
   unsigned int i, pad;
   int ret;
-  mpi_t m, res;
   opaque *edata, *ps;
   size_t k, psize;
   size_t mod_bits;
+  gnutls_pk_params_st pk_params;
+  gnutls_datum to_encrypt, encrypted;
+
+  pk_params.params = params;
+  pk_params.params_nr = params_len;
 
   mod_bits = _gnutls_mpi_get_nbits (params[0]);
   k = mod_bits / 8;
@@ -134,20 +138,15 @@ _gnutls_pkcs1_rsa_encrypt (gnutls_datum_t * ciphertext,
   ps[psize] = 0;
   memcpy (&ps[psize + 1], plaintext->data, plaintext->size);
 
-  if (_gnutls_mpi_scan_nz (&m, edata, k) != 0)
-    {
-      gnutls_assert ();
-      gnutls_free (edata);
-      return GNUTLS_E_MPI_SCAN_FAILED;
-    }
-  gnutls_free (edata);
+  to_encrypt.data = edata;
+  to_encrypt.size = k;
 
   if (btype == 2)		/* encrypt */
-    ret = _gnutls_pk_encrypt (GNUTLS_PK_RSA, &res, m, params, params_len);
+    ret = _gnutls_pk_encrypt (GNUTLS_PK_RSA, &encrypted, &to_encrypt, &pk_params);
   else				/* sign */
-    ret = _gnutls_pk_sign (GNUTLS_PK_RSA, &res, m, params, params_len);
+    ret = _gnutls_pk_sign (GNUTLS_PK_RSA, &encrypted, &to_encrypt, &pk_params);
 
-  _gnutls_mpi_release (&m);
+  gnutls_free (edata);
 
   if (ret < 0)
     {
@@ -155,8 +154,7 @@ _gnutls_pkcs1_rsa_encrypt (gnutls_datum_t * ciphertext,
       return ret;
     }
 
-  _gnutls_mpi_print (res, NULL, &psize);
-
+  psize = encrypted.size;
   if (psize < k)
     {
       /* padding psize */
@@ -165,13 +163,18 @@ _gnutls_pkcs1_rsa_encrypt (gnutls_datum_t * ciphertext,
     }
   else if (psize == k)
     {
-      pad = 0;
+      /* pad = 0; 
+       * no need to do anything else
+       */
+      ciphertext->data = encrypted.data;
+      ciphertext->size = encrypted.size;
+      return 0;
     }
   else
     {				/* psize > k !!! */
       /* This is an impossible situation */
       gnutls_assert ();
-      _gnutls_mpi_release (&res);
+      _gnutls_free_datum (&encrypted);
       return GNUTLS_E_INTERNAL_ERROR;
     }
 
@@ -179,16 +182,17 @@ _gnutls_pkcs1_rsa_encrypt (gnutls_datum_t * ciphertext,
   if (ciphertext->data == NULL)
     {
       gnutls_assert ();
-      _gnutls_mpi_release (&res);
+      _gnutls_free_datum (&encrypted);
       return GNUTLS_E_MEMORY_ERROR;
     }
-  _gnutls_mpi_print (res, &ciphertext->data[pad], &psize);
+
+  memcpy( &ciphertext->data[pad], encrypted.data, encrypted.size);
   for (i = 0; i < pad; i++)
     ciphertext->data[i] = 0;
 
   ciphertext->size = k;
 
-  _gnutls_mpi_release (&res);
+  _gnutls_free_datum (&encrypted);
 
   return 0;
 }
@@ -206,9 +210,11 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
 {
   unsigned k, i;
   int ret;
-  mpi_t c, res;
-  opaque *edata;
   size_t esize, mod_bits;
+  gnutls_pk_params_st pk_params;
+
+  pk_params.params = params;
+  pk_params.params_nr = params_len;
 
   mod_bits = _gnutls_mpi_get_nbits (params[0]);
   k = mod_bits / 8;
@@ -223,40 +229,25 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
       return GNUTLS_E_PK_DECRYPTION_FAILED;
     }
 
-  if (_gnutls_mpi_scan_nz (&c, ciphertext->data, esize) != 0)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_MPI_SCAN_FAILED;
-    }
-
   /* we can use btype to see if the private key is
    * available.
    */
   if (btype == 2)
-    ret = _gnutls_pk_decrypt (GNUTLS_PK_RSA, &res, c, params, params_len);
+    {
+//      pk_params.flags = GNUTLS_PK_FLAG_PKCS1_TYPE2;
+      ret = _gnutls_pk_decrypt (GNUTLS_PK_RSA, plaintext, ciphertext, &pk_params);
+    }
   else
     {
-      ret = _gnutls_pk_encrypt (GNUTLS_PK_RSA, &res, c, params, params_len);
+//      pk_params.flags = GNUTLS_PK_FLAG_PKCS1_TYPE1;
+      ret = _gnutls_pk_encrypt (GNUTLS_PK_RSA, plaintext, ciphertext, &pk_params);
     }
-  _gnutls_mpi_release (&c);
 
   if (ret < 0)
     {
       gnutls_assert ();
       return ret;
     }
-
-  _gnutls_mpi_print (res, NULL, &esize);
-  edata = gnutls_malloc (esize + 1);
-  if (edata == NULL)
-    {
-      gnutls_assert ();
-      _gnutls_mpi_release (&res);
-      return GNUTLS_E_MEMORY_ERROR;
-    }
-  _gnutls_mpi_print (res, &edata[1], &esize);
-
-  _gnutls_mpi_release (&res);
 
   /* EB = 00||BT||PS||00||D
    * (use block type 'btype')
@@ -267,14 +258,9 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
    * Encryption Standard PKCS #1".
    */
 
-
-  edata[0] = 0;
-  esize++;
-
-  if (edata[0] != 0 || edata[1] != btype)
+  if (plaintext->data[0] != 0 || plaintext->data[1] != btype)
     {
       gnutls_assert ();
-      gnutls_free (edata);
       return GNUTLS_E_DECRYPTION_FAILED;
     }
 
@@ -282,9 +268,9 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
   switch (btype)
     {
     case 2:
-      for (i = 2; i < esize; i++)
+      for (i = 2; i < plaintext->size; i++)
 	{
-	  if (edata[i] == 0)
+	  if (plaintext->data[i] == 0)
 	    {
 	      ret = 0;
 	      break;
@@ -292,16 +278,17 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
 	}
       break;
     case 1:
-      for (i = 2; i < esize; i++)
+      for (i = 2; i < plaintext->size; i++)
 	{
-	  if (edata[i] == 0 && i > 2)
+	  if (plaintext->data[i] == 0 && i > 2)
 	    {
 	      ret = 0;
 	      break;
 	    }
-	  if (edata[i] != 0xff)
+	  if (plaintext->data[i] != 0xff)
 	    {
 	      _gnutls_handshake_log ("PKCS #1 padding error");
+	      _gnutls_free_datum( plaintext);
 	      /* PKCS #1 padding error.  Don't use
 		 GNUTLS_E_PKCS1_WRONG_PAD here.  */
 	      break;
@@ -310,7 +297,7 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
       break;
     default:
       gnutls_assert ();
-      gnutls_free (edata);
+      _gnutls_free_datum( plaintext);
       break;
     }
   i++;
@@ -318,18 +305,9 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
   if (ret < 0)
     {
       gnutls_assert ();
-      gnutls_free (edata);
+      _gnutls_free_datum( plaintext);
       return GNUTLS_E_DECRYPTION_FAILED;
     }
-
-  if (_gnutls_sset_datum (plaintext, &edata[i], esize - i) < 0)
-    {
-      gnutls_assert ();
-      gnutls_free (edata);
-      return GNUTLS_E_MEMORY_ERROR;
-    }
-
-  gnutls_free (edata);
 
   return 0;
 }
@@ -428,9 +406,12 @@ _gnutls_dsa_sign (gnutls_datum_t * signature,
 		  const gnutls_datum_t * hash, mpi_t * params,
 		  unsigned params_len)
 {
-  mpi_t rs[2], mdata;
   int ret;
   size_t k;
+  gnutls_pk_params_st pk_params;
+
+  pk_params.params = params;
+  pk_params.params_nr = params_len;
 
   k = hash->size;
   if (k < 20)
@@ -439,32 +420,13 @@ _gnutls_dsa_sign (gnutls_datum_t * signature,
       return GNUTLS_E_PK_SIGN_FAILED;
     }
 
-  if (_gnutls_mpi_scan_nz (&mdata, hash->data, k) != 0)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_MPI_SCAN_FAILED;
-    }
-
-  ret = _gnutls_pk_sign (GNUTLS_PK_DSA, rs, mdata, params, params_len);
+  ret = _gnutls_pk_sign (GNUTLS_PK_DSA, signature, hash, &pk_params);
   /* rs[0], rs[1] now hold r,s */
-  _gnutls_mpi_release (&mdata);
 
   if (ret < 0)
     {
       gnutls_assert ();
       return ret;
-    }
-
-  ret = _gnutls_encode_ber_rs (signature, rs[0], rs[1]);
-
-  /* free r,s */
-  _gnutls_mpi_release (&rs[0]);
-  _gnutls_mpi_release (&rs[1]);
-
-  if (ret != 0)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_MEMORY_ERROR;
     }
 
   return 0;
@@ -529,6 +491,10 @@ _gnutls_dsa_verify (const gnutls_datum_t * vdata,
   int ret;
   size_t k;
   mpi_t rs[2];
+  gnutls_pk_params_st pk_params;
+
+  pk_params.params = params;
+  pk_params.params_nr = params_len;
 
   if (vdata->size != 20)
     {				/* sha-1 only */
@@ -536,26 +502,8 @@ _gnutls_dsa_verify (const gnutls_datum_t * vdata,
       return GNUTLS_E_PK_SIG_VERIFY_FAILED;
     }
 
-  if (_gnutls_decode_ber_rs (sig_value, &rs[0], &rs[1]) != 0)
-    {
-      gnutls_assert ();
-      return GNUTLS_E_MPI_SCAN_FAILED;
-    }
-
-  k = vdata->size;
-  if (_gnutls_mpi_scan_nz (&mdata, vdata->data, k) != 0)
-    {
-      gnutls_assert ();
-      _gnutls_mpi_release (&rs[0]);
-      _gnutls_mpi_release (&rs[1]);
-      return GNUTLS_E_MPI_SCAN_FAILED;
-    }
-
   /* decrypt signature */
-  ret = _gnutls_pk_verify (GNUTLS_PK_DSA, mdata, rs, params, params_len);
-  _gnutls_mpi_release (&mdata);
-  _gnutls_mpi_release (&rs[0]);
-  _gnutls_mpi_release (&rs[1]);
+  ret = _gnutls_pk_verify (GNUTLS_PK_DSA, vdata, sig_value, &pk_params);
 
   if (ret < 0)
     {

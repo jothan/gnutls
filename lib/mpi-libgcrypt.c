@@ -39,7 +39,7 @@
 /* returns zero on success
  */
 mpi_t
-wrap_gcry_mpi_scan (const void * buffer, size_t nbytes, gnutls_mpi_format_t format)
+wrap_gcry_mpi_scan (const void * buffer, size_t nbytes, gnutls_bigint_format_t format)
 {
   gcry_mpi_t ret_mpi = NULL;
   int ret;
@@ -52,7 +52,7 @@ wrap_gcry_mpi_scan (const void * buffer, size_t nbytes, gnutls_mpi_format_t form
 }
 
 int
-wrap_gcry_mpi_print (const mpi_t a, void *buffer, size_t * nbytes, gnutls_mpi_format_t format)
+wrap_gcry_mpi_print (const mpi_t a, void *buffer, size_t * nbytes, gnutls_bigint_format_t format)
 {
   int ret;
 
@@ -230,12 +230,12 @@ int wrap_gcry_prime_check( mpi_t pp)
   return gcry_prime_check( pp, 0);
 }
 
-int wrap_gcry_generate_group( gnutls_group_t *group, unsigned int bits)
+int wrap_gcry_generate_group( gnutls_group_st *group, unsigned int bits)
 {
   mpi_t g = NULL, prime = NULL;
   gcry_error_t err;
   int result, times = 0, qbits;
-  mpi_t *factors = NULL;
+  gcry_mpi_t *factors = NULL;
 
   /* Calculate the size of a prime factor of (prime-1)/2.
    * This is an emulation of the values in "Selecting Cryptographic Key Sizes" paper.
@@ -261,7 +261,7 @@ int wrap_gcry_generate_group( gnutls_group_t *group, unsigned int bits)
 	  gcry_prime_release_factors (factors);
 	}
 
-      err = gcry_prime_generate (&prime, bits, qbits,
+      err = gcry_prime_generate ((gcry_mpi_t*)&prime, bits, qbits,
 				 &factors, NULL, NULL, GCRY_STRONG_RANDOM,
 				 GCRY_PRIME_FLAG_SPECIAL_FACTOR);
 
@@ -287,7 +287,7 @@ int wrap_gcry_generate_group( gnutls_group_t *group, unsigned int bits)
 
   /* generate the group generator.
    */
-  err = gcry_prime_group_generator (&g, prime, factors, NULL);
+  err = gcry_prime_group_generator ((gcry_mpi_t*)&g, prime, factors, NULL);
   if (err != 0)
     {
       gnutls_assert ();
@@ -312,7 +312,7 @@ cleanup:
 
 }
 
-gnutls_crypto_mpi_st mpi_ops = {
+gnutls_crypto_bigint_st mpi_ops = {
   .bigint_new = gcry_mpi_new,
   .bigint_cmp = gcry_mpi_cmp,
   .bigint_cmp_ui = gcry_mpi_cmp_ui,  
@@ -333,8 +333,6 @@ gnutls_crypto_mpi_st mpi_ops = {
   .bigint_div = wrap_gcry_mpi_div,
   .bigint_prime_check = wrap_gcry_prime_check,
   .bigint_release = gcry_mpi_release,
-  .bigint_set_bit = gcry_mpi_set_bit,
-  .bigint_clear_bit = gcry_mpi_clear_bit,
   .bigint_print = wrap_gcry_mpi_print,
   .bigint_scan = wrap_gcry_mpi_scan,
   .bigint_generate_group = wrap_gcry_generate_group

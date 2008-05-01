@@ -55,7 +55,7 @@ int rem, i;
       return NULL;
     }
 
-  buf = gnutls_alloca( size);
+  buf = gnutls_malloc( size);
   if (buf == NULL)
     {
       gnutls_assert();
@@ -88,7 +88,7 @@ int rem, i;
   return r;
   
 cleanup:
-  gnutls_afree(buf);
+  gnutls_free(buf);
   return NULL;
 }
 

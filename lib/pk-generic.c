@@ -22,13 +22,10 @@
  *
  */
 
+#include <gnutls_int.h>
+#include <gnutls_errors.h>
 #include <pk-generic.h>
-
-typedef struct pk_params {
-  bigint_t * params;
-  unsigned int params_nr; /* the number of parameters */
-  unsigned int flags;
-} gnutls_pk_params_st;
+#include <gnutls_num.h>
 
 static
 int _generate_params(int algo, mpi_t * resarr, int *resarr_len, int bits)
@@ -70,7 +67,14 @@ int _gnutls_pk_params_copy( gnutls_pk_params_st* dst, mpi_t* params, int params_
 {
 int i,j;
 	dst->params_nr = 0;
-	for (i=0;i<MIN(params_len, MAX_PARAMS);i++) {
+
+	dst->params = gnutls_malloc( sizeof(mpi_t)*params_len);
+	if (dst->params == NULL) {
+		gnutls_assert();
+		return GNUTLS_E_MEMORY_ERROR;
+	}
+
+	for (i=0;i<params_len;i++) {
 		dst->params[i] = _gnutls_mpi_set( NULL, params[i]);
 		if (dst->params[i] == NULL) {
 			for (j=0;j<i;j++)
@@ -81,12 +85,17 @@ int i,j;
 	}
 }
 
-void _gnutls_pk_params_release( gnutls_pk_params_st* p)
+void gnutls_pk_params_init( gnutls_pk_params_st* p)
+{
+	memset( p, 0, sizeof(gnutls_pk_params_st));
+}
+
+void gnutls_pk_params_release( gnutls_pk_params_st* p)
 {
 int i;
 	for (i=0;i<p->params_nr;i++) {
 		_gnutls_mpi_release( &p->params[i]);
 	}
+	gnutls_free( p->params);
+	p->params = NULL;
 }
-
-

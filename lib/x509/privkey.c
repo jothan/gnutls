@@ -155,7 +155,11 @@ _gnutls_privkey_decode_pkcs1_rsa_key (const gnutls_datum_t * raw_key,
 {
   int result;
   ASN1_TYPE pkey_asn;
+  mpi_t temp_params[RSA_PRIVATE_PARAMS];
   gnutls_pk_params_st pk_params;
+  
+  pk_params.params = temp_params;
+  pk_params.params_nr = RSA_PRIVATE_PARAMS;
 
   if ((result =
        asn1_create_element (_gnutls_get_gnutls_asn (),
@@ -238,7 +242,7 @@ _gnutls_privkey_decode_pkcs1_rsa_key (const gnutls_datum_t * raw_key,
   pkey->params[3] = pk_params.params[3];
   pkey->params[4] = pk_params.params[4];
   pkey->params[5] = pk_params.params[5];
-  pkey->params_size = 6;
+  pkey->params_size = pk_params.params_nr;
 
   return pkey_asn;
 
@@ -478,7 +482,11 @@ gnutls_x509_privkey_import_rsa_raw (gnutls_x509_privkey_t key,
 {
   int i = 0, ret;
   size_t siz = 0;
+  mpi_t temp_params[RSA_PRIVATE_PARAMS];
   gnutls_pk_params_st pk_params;
+  
+  pk_params.params = temp_params;
+  pk_params.params_nr = RSA_PRIVATE_PARAMS;
 
   if (key == NULL)
     {
@@ -559,7 +567,7 @@ gnutls_x509_privkey_import_rsa_raw (gnutls_x509_privkey_t key,
   key->params[3] = pk_params.params[3];
   key->params[4] = pk_params.params[4];
   key->params[5] = pk_params.params[5];
-  key->params_size = RSA_PRIVATE_PARAMS;
+  key->params_size = pk_params.params_nr;
   key->pk_algorithm = GNUTLS_PK_RSA;
 
   return 0;
@@ -851,7 +859,7 @@ gnutls_x509_privkey_export_rsa_raw (gnutls_x509_privkey_t key,
       goto error;
     }
 
-  _gnutls_pk_params_release( &pk_params);
+  gnutls_pk_params_release( &pk_params);
 
   return 0;
 
@@ -861,7 +869,7 @@ error:
   _gnutls_free_datum (e);
   _gnutls_free_datum (p);
   _gnutls_free_datum (q);
-  _gnutls_pk_params_release( &pk_params);
+  gnutls_pk_params_release( &pk_params);
 
   return ret;
 }
@@ -1151,7 +1159,7 @@ _gnutls_asn1_encode_rsa (ASN1_TYPE * c2, mpi_t * params)
   _gnutls_mpi_release (&exp2);
   _gnutls_mpi_release (&q1);
   _gnutls_mpi_release (&p1);
-  _gnutls_pk_params_release( &pk_params);
+  gnutls_pk_params_release( &pk_params);
   gnutls_free (all_data);
 
   if ((result = asn1_write_value (*c2, "otherPrimeInfos",
@@ -1176,7 +1184,7 @@ cleanup:
   _gnutls_mpi_release (&exp2);
   _gnutls_mpi_release (&q1);
   _gnutls_mpi_release (&p1);
-  _gnutls_pk_params_release( &pk_params);
+  gnutls_pk_params_release( &pk_params);
   asn1_delete_structure (c2);
   gnutls_free (all_data);
 
