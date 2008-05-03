@@ -33,7 +33,7 @@ int _generate_params(int algo, mpi_t * resarr, int *resarr_len, int bits)
 gnutls_pk_params_st params;
 int ret, i;
 	
-	ret = pk_ops.generate( GNUTLS_PK_RSA, bits, &params);
+	ret = gnutls_pk_ops.generate( GNUTLS_PK_RSA, bits, &params);
 
 	if (ret < 0) {
 		gnutls_assert();

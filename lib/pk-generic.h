@@ -3,17 +3,17 @@
 
 # include <gnutls/crypto.h>
 
-extern gnutls_crypto_pk_st pk_ops;
+extern gnutls_crypto_pk_st gnutls_pk_ops;
 
-#define _gnutls_pk_encrypt( algo, ciphertext, plaintext, params) pk_ops.encrypt( algo, ciphertext, plaintext, params)
-#define _gnutls_pk_decrypt( algo, ciphertext, plaintext, params) pk_ops.decrypt( algo, ciphertext, plaintext, params)
-#define _gnutls_pk_sign( algo, sig, data, params) pk_ops.sign( algo, sig, data, params)
-#define _gnutls_pk_verify( algo, data, sig, params) pk_ops.verify( algo, data, sig, params)
+#define _gnutls_pk_encrypt( algo, ciphertext, plaintext, params) gnutls_pk_ops.encrypt( algo, ciphertext, plaintext, params)
+#define _gnutls_pk_decrypt( algo, ciphertext, plaintext, params) gnutls_pk_ops.decrypt( algo, ciphertext, plaintext, params)
+#define _gnutls_pk_sign( algo, sig, data, params) gnutls_pk_ops.sign( algo, sig, data, params)
+#define _gnutls_pk_verify( algo, data, sig, params) gnutls_pk_ops.verify( algo, data, sig, params)
 
 inline static int
 _gnutls_pk_fixup( gnutls_pk_algorithm_t algo, gnutls_direction_t direction, gnutls_pk_params_st* params)
 {
-	if (pk_ops.pk_fixup_private_params) return pk_ops.pk_fixup_private_params(algo, direction, params);
+	if (gnutls_pk_ops.pk_fixup_private_params) return gnutls_pk_ops.pk_fixup_private_params(algo, direction, params);
 	return 0;
 }
 

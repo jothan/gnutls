@@ -36,24 +36,15 @@
 /* Functions that refer to the mpi library.
  */
 
-#define clearbit(n, v)    ((unsigned char)(v) & ~( (unsigned char)(1U) << (unsigned)(n)))
+#define clearbit(v,n)    ((unsigned char)(v) & ~( (unsigned char)(1) << (unsigned)(n)))
 
 /* FIXME: test this function */
-mpi_t _gnutls_mpi_random( mpi_t r, unsigned int bits, gnutls_rnd_level_t level)
+mpi_t _gnutls_mpi_randomize( mpi_t r, unsigned int bits, gnutls_rnd_level_t level)
 {
 opaque * buf = NULL;
 int size = 1+(bits/8), ret;
 int rem, i;
-
-  if (r == NULL) {
-    r = _gnutls_mpi_new(bits);
-  }
-  
-  if (r == NULL)
-    {
-      gnutls_assert();
-      return NULL;
-    }
+mpi_t tmp;
 
   buf = gnutls_malloc( size);
   if (buf == NULL)
@@ -71,21 +62,29 @@ int rem, i;
   
   /* mask the bits that weren't requested */
   rem = bits % 8;
+
   if (rem == 0) {
-    buf[size-1]=0;
+    buf[0]=0;
   } else {
-    for (i=8;i>rem;i--)
-      clearbit(buf[size-1], i);
+    for (i=8;i>=rem;i--)
+      buf[0]=clearbit(buf[0], i);
   }
 
-  ret = _gnutls_mpi_scan ( &r, buf, size);
+  ret = _gnutls_mpi_scan ( &tmp, buf, size);
   if (ret < 0) 
     {
       gnutls_assert();
       goto cleanup;
     }
+    
+  if (r != NULL) 
+    {
+      _gnutls_mpi_set(r, tmp);
+      _gnutls_mpi_release( &tmp);
+      return r;
+    }
 
-  return r;
+  return tmp;
   
 cleanup:
   gnutls_free(buf);
@@ -98,7 +97,7 @@ _gnutls_mpi_release (mpi_t * x)
   if (*x == NULL)
     return;
   
-  mpi_ops.bigint_release (*x);
+  gnutls_mpi_ops.bigint_release (*x);
   *x = NULL;
 }
 
@@ -107,7 +106,7 @@ _gnutls_mpi_release (mpi_t * x)
 int
 _gnutls_mpi_scan (mpi_t * ret_mpi, const void * buffer, size_t nbytes)
 {
-  *ret_mpi = mpi_ops.bigint_scan (buffer, nbytes, GNUTLS_MPI_FORMAT_USG);
+  *ret_mpi = gnutls_mpi_ops.bigint_scan (buffer, nbytes, GNUTLS_MPI_FORMAT_USG);
   
   if (*ret_mpi == NULL)
     {
