@@ -29,6 +29,7 @@ endif
 AM_CPPFLAGS = -I$(top_srcdir)/lgl -I$(top_builddir)/lgl			\
 	-I$(top_srcdir)/gl -I$(top_builddir)/gl				\
 	-I$(top_srcdir)/includes -I$(top_builddir)/includes		\
+	-I$(top_srcdir)/lib 						\
 	-I$(top_srcdir)/doc/examples
 AM_LDFLAGS = -no-install
 LDADD = ../lib/libgnutls.la ../gl/libgnu.la ../lgl/liblgnu.la libutils.la
@@ -37,7 +38,7 @@ noinst_LTLIBRARIES = libutils.la
 libutils_la_SOURCES = utils.h utils.c
 
 ctests = simple openssl gc set_pkcs12_cred certder	\
-	certificate_set_x509_crl dn parse_ca moredn
+	certificate_set_x509_crl dn parse_ca moredn mpi
 openssl_LDADD = $(LDADD) ../libextra/libgnutls-openssl.la
 if HAVE_FORK
 ctests +=  openpgpself x509self x509signself x509dn anonself pskself dhepskself tlsia resume
