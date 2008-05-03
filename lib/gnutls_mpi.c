@@ -197,6 +197,49 @@ _gnutls_mpi_dprint (const mpi_t a, gnutls_datum_t * dest)
   return 0;
 }
 
+/* This function will copy the mpi data into a datum,
+ * but will set minimum size to 'size'. That means that
+ * the output value is left padded with zeros.
+ */
+int
+_gnutls_mpi_dprint_size (const mpi_t a, gnutls_datum_t * dest, size_t size)
+{
+  int ret;
+  opaque *buf = NULL;
+  size_t bytes = 0;
+  unsigned int i;
+
+  if (dest == NULL || a == NULL)
+    return GNUTLS_E_INVALID_REQUEST;
+
+  _gnutls_mpi_print (a, NULL, &bytes);
+  if (bytes != 0)
+    buf = gnutls_malloc (MAX(size, bytes));
+  if (buf == NULL)
+    return GNUTLS_E_MEMORY_ERROR;
+
+  dest->size = MAX(size, bytes);
+
+  if (bytes <= size) {
+      size_t diff = size - bytes;
+      for (i=0;i<diff;i++)
+        buf[i] = 0;
+      ret = _gnutls_mpi_print(a, &buf[diff], &bytes);
+    } else {
+      ret = _gnutls_mpi_print(a, buf, &bytes);
+    }
+
+  if (ret < 0)
+    {
+      gnutls_free (buf);
+      return ret;
+    }
+
+  dest->data = buf;
+  dest->size = MAX(size, bytes);
+  return 0;
+}
+
 /* this function reads an integer
  * from asn1 structs. Combines the read and mpi_scan
  * steps.

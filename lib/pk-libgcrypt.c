@@ -43,7 +43,6 @@
 /* this is based on code from old versions of libgcrypt (centuries ago)
  */
 
-
 int (*generate) (gnutls_pk_algorithm_t, unsigned int level /*bits */ ,
 		 gnutls_pk_params_st *);
 
@@ -123,7 +122,7 @@ _wrap_gcry_pk_encrypt(gnutls_pk_algorithm_t algo,
       goto cleanup;
     }
 
-    ret = _gnutls_mpi_dprint(ciphertext, res);
+    ret = _gnutls_mpi_dprint_size(res, ciphertext, plaintext->size);
     _gnutls_mpi_release(&res);
 
     if (ret < 0) {
@@ -213,7 +212,7 @@ _wrap_gcry_pk_decrypt(gnutls_pk_algorithm_t algo,
       goto cleanup;
     }
 
-    ret = _gnutls_mpi_dprint(plaintext, res);
+    ret = _gnutls_mpi_dprint_size(res, plaintext, ciphertext->size);
     _gnutls_mpi_release(&res);
 
     if (ret < 0) {

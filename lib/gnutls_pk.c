@@ -234,12 +234,10 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
    */
   if (btype == 2)
     {
-//      pk_params.flags = GNUTLS_PK_FLAG_PKCS1_TYPE2;
       ret = _gnutls_pk_decrypt (GNUTLS_PK_RSA, plaintext, ciphertext, &pk_params);
     }
   else
     {
-//      pk_params.flags = GNUTLS_PK_FLAG_PKCS1_TYPE1;
       ret = _gnutls_pk_encrypt (GNUTLS_PK_RSA, plaintext, ciphertext, &pk_params);
     }
 
@@ -257,7 +255,6 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
    * "Chosen Ciphertext Attacks against Protocols Based on RSA
    * Encryption Standard PKCS #1".
    */
-
   if (plaintext->data[0] != 0 || plaintext->data[1] != btype)
     {
       gnutls_assert ();
