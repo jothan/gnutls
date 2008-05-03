@@ -96,7 +96,7 @@ _gnutls_mpi_release (mpi_t * x)
 {
   if (*x == NULL)
     return;
-  
+
   gnutls_mpi_ops.bigint_release (*x);
   *x = NULL;
 }
@@ -107,7 +107,6 @@ int
 _gnutls_mpi_scan (mpi_t * ret_mpi, const void * buffer, size_t nbytes)
 {
   *ret_mpi = gnutls_mpi_ops.bigint_scan (buffer, nbytes, GNUTLS_MPI_FORMAT_USG);
-  
   if (*ret_mpi == NULL)
     {
       gnutls_assert();
@@ -187,7 +186,7 @@ _gnutls_mpi_dprint (const mpi_t a, gnutls_datum_t * dest)
   if (buf == NULL)
     return GNUTLS_E_MEMORY_ERROR;
 
-  ret = _gnutls_mpi_print (a, NULL, &bytes);
+  ret = _gnutls_mpi_print (a, buf, &bytes);
   if (ret < 0)
     {
       gnutls_free (buf);
@@ -207,7 +206,6 @@ int
 _gnutls_x509_read_int (ASN1_TYPE node, const char *value, mpi_t * ret_mpi)
 {
   int result;
-  size_t s_len;
   opaque *tmpstr = NULL;
   int tmpstr_size;
 
@@ -234,15 +232,14 @@ _gnutls_x509_read_int (ASN1_TYPE node, const char *value, mpi_t * ret_mpi)
       return _gnutls_asn2err (result);
     }
 
-  s_len = tmpstr_size;
-  if (_gnutls_mpi_scan (ret_mpi, tmpstr, s_len) != 0)
+  result = _gnutls_mpi_scan (ret_mpi, tmpstr, tmpstr_size);
+  gnutls_free (tmpstr);
+
+  if (result < 0)
     {
       gnutls_assert ();
-      gnutls_free (tmpstr);
-      return GNUTLS_E_MPI_SCAN_FAILED;
+      return result;
     }
-
-  gnutls_free (tmpstr);
 
   return 0;
 }

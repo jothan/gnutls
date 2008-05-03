@@ -44,8 +44,8 @@ wrap_gcry_mpi_scan (const void * buffer, size_t nbytes, gnutls_bigint_format_t f
   gcry_mpi_t ret_mpi = NULL;
   int ret;
 
-  ret = gcry_mpi_scan (&ret_mpi, format==GNUTLS_MPI_FORMAT_USG?GCRYMPI_FMT_USG:GCRYMPI_FMT_STD, buffer, nbytes, &nbytes);
-  if (ret)
+  ret = gcry_mpi_scan (&ret_mpi, (format==GNUTLS_MPI_FORMAT_USG)?GCRYMPI_FMT_USG:GCRYMPI_FMT_STD, buffer, nbytes, NULL);
+  if (ret != 0)
     return NULL;
 
   return ret_mpi;
@@ -56,10 +56,15 @@ wrap_gcry_mpi_print (const mpi_t a, void *buffer, size_t * nbytes, gnutls_bigint
 {
   int ret;
 
+  if (format==GNUTLS_MPI_FORMAT_USG)
+    format = GCRYMPI_FMT_USG;
+  else 
+    format = GCRYMPI_FMT_STD;
+    
   if (nbytes == NULL || a == NULL)
     return GNUTLS_E_INVALID_REQUEST;
 
-  ret = gcry_mpi_print (format==GNUTLS_MPI_FORMAT_USG?GCRYMPI_FMT_USG:GCRYMPI_FMT_STD, buffer, *nbytes, nbytes, a);
+  ret = gcry_mpi_print( format , buffer, *nbytes, nbytes, a);
   if (!ret)
     return 0;
 
