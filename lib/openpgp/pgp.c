@@ -661,7 +661,7 @@ static cdk_packet_t _get_public_subkey(gnutls_openpgp_crt_t key, unsigned int in
 {
   cdk_kbnode_t p, ctx;
   cdk_packet_t pkt;
-  int subkeys;
+  unsigned int subkeys;
 
   if (key == NULL)
     {
@@ -997,7 +997,7 @@ int _gnutls_read_pgp_mpi( cdk_packet_t pkt, unsigned int priv, size_t idx, mpi_t
 size_t buf_size = 512;
 opaque * buf = gnutls_malloc( buf_size);
 int err;
-int max_pub_params = 0;
+unsigned int max_pub_params = 0;
 
   if (priv !=0)
      max_pub_params = cdk_pk_get_npkey(pkt->pkt.secret_key->pk->pubkey_algo);

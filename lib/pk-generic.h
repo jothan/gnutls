@@ -21,7 +21,7 @@ int _gnutls_pk_params_copy( gnutls_pk_params_st* dst, mpi_t* params, int params_
 void gnutls_pk_params_release( gnutls_pk_params_st* p);
 void gnutls_pk_params_init( gnutls_pk_params_st* p);
 
-int _gnutls_rsa_generate_params (mpi_t * resarr, int *resarr_len, int bits);
-int _gnutls_dsa_generate_params (mpi_t * resarr, int *resarr_len, int bits);
+int _gnutls_rsa_generate_params (mpi_t * resarr, unsigned int *resarr_len, int bits);
+int _gnutls_dsa_generate_params (mpi_t * resarr, unsigned int *resarr_len, int bits);
 
 #endif

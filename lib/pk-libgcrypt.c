@@ -487,6 +487,7 @@ cleanup:
   if (s_pkey)
     gcry_sexp_release(s_pkey);
 
+  return ret;
 }
 
 static int _dsa_generate_params(mpi_t * resarr, int *resarr_len, int bits)
@@ -752,6 +753,7 @@ static int wrap_gcry_pk_fixup(gnutls_pk_algorithm_t algo,
     return GNUTLS_E_INVALID_REQUEST;
   }
 
+  return 0;
 }
 
 gnutls_crypto_pk_st gnutls_pk_ops = {

@@ -487,10 +487,7 @@ _gnutls_dsa_verify (const gnutls_datum_t * vdata,
 		    int params_len)
 {
 
-  mpi_t mdata;
   int ret;
-  size_t k;
-  mpi_t rs[2];
   gnutls_pk_params_st pk_params;
 
   pk_params.params = params;

@@ -28,10 +28,11 @@
 #include <gnutls_num.h>
 
 static
-int _generate_params(int algo, mpi_t * resarr, int *resarr_len, int bits)
+int _generate_params(int algo, mpi_t * resarr, unsigned int *resarr_len, int bits)
 {
 gnutls_pk_params_st params;
-int ret, i;
+int ret;
+unsigned int i;
 	
 	ret = gnutls_pk_ops.generate( GNUTLS_PK_RSA, bits, &params);
 
@@ -53,12 +54,12 @@ int ret, i;
 
 
 
-int _gnutls_rsa_generate_params (mpi_t * resarr, int *resarr_len, int bits)
+int _gnutls_rsa_generate_params (mpi_t * resarr, unsigned int *resarr_len, int bits)
 {
 	return _generate_params( GNUTLS_PK_RSA, resarr, resarr_len, bits);
 }
 
-int _gnutls_dsa_generate_params (mpi_t * resarr, int *resarr_len, int bits)
+int _gnutls_dsa_generate_params (mpi_t * resarr, unsigned int *resarr_len, int bits)
 {
 	return _generate_params( GNUTLS_PK_DSA, resarr, resarr_len, bits);
 }
@@ -83,6 +84,8 @@ int i,j;
 		}
 		dst->params_nr++;
 	}
+	
+	return 0;
 }
 
 void gnutls_pk_params_init( gnutls_pk_params_st* p)
@@ -92,7 +95,7 @@ void gnutls_pk_params_init( gnutls_pk_params_st* p)
 
 void gnutls_pk_params_release( gnutls_pk_params_st* p)
 {
-int i;
+unsigned int i;
 	for (i=0;i<p->params_nr;i++) {
 		_gnutls_mpi_release( &p->params[i]);
 	}

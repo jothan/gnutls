@@ -504,7 +504,6 @@ gnutls_dh_params_export_raw (gnutls_dh_params_t params,
 			     gnutls_datum_t * generator, unsigned int *bits)
 {
   int ret;
-  size_t size;
 
   if (params->params[1] == NULL || params->params[0] == NULL)
     {

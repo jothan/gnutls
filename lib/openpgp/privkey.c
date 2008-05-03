@@ -368,7 +368,7 @@ static cdk_packet_t _get_secret_subkey(gnutls_openpgp_privkey_t key, unsigned in
 {
   cdk_kbnode_t p, ctx;
   cdk_packet_t pkt;
-  int subkeys;
+  unsigned int subkeys;
 
   ctx = NULL;
   subkeys = 0;

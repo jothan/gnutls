@@ -786,7 +786,6 @@ gnutls_x509_privkey_export_rsa_raw (gnutls_x509_privkey_t key,
 				    gnutls_datum_t * q, gnutls_datum_t * u)
 {
   int ret;
-  mpi_t coeff = NULL;
   gnutls_pk_params_st pk_params;
 
   if (key == NULL)
@@ -1325,8 +1324,9 @@ gnutls_x509_privkey_generate (gnutls_x509_privkey_t key,
 			      gnutls_pk_algorithm_t algo, unsigned int bits,
 			      unsigned int flags)
 {
-  int ret, params_len;
-  int i;
+  int ret;
+  unsigned int params_len;
+  unsigned int i;
 
   if (key == NULL)
     {
