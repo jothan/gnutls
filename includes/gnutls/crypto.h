@@ -50,6 +50,11 @@ typedef enum gnutls_rnd_level
   GNUTLS_RND_NONCE = 2, /* fatal in parts of session if broken - i.e. vulnerable to statistical analysis */
 } gnutls_rnd_level_t;
 
+typedef enum 
+{
+  GNUTLS_PK_FLAG_NONE = 0,
+} gnutls_pk_flag_t;
+
 typedef struct gnutls_crypto_rnd {
   int (*init)( void** ctx);
   int (*rnd) ( void* ctx, int /* gnutls_rnd_level_t */ level, void* data, int datasize);
@@ -58,7 +63,7 @@ typedef struct gnutls_crypto_rnd {
 
 typedef void* bigint_t;
 
-typedef enum gnutls_bigint_format
+typedef enum 
 {
   GNUTLS_MPI_FORMAT_USG = 0, /* raw unsigned integer format */ 
   GNUTLS_MPI_FORMAT_STD = 1, /* raw signed integer format - always a leading zero when positive */
@@ -68,7 +73,7 @@ typedef struct
 {
   bigint_t g; /* group generator */
   bigint_t p; /* prime */
-} gnutls_group_t;
+} gnutls_group_st;
 
 /* Multi precision integer arithmetic */
 typedef struct gnutls_crypto_bigint {
@@ -92,7 +97,7 @@ typedef struct gnutls_crypto_bigint {
   bigint_t (*bigint_mul_ui) (bigint_t w, const bigint_t a, unsigned long b); /* w = a * b */
   bigint_t (*bigint_div) (bigint_t q, const bigint_t a, const bigint_t b); /* q = a / b */
   int (*bigint_prime_check) (const bigint_t pp); /* 0 if prime */
-  int (*bigint_generate_group) (gnutls_group_t* gg, unsigned int bits);
+  int (*bigint_generate_group) (gnutls_group_st* gg, unsigned int bits);
   
   bigint_t (*bigint_scan) ( const void* buf, size_t buf_size, gnutls_bigint_format_t format); /* reads an bigint from a buffer */
    /* stores an bigint into the buffer.
@@ -104,10 +109,13 @@ typedef struct gnutls_crypto_bigint {
 } gnutls_crypto_bigint_st;
 
 typedef struct pk_params {
-  bigint_t * params;
+  bigint_t *params;
   unsigned int params_nr; /* the number of parameters */
   unsigned int flags;
-} pk_params_t;
+} gnutls_pk_params_st;
+
+void gnutls_pk_params_release( gnutls_pk_params_st* p);
+void gnutls_pk_params_init( gnutls_pk_params_st* p);
 
 /* params are:
  * RSA: 
@@ -129,26 +137,32 @@ typedef struct pk_params {
  *  [4] is x (private key only)
  */
 
+typedef enum 
+{
+  GNUTLS_IMPORT,
+  GNUTLS_EXPORT
+} gnutls_direction_t;
+
 /* Public key algorithms */
 typedef struct gnutls_crypto_pk {
   /* The params structure should contain the private or public key
    * parameters, depending on the operation */
   int (*encrypt)( gnutls_pk_algorithm_t, gnutls_datum_t* ciphertext, 
-    const gnutls_datum_t* plaintext, const pk_params_t* /* public */);
+    const gnutls_datum_t* plaintext, const gnutls_pk_params_st* /* public */);
   int (*decrypt)( gnutls_pk_algorithm_t, gnutls_datum_t* plaintext, 
-    const gnutls_datum_t* ciphertext, const pk_params_t* /* private */);
+    const gnutls_datum_t* ciphertext, const gnutls_pk_params_st* /* private */);
 
   int (*sign)( gnutls_pk_algorithm_t, gnutls_datum_t* signature, 
-    const gnutls_datum_t* data, const pk_params_t* /* private */);
+    const gnutls_datum_t* data, const gnutls_pk_params_st* /* private */);
   int (*verify)( gnutls_pk_algorithm_t, const gnutls_datum_t* data, 
-    const gnutls_datum_t* signature, const pk_params_t* /* public */);
+    const gnutls_datum_t* signature, const gnutls_pk_params_st* /* public */);
 
-  int (*generate)( gnutls_pk_algorithm_t, pk_params_t*);
+  int (*generate)( gnutls_pk_algorithm_t, unsigned int level /*bits*/, gnutls_pk_params_st*);
   /* this function should convert params to ones suitable
    * for the above functions
    */
-  int (*pk_fixup_private_params)( gnutls_pk_algorithm_t, pk_params_t*);
-  
+  int (*pk_fixup_private_params)( gnutls_pk_algorithm_t, gnutls_direction_t, gnutls_pk_params_st*);
+
 } gnutls_crypto_pk_st;
 
 /* the same... setkey should be null */

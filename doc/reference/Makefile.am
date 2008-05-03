@@ -18,7 +18,7 @@ DOC_MAIN_SGML_FILE=$(DOC_MODULE)-docs.sgml
 # gtk-doc will search all .c & .h files beneath here for inline comments
 # documenting the functions and macros.
 # e.g. DOC_SOURCE_DIR=../../../gtk
-DOC_SOURCE_DIR=../../
+DOC_SOURCE_DIR=../../lib --source-dir=../../libextra --source-dir=../../includes
 
 # Extra options to pass to gtkdoc-scangobj. Not normally needed.
 SCANGOBJ_OPTIONS=
@@ -69,18 +69,19 @@ IGNORE_HFILES=debug.h gnutls_compress.h defines.h gnutls_cipher.h	\
 	auth_psk_passwd.h memmem.h gnutls_helper.h			\
 	ext_inner_application.h						\
 									\
-	der.h errors.h gstr.h parser_aux.h element.h			\
-	errors_int.h int.h mem.h structure.h				\
+	der.h errors.h gstr.h parser_aux.h element.h errors_int.h	\
+	int.h structure.h						\
 									\
 	common.h compat.h						\
 									\
-	openssl_compat.h					\
+	openssl_compat.h						\
 									\
 	cipher.h context.h filters.h main.h md.h packet.h		\
 	stream.h types.h						\
 									\
 	gnutls_openpgp.h gnutlsxx.h gnutls_extra_hooks.h		\
-	gnutls_supplemental.h
+	gnutls_supplemental.h						\
+	opencdk.h
 
 # Images to copy into HTML directory.
 # e.g. HTML_IMAGES=$(top_srcdir)/gtk/stock-icons/stock_about_24.png

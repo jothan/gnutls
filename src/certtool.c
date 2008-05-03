@@ -1739,7 +1739,11 @@ generate_request (void)
    */
   key = load_private_key (0);
   if (!key)
-    key = generate_private_key_int ();
+    {
+      key = generate_private_key_int ();
+
+      print_private_key (key);
+    }
 
   /* Set the DN.
    */
@@ -1751,10 +1755,6 @@ generate_request (void)
   get_cn_crq_set (crq);
   get_uid_crq_set (crq);
   get_oid_crq_set (crq);
-
-  ret = gnutls_x509_crq_set_version (crq, 1);
-  if (ret < 0)
-    error (EXIT_FAILURE, 0, "set_version: %s", gnutls_strerror (ret));
 
   pass = get_challenge_pass ();
 

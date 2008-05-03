@@ -27,6 +27,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -43,15 +44,9 @@
 #include "cli-gaa.h"
 
 #if defined _WIN32 || defined __WIN32__
+int _win_select(int max_fd, fd_set * rfds, fd_set * wfds, fd_set * efds,
+		const struct timeval *tv);
 #define select _win_select
-#endif
-
-#ifndef SHUT_WR
-# define SHUT_WR 1
-#endif
-
-#ifndef SHUT_RDWR
-# define SHUT_RDWR 2
 #endif
 
 #define SA struct sockaddr
@@ -763,7 +758,6 @@ after_handshake:
 		  if (ret < 0)
 		    {
 		      fprintf (stderr, "*** Handshake has failed\n");
-		      socket_bye (&hd);
 		      user_term = 1;
 		      break;
 		    }

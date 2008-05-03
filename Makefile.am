@@ -30,15 +30,13 @@ endif
 
 ACLOCAL_AMFLAGS = -I m4 -I gl/m4 -I lgl/m4
 
-# Maintainer targets
+EXTRA_DIST = cfg.mk .clcopying
 
-update-po: refresh-po
-	-cg-add `ls po/*.po | grep -v quot.po`
-	cg-commit -m "Sync with TP." po/LINGUAS `ls po/*.po | grep -v quot.po`
+# Maintainer targets
 
 ChangeLog:
 	git log --pretty --numstat --summary --since="2005 November 07" -- | git2cl > ChangeLog
-	cat .cvscopying >> ChangeLog
+	cat .clcopying >> ChangeLog
 
 tag = $(PACKAGE)_`echo $(VERSION) | sed 's/\./_/g'`
 htmldir = ../www-$(PACKAGE)
