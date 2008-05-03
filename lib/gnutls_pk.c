@@ -305,6 +305,9 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
       _gnutls_free_datum( plaintext);
       return GNUTLS_E_DECRYPTION_FAILED;
     }
+    
+  memmove(plaintext->data, &plaintext->data[i], esize - i);
+  plaintext->size = esize - i;
 
   return 0;
 }
