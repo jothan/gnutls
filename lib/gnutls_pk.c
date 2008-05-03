@@ -138,18 +138,8 @@ _gnutls_pkcs1_rsa_encrypt (gnutls_datum_t * ciphertext,
   ps[psize] = 0;
   memcpy (&ps[psize + 1], plaintext->data, plaintext->size);
 
-<<<<<<< HEAD:lib/gnutls_pk.c
   to_encrypt.data = edata;
   to_encrypt.size = k;
-=======
-  if (_gnutls_mpi_scan_nz (&m, edata, &k) != 0)
-    {
-      gnutls_assert ();
-      gnutls_free (edata);
-      return GNUTLS_E_MPI_SCAN_FAILED;
-    }
-  gnutls_free (edata);
->>>>>>> master:lib/gnutls_pk.c
 
   if (btype == 2)		/* encrypt */
     ret = _gnutls_pk_encrypt (GNUTLS_PK_RSA, &encrypted, &to_encrypt, &pk_params);

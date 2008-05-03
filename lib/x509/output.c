@@ -85,7 +85,7 @@ asciiprint (gnutls_string * str, const char *data, size_t len)
   size_t j;
 
   for (j = 0; j < len; j++)
-    if (c_isprint (data[j]))
+    if (isprint (data[j]))
       addf (str, "%c", (unsigned char) data[j]);
     else
       addf (str, ".");
