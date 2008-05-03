@@ -180,7 +180,6 @@ _gnutls_mpi_dprint (const mpi_t a, gnutls_datum_t * dest)
     return GNUTLS_E_INVALID_REQUEST;
 
   _gnutls_mpi_print (a, NULL, &bytes);
-
   if (bytes != 0)
     buf = gnutls_malloc (bytes);
   if (buf == NULL)
