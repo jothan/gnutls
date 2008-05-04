@@ -29,6 +29,7 @@
 #include <gnutls_mpi.h>
 #include <pk-generic.h>
 #include <random.h>
+#include <gnutls_cipher_int.h>
 
 typedef struct algo_list {
   int algorithm;
@@ -287,6 +288,32 @@ int gnutls_crypto_pk_register( int priority, gnutls_crypto_pk_st* s)
   if (crypto_pk_prio < priority) {
 	_gnutls_pk_ops = *s;
 	crypto_pk_prio = priority;
+        return 0;
+  }
+  return GNUTLS_E_CRYPTO_ALREADY_REGISTERED;
+}
+
+/**
+  * gnutls_crypto_cipher_register - register a cipher interface
+  * @priority: is the priority of the cipher interface
+  * @s: is a structure holding new interface's data
+  *
+  * This function will register a cipher interface to be used
+  * by gnutls. Any interface registered will override
+  * the included engine and by convention kernel implemented
+  * interfaces should have priority of 90. The interface with the lowest
+  * priority will be used by gnutls.
+  *
+  * This function should be called before gnutls_global_init().
+  *
+  * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
+  *
+  **/
+int gnutls_crypto_cipher_register( int priority, gnutls_crypto_cipher_st* s)
+{
+  if (crypto_cipher_prio < priority) {
+	_gnutls_cipher_ops = *s;
+	crypto_cipher_prio = priority;
         return 0;
   }
   return GNUTLS_E_CRYPTO_ALREADY_REGISTERED;

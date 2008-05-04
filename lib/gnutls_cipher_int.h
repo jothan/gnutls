@@ -27,6 +27,9 @@
 
 #include <gnutls/crypto.h>
 
+extern int crypto_cipher_prio;
+extern gnutls_crypto_cipher_st _gnutls_cipher_ops;
+
 typedef struct {
   gnutls_crypto_single_cipher_st* cc;
   void* ctx;
