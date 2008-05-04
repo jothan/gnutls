@@ -121,6 +121,8 @@ opaque *_digest = gcry_md_read (src_ctx, 0);
       
       if (len <= digestsize && digest != NULL)
         memcpy( digest, _digest, len);
+      
+      return 0;
     }
     
   gnutls_assert();
