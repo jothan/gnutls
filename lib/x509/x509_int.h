@@ -293,7 +293,7 @@ typedef struct gnutls_pkcs12_bag_int
 #define KEY_ID_OID "1.2.840.113549.1.9.21"
 
 int
-_pkcs12_string_to_key (unsigned int id, const opaque * salt,
+_gnutls_pkcs12_string_to_key (unsigned int id, const opaque * salt,
 		       unsigned int salt_size, unsigned int iter,
 		       const char *pw, unsigned int req_keylen,
 		       opaque * keybuf);

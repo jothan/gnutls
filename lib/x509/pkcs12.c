@@ -904,7 +904,7 @@ gnutls_pkcs12_generate_mac (gnutls_pkcs12_t pkcs12, const char *pass)
 
   /* Generate the key.
    */
-  result = _pkcs12_string_to_key (3 /*MAC*/, salt, sizeof (salt),
+  result = _gnutls_pkcs12_string_to_key (3 /*MAC*/, salt, sizeof (salt),
 				  iter, pass, sizeof (key), key);
   if (result < 0)
     {
@@ -1027,7 +1027,7 @@ gnutls_pkcs12_verify_mac (gnutls_pkcs12_t pkcs12, const char *pass)
 
   /* Generate the key.
    */
-  result = _pkcs12_string_to_key (3 /*MAC*/, salt.data, salt.size,
+  result = _gnutls_pkcs12_string_to_key (3 /*MAC*/, salt.data, salt.size,
 				  iter, pass, sizeof (key), key);
   if (result < 0)
     {

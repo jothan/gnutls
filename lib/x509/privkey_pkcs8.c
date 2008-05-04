@@ -692,7 +692,7 @@ read_pkcs_schema_params (schema_id schema, const char *password,
       if (enc_params->iv_size)
 	{
 	  result =
-	    _pkcs12_string_to_key (2 /*IV*/, kdf_params->salt,
+	    _gnutls_pkcs12_string_to_key (2 /*IV*/, kdf_params->salt,
 				   kdf_params->salt_size,
 				   kdf_params->iter_count, password,
 				   enc_params->iv_size, enc_params->iv);
@@ -1503,7 +1503,7 @@ decrypt_data (schema_id schema, ASN1_TYPE pkcs8_asn,
   else
     {
       result =
-	_pkcs12_string_to_key (1 /*KEY*/, kdf_params->salt,
+	_gnutls_pkcs12_string_to_key (1 /*KEY*/, kdf_params->salt,
 			       kdf_params->salt_size,
 			       kdf_params->iter_count, password,
 			       key_size, key);
@@ -1817,7 +1817,7 @@ generate_key (schema_id schema,
   else
     {				/* PKCS12 schemas */
       ret =
-	_pkcs12_string_to_key (1 /*KEY*/, kdf_params->salt,
+	_gnutls_pkcs12_string_to_key (1 /*KEY*/, kdf_params->salt,
 			       kdf_params->salt_size,
 			       kdf_params->iter_count, password,
 			       kdf_params->key_size, key->data);
@@ -1832,7 +1832,7 @@ generate_key (schema_id schema,
       if (enc_params->iv_size)
 	{
 	  ret =
-	    _pkcs12_string_to_key (2 /*IV*/, kdf_params->salt,
+	    _gnutls_pkcs12_string_to_key (2 /*IV*/, kdf_params->salt,
 				   kdf_params->salt_size,
 				   kdf_params->iter_count, password,
 				   enc_params->iv_size, enc_params->iv);

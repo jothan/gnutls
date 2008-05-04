@@ -53,7 +53,7 @@ _pkcs12_check_pass (const char *pass, size_t plen)
  * 1 for encryption key
  */
 int
-_pkcs12_string_to_key (unsigned int id, const opaque * salt,
+_gnutls_pkcs12_string_to_key (unsigned int id, const opaque * salt,
 		       unsigned int salt_size, unsigned int iter,
 		       const char *pw, unsigned int req_keylen,
 		       opaque * keybuf)
