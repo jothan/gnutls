@@ -31,6 +31,7 @@
 
 # include <gnutls/crypto.h>
 
+extern int crypto_bigint_prio;
 extern gnutls_crypto_bigint_st gnutls_mpi_ops;
 
 typedef bigint_t mpi_t;

@@ -26,6 +26,8 @@
 #include <gnutls_int.h>
 #include <gnutls/crypto.h>
 #include <crypto.h>
+#include <gnutls_mpi.h>
+#include <pk-generic.h>
 
 typedef struct algo_list {
   int algorithm;
@@ -232,4 +234,62 @@ int gnutls_crypto_digest_register( gnutls_digest_algorithm_t algorithm, int prio
 gnutls_crypto_digest_st *_gnutls_get_crypto_digest( gnutls_digest_algorithm_t algo)
 {
   return _get_algo( &glob_dl, algo);
+}
+
+/**
+  * gnutls_crypto_bigint_register - register a bigint interface
+  * @priority: is the priority of the interface
+  * @s: is a structure holding new interface's data
+  *
+  * This function will register an interface for gnutls to operate
+  * on big integers. Any interface registered will override
+  * the included interface. The interface with the lowest
+  * priority will be used by gnutls.
+  *
+  * Note that the bigint interface must interoperate with the public
+  * key interface. Thus if this interface is updated the
+  * gnutls_crypto_pk_register() should also be used.
+  *
+  * This function should be called before gnutls_global_init().
+  *
+  * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
+  *
+  **/
+int gnutls_crypto_bigint_register( int priority, gnutls_crypto_bigint_st* s)
+{
+  if (crypto_bigint_prio < priority) {
+	gnutls_mpi_ops = *s;
+	crypto_bigint_prio = priority;
+        return 0;
+  }
+  return GNUTLS_E_CRYPTO_ALREADY_REGISTERED;
+}
+
+/**
+  * gnutls_crypto_pk_register - register a public key interface
+  * @priority: is the priority of the interface
+  * @s: is a structure holding new interface's data
+  *
+  * This function will register an interface for gnutls to operate
+  * on public key operations. Any interface registered will override
+  * the included interface. The interface with the lowest
+  * priority will be used by gnutls.
+  *
+  * Note that the bigint interface must interoperate with the bigint
+  * interface. Thus if this interface is updated the
+  * gnutls_crypto_bigint_register() should also be used.
+  *
+  * This function should be called before gnutls_global_init().
+  *
+  * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
+  *
+  **/
+int gnutls_crypto_pk_register( int priority, gnutls_crypto_pk_st* s)
+{
+  if (crypto_pk_prio < priority) {
+	gnutls_pk_ops = *s;
+	crypto_pk_prio = priority;
+        return 0;
+  }
+  return GNUTLS_E_CRYPTO_ALREADY_REGISTERED;
 }

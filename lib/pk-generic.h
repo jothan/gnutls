@@ -3,6 +3,7 @@
 
 # include <gnutls/crypto.h>
 
+extern int crypto_pk_prio;
 extern gnutls_crypto_pk_st gnutls_pk_ops;
 
 #define _gnutls_pk_encrypt( algo, ciphertext, plaintext, params) gnutls_pk_ops.encrypt( algo, ciphertext, plaintext, params)

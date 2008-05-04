@@ -174,7 +174,8 @@ int gnutls_crypto_cipher_register( gnutls_cipher_algorithm_t algorithm, int prio
 int gnutls_crypto_mac_register( gnutls_mac_algorithm_t algorithm, int priority, gnutls_crypto_mac_st* s);
 int gnutls_crypto_digest_register( gnutls_digest_algorithm_t algorithm, int priority, gnutls_crypto_digest_st* s);
 int gnutls_crypto_rnd_register( int priority, gnutls_crypto_rnd_st* s);
+
+int gnutls_crypto_pk_register( int priority, gnutls_crypto_pk_st* s);
 int gnutls_crypto_bigint_register( int priority, gnutls_crypto_bigint_st* s);
-int gnutls_crypto_pk_register( int priority, gnutls_crypto_bigint_st* s);
 
 #endif
