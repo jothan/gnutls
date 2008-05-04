@@ -32,7 +32,7 @@ typedef struct gnutls_crypto_cipher {
   int (*encrypt)(void* ctx, const void* plain, int plainsize, void* encr, int encrsize);
   int (*decrypt)(void* ctx, const void* encr, int encrsize, void* plain, int plainsize);
   void (*deinit)( void* ctx);
-} gnutls_crypto_cipher_st;
+} gnutls_crypto_single_cipher_st;
 
 typedef struct gnutls_crypto_mac {
   int (*init)( void** ctx);
@@ -41,7 +41,7 @@ typedef struct gnutls_crypto_mac {
   int (*copy)( void** dst_ctx, void* src_ctx);
   int (*output) ( void* src_ctx, void* digest, int digestsize);
   void (*deinit)( void* ctx);
-} gnutls_crypto_mac_st;
+} gnutls_crypto_single_mac_st;
 
 typedef enum gnutls_rnd_level
 {
@@ -166,15 +166,15 @@ typedef struct gnutls_crypto_pk {
 } gnutls_crypto_pk_st;
 
 /* the same... setkey should be null */
-typedef gnutls_crypto_mac_st gnutls_crypto_digest_st;
+typedef gnutls_crypto_single_mac_st gnutls_crypto_single_digest_st;
 
 /* priority: infinity for backend algorithms, 90 for kernel algorithms - lowest wins 
  */
-int gnutls_crypto_cipher_register( gnutls_cipher_algorithm_t algorithm, int priority, gnutls_crypto_cipher_st* s);
-int gnutls_crypto_mac_register( gnutls_mac_algorithm_t algorithm, int priority, gnutls_crypto_mac_st* s);
-int gnutls_crypto_digest_register( gnutls_digest_algorithm_t algorithm, int priority, gnutls_crypto_digest_st* s);
-int gnutls_crypto_rnd_register( int priority, gnutls_crypto_rnd_st* s);
+int gnutls_crypto_single_cipher_register( gnutls_cipher_algorithm_t algorithm, int priority, gnutls_crypto_single_cipher_st* s);
+int gnutls_crypto_single_mac_register( gnutls_mac_algorithm_t algorithm, int priority, gnutls_crypto_single_mac_st* s);
+int gnutls_crypto_single_digest_register( gnutls_digest_algorithm_t algorithm, int priority, gnutls_crypto_single_digest_st* s);
 
+int gnutls_crypto_rnd_register( int priority, gnutls_crypto_rnd_st* s);
 int gnutls_crypto_pk_register( int priority, gnutls_crypto_pk_st* s);
 int gnutls_crypto_bigint_register( int priority, gnutls_crypto_bigint_st* s);
 

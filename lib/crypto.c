@@ -128,7 +128,7 @@ void _gnutls_crypto_deregister(void)
 }
 
 /**
-  * gnutls_crypto_cipher_register - register a cipher algorithm
+  * gnutls_crypto_single_cipher_register - register a cipher algorithm
   * @algorithm: is the gnutls algorithm identifier
   * @priority: is the priority of the algorithm
   * @s: is a structure holding new cipher's data
@@ -144,12 +144,12 @@ void _gnutls_crypto_deregister(void)
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
   **/
-int gnutls_crypto_cipher_register( gnutls_cipher_algorithm_t algorithm, int priority, gnutls_crypto_cipher_st* s)
+int gnutls_crypto_single_cipher_register( gnutls_cipher_algorithm_t algorithm, int priority, gnutls_crypto_single_cipher_st* s)
 {
   return _algo_register( &glob_cl, algorithm, priority, s);
 }
 
-gnutls_crypto_cipher_st *_gnutls_get_crypto_cipher( gnutls_cipher_algorithm_t algo)
+gnutls_crypto_single_cipher_st *_gnutls_get_crypto_cipher( gnutls_cipher_algorithm_t algo)
 {
   return _get_algo( &glob_cl, algo);
 }
@@ -181,7 +181,7 @@ int gnutls_crypto_rnd_register( int priority, gnutls_crypto_rnd_st* s)
 }
 
 /**
-  * gnutls_crypto_mac_register - register a MAC algorithm
+  * gnutls_crypto_single_mac_register - register a MAC algorithm
   * @algorithm: is the gnutls algorithm identifier
   * @priority: is the priority of the algorithm
   * @s: is a structure holding new algorithms's data
@@ -197,18 +197,18 @@ int gnutls_crypto_rnd_register( int priority, gnutls_crypto_rnd_st* s)
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
   **/
-int gnutls_crypto_mac_register( gnutls_mac_algorithm_t algorithm, int priority, gnutls_crypto_mac_st* s)
+int gnutls_crypto_single_mac_register( gnutls_mac_algorithm_t algorithm, int priority, gnutls_crypto_single_mac_st* s)
 {
   return _algo_register( &glob_ml, algorithm, priority, s);
 }
 
-gnutls_crypto_mac_st *_gnutls_get_crypto_mac( gnutls_mac_algorithm_t algo)
+gnutls_crypto_single_mac_st *_gnutls_get_crypto_mac( gnutls_mac_algorithm_t algo)
 {
   return _get_algo( &glob_ml, algo);
 }
 
 /**
-  * gnutls_crypto_digest_register - register a digest algorithm
+  * gnutls_crypto_single_digest_register - register a digest algorithm
   * @algorithm: is the gnutls algorithm identifier
   * @priority: is the priority of the algorithm
   * @s: is a structure holding new algorithms's data
@@ -224,12 +224,12 @@ gnutls_crypto_mac_st *_gnutls_get_crypto_mac( gnutls_mac_algorithm_t algo)
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
   **/
-int gnutls_crypto_digest_register( gnutls_digest_algorithm_t algorithm, int priority, gnutls_crypto_digest_st* s)
+int gnutls_crypto_single_digest_register( gnutls_digest_algorithm_t algorithm, int priority, gnutls_crypto_single_digest_st* s)
 {
   return _algo_register( &glob_dl, algorithm, priority, s);
 }
 
-gnutls_crypto_digest_st *_gnutls_get_crypto_digest( gnutls_digest_algorithm_t algo)
+gnutls_crypto_single_digest_st *_gnutls_get_crypto_digest( gnutls_digest_algorithm_t algo)
 {
   return _get_algo( &glob_dl, algo);
 }

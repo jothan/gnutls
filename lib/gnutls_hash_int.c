@@ -69,7 +69,7 @@ int
 _gnutls_hash_init (digest_hd_st* dig, gnutls_mac_algorithm_t algorithm)
 {
   int result;
-  gnutls_crypto_digest_st * cc = NULL;
+  gnutls_crypto_single_digest_st * cc = NULL;
 
   dig->algorithm = algorithm;
 
@@ -170,7 +170,7 @@ int _gnutls_hmac_init (digest_hd_st *dig, gnutls_mac_algorithm_t algorithm,
 		   const void *key, int keylen)
 {
   int result;
-  gnutls_crypto_digest_st * cc = NULL;
+  gnutls_crypto_single_mac_st * cc = NULL;
 
   dig->algorithm = algorithm;
   dig->key = key;

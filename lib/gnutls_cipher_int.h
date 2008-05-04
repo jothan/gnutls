@@ -28,7 +28,7 @@
 #include <gnutls/crypto.h>
 
 typedef struct {
-  gnutls_crypto_cipher_st* cc;
+  gnutls_crypto_single_cipher_st* cc;
   void* ctx;
 } reg_hd;
 

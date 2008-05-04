@@ -32,7 +32,7 @@
 /* for message digests */
 
 typedef struct {
-  gnutls_crypto_mac_st* cc;
+  gnutls_crypto_single_mac_st* cc;
   void* ctx;
 } digest_reg_hd;
 
