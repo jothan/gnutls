@@ -37,7 +37,7 @@
 #include <x509/x509_int.h>
 #include <x509/common.h>
 #include <random.h>
-#include <pk-generic.h>
+#include <gnutls_pk.h>
 #include <gcrypt.h>
 
 /* this is based on code from old versions of libgcrypt (centuries ago)

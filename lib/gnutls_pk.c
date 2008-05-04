@@ -37,7 +37,6 @@
 #include <x509/x509_int.h>
 #include <x509/common.h>
 #include <random.h>
-#include <pk-generic.h>
 
 /* Do PKCS-1 RSA encryption. 
  * params is modulus, public exp.
@@ -509,4 +508,81 @@ _gnutls_dsa_verify (const gnutls_datum_t * vdata,
     }
 
   return 0;			/* ok */
+}
+
+/* some generic pk functions */
+static
+int _generate_params(int algo, mpi_t * resarr, unsigned int *resarr_len, int bits)
+{
+gnutls_pk_params_st params;
+int ret;
+unsigned int i;
+	
+	ret = _gnutls_pk_ops.generate( GNUTLS_PK_RSA, bits, &params);
+
+	if (ret < 0) {
+		gnutls_assert();
+		return ret;
+	}
+
+	if (resarr && resarr_len && *resarr_len > params.params_nr) {
+		*resarr_len = params.params_nr;
+		for (i=0;i<params.params_nr;i++)
+			resarr[i] = params.params[i];
+	} else {
+		gnutls_assert();
+		return GNUTLS_E_INVALID_REQUEST;
+	}
+	return 0;
+}
+
+
+
+int _gnutls_rsa_generate_params (mpi_t * resarr, unsigned int *resarr_len, int bits)
+{
+	return _generate_params( GNUTLS_PK_RSA, resarr, resarr_len, bits);
+}
+
+int _gnutls_dsa_generate_params (mpi_t * resarr, unsigned int *resarr_len, int bits)
+{
+	return _generate_params( GNUTLS_PK_DSA, resarr, resarr_len, bits);
+}
+
+int _gnutls_pk_params_copy( gnutls_pk_params_st* dst, mpi_t* params, int params_len)
+{
+int i,j;
+	dst->params_nr = 0;
+
+	dst->params = gnutls_malloc( sizeof(mpi_t)*params_len);
+	if (dst->params == NULL) {
+		gnutls_assert();
+		return GNUTLS_E_MEMORY_ERROR;
+	}
+
+	for (i=0;i<params_len;i++) {
+		dst->params[i] = _gnutls_mpi_set( NULL, params[i]);
+		if (dst->params[i] == NULL) {
+			for (j=0;j<i;j++)
+				_gnutls_mpi_release( &dst->params[j]);
+			return GNUTLS_E_MEMORY_ERROR;
+		}
+		dst->params_nr++;
+	}
+	
+	return 0;
+}
+
+void gnutls_pk_params_init( gnutls_pk_params_st* p)
+{
+	memset( p, 0, sizeof(gnutls_pk_params_st));
+}
+
+void gnutls_pk_params_release( gnutls_pk_params_st* p)
+{
+unsigned int i;
+	for (i=0;i<p->params_nr;i++) {
+		_gnutls_mpi_release( &p->params[i]);
+	}
+	gnutls_free( p->params);
+	p->params = NULL;
 }

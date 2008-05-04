@@ -27,7 +27,7 @@
 #include <gnutls/crypto.h>
 #include <crypto.h>
 #include <gnutls_mpi.h>
-#include <pk-generic.h>
+#include <gnutls_pk.h>
 #include <random.h>
 #include <gnutls_cipher_int.h>
 

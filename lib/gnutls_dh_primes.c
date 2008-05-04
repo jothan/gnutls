@@ -28,7 +28,7 @@
 #include <x509_b64.h>		/* for PKCS3 PEM decoding */
 #include <gnutls_global.h>
 #include <gnutls_dh.h>
-#include <pk-generic.h>
+#include <gnutls_pk.h>
 #include <gnutls/crypto.h>
 #include "x509/x509_int.h"
 #include "debug.h"

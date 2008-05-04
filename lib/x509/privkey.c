@@ -32,7 +32,7 @@
 #include <gnutls_x509.h>
 #include <x509_b64.h>
 #include <x509_int.h>
-#include <pk-generic.h>
+#include <gnutls_pk.h>
 
 static int _gnutls_asn1_encode_rsa (ASN1_TYPE * c2, mpi_t * params);
 int _gnutls_asn1_encode_dsa (ASN1_TYPE * c2, mpi_t * params);
