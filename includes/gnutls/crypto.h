@@ -27,37 +27,37 @@
 
 typedef struct {
   int (*init)( void** ctx);
-  int (*setkey)( void* ctx, const void * key, int keysize);
-  int (*setiv)(void* ctx, const void* iv, int ivsize);
-  int (*encrypt)(void* ctx, const void* plain, int plainsize, void* encr, int encrsize);
-  int (*decrypt)(void* ctx, const void* encr, int encrsize, void* plain, int plainsize);
+  int (*setkey)( void* ctx, const void * key, size_t keysize);
+  int (*setiv)(void* ctx, const void* iv, size_t ivsize);
+  int (*encrypt)(void* ctx, const void* plain, size_t plainsize, void* encr, size_t encrsize);
+  int (*decrypt)(void* ctx, const void* encr, size_t encrsize, void* plain, size_t plainsize);
   void (*deinit)( void* ctx);
 } gnutls_crypto_single_cipher_st;
 
 typedef struct {
   int (*init)( void** ctx);
-  int (*setkey)( void* ctx, const void * key, int keysize);
-  int (*hash)( void* ctx, const void * text, int textsize);
+  int (*setkey)( void* ctx, const void * key, size_t keysize);
+  int (*hash)( void* ctx, const void * text, size_t textsize);
   int (*copy)( void** dst_ctx, void* src_ctx);
-  int (*output) ( void* src_ctx, void* digest, int digestsize);
+  int (*output) ( void* src_ctx, void* digest, size_t digestsize);
   void (*deinit)( void* ctx);
 } gnutls_crypto_single_mac_st;
 
 typedef struct {
   int (*init)( gnutls_cipher_algorithm_t, void** ctx);
-  int (*setkey)( void* ctx, const void * key, int keysize);
-  int (*setiv)(void* ctx, const void* iv, int ivsize);
-  int (*encrypt)(void* ctx, const void* plain, int plainsize, void* encr, int encrsize);
-  int (*decrypt)(void* ctx, const void* encr, int encrsize, void* plain, int plainsize);
+  int (*setkey)( void* ctx, const void * key, size_t keysize);
+  int (*setiv)(void* ctx, const void* iv, size_t ivsize);
+  int (*encrypt)(void* ctx, const void* plain, size_t plainsize, void* encr, size_t encrsize);
+  int (*decrypt)(void* ctx, const void* encr, size_t encrsize, void* plain, size_t plainsize);
   void (*deinit)( void* ctx);
 } gnutls_crypto_cipher_st;
 
 typedef struct {
   int (*init)( gnutls_mac_algorithm_t, void** ctx);
-  int (*setkey)( void* ctx, const void * key, int keysize);
-  int (*hash)( void* ctx, const void * text, int textsize);
+  int (*setkey)( void* ctx, const void * key, size_t keysize);
+  int (*hash)( void* ctx, const void * text, size_t textsize);
   int (*copy)( void** dst_ctx, void* src_ctx);
-  int (*output) ( void* src_ctx, void* digest, int digestsize);
+  int (*output) ( void* src_ctx, void* digest, size_t digestsize);
   void (*deinit)( void* ctx);
 } gnutls_crypto_mac_st;
 
@@ -79,7 +79,7 @@ typedef enum
 
 typedef struct gnutls_crypto_rnd {
   int (*init)( void** ctx);
-  int (*rnd) ( void* ctx, int /* gnutls_rnd_level_t */ level, void* data, int datasize);
+  int (*rnd) ( void* ctx, int /* gnutls_rnd_level_t */ level, void* data, size_t datasize);
   void (*deinit)( void* ctx);
 } gnutls_crypto_rnd_st;
 

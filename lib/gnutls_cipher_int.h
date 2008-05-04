@@ -38,7 +38,7 @@ typedef struct {
 typedef struct {
 	int registered; /* true or false(0) */
 	union {
-		gc_cipher_handle gc; /* when not registered */
+		void* gc; /* when not registered */
 		reg_hd rh; /* when registered */
 	} hd;
 } cipher_hd_st;

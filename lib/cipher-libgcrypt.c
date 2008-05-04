@@ -85,19 +85,19 @@ int err;
     return GNUTLS_E_ENCRYPTION_FAILED;
 }
 
-static int wrap_gcry_cipher_setkey( void* ctx, const void * key, int keysize)
+static int wrap_gcry_cipher_setkey( void* ctx, const void * key, size_t keysize)
 {
     gcry_cipher_setkey( ctx, key, keysize);
     return 0;
 }
 
-static int wrap_gcry_cipher_setiv( void* ctx, const void * iv, int ivsize)
+static int wrap_gcry_cipher_setiv( void* ctx, const void * iv, size_t ivsize)
 {
     gcry_cipher_setiv( ctx, iv, ivsize);
     return 0;
 }
 
-static int wrap_gcry_cipher_decrypt( void* ctx, const void* encr, int encrsize, void* plain, int plainsize)
+static int wrap_gcry_cipher_decrypt( void* ctx, const void* encr, size_t encrsize, void* plain, size_t plainsize)
 {
 int err;
 
@@ -108,7 +108,7 @@ int err;
     return GNUTLS_E_ENCRYPTION_FAILED;
 }
 
-static int wrap_gcry_cipher_encrypt( void* ctx, const void* plain, int plainsize, void* encr, int encrsize)
+static int wrap_gcry_cipher_encrypt( void* ctx, const void* plain, size_t plainsize, void* encr, size_t encrsize)
 {
 int err;
 
@@ -119,7 +119,7 @@ int err;
     return GNUTLS_E_ENCRYPTION_FAILED;
 }
 
-int crypto_cipher_prio = INT_MIN;
+int crypto_cipher_prio = INT_MAX;
 
 gnutls_crypto_cipher_st _gnutls_cipher_ops = {
   .init = wrap_gcry_cipher_init,

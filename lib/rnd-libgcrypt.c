@@ -66,7 +66,7 @@ static int wrap_gcry_rnd( void* ctx, int level, void* data, int datasize)
   return 0;
 }
 
-int crypto_rnd_prio = INT_MIN;
+int crypto_rnd_prio = INT_MAX;
 
 gnutls_crypto_rnd_st _gnutls_rnd_ops = {
   .init = wrap_gcry_rnd_init,

@@ -173,7 +173,7 @@ gnutls_crypto_single_cipher_st *_gnutls_get_crypto_cipher( gnutls_cipher_algorit
   **/
 int gnutls_crypto_rnd_register( int priority, gnutls_crypto_rnd_st* s)
 {
-  if (crypto_rnd_prio < priority) {
+  if (crypto_rnd_prio > priority) {
 	_gnutls_rnd_ops = *s;
 	crypto_rnd_prio = priority;
         return 0;
@@ -256,7 +256,7 @@ gnutls_crypto_single_digest_st *_gnutls_get_crypto_digest( gnutls_digest_algorit
   **/
 int gnutls_crypto_bigint_register( int priority, gnutls_crypto_bigint_st* s)
 {
-  if (crypto_bigint_prio < priority) {
+  if (crypto_bigint_prio > priority) {
 	_gnutls_mpi_ops = *s;
 	crypto_bigint_prio = priority;
         return 0;
@@ -285,7 +285,7 @@ int gnutls_crypto_bigint_register( int priority, gnutls_crypto_bigint_st* s)
   **/
 int gnutls_crypto_pk_register( int priority, gnutls_crypto_pk_st* s)
 {
-  if (crypto_pk_prio < priority) {
+  if (crypto_pk_prio > priority) {
 	_gnutls_pk_ops = *s;
 	crypto_pk_prio = priority;
         return 0;
@@ -311,9 +311,61 @@ int gnutls_crypto_pk_register( int priority, gnutls_crypto_pk_st* s)
   **/
 int gnutls_crypto_cipher_register( int priority, gnutls_crypto_cipher_st* s)
 {
-  if (crypto_cipher_prio < priority) {
+  if (crypto_cipher_prio > priority) {
 	_gnutls_cipher_ops = *s;
 	crypto_cipher_prio = priority;
+        return 0;
+  }
+  return GNUTLS_E_CRYPTO_ALREADY_REGISTERED;
+}
+
+/**
+  * gnutls_crypto_mac_register - register a mac interface
+  * @priority: is the priority of the mac interface
+  * @s: is a structure holding new interface's data
+  *
+  * This function will register a mac interface to be used
+  * by gnutls. Any interface registered will override
+  * the included engine and by convention kernel implemented
+  * interfaces should have priority of 90. The interface with the lowest
+  * priority will be used by gnutls.
+  *
+  * This function should be called before gnutls_global_init().
+  *
+  * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
+  *
+  **/
+int gnutls_crypto_mac_register( int priority, gnutls_crypto_mac_st* s)
+{
+  if (crypto_mac_prio > priority) {
+	_gnutls_mac_ops = *s;
+	crypto_mac_prio = priority;
+        return 0;
+  }
+  return GNUTLS_E_CRYPTO_ALREADY_REGISTERED;
+}
+
+/**
+  * gnutls_crypto_digest_register - register a digest interface
+  * @priority: is the priority of the digest interface
+  * @s: is a structure holding new interface's data
+  *
+  * This function will register a digest interface to be used
+  * by gnutls. Any interface registered will override
+  * the included engine and by convention kernel implemented
+  * interfaces should have priority of 90. The interface with the lowest
+  * priority will be used by gnutls.
+  *
+  * This function should be called before gnutls_global_init().
+  *
+  * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
+  *
+  **/
+int gnutls_crypto_digest_register( int priority, gnutls_crypto_digest_st* s)
+{
+  if (crypto_digest_prio > priority) {
+	_gnutls_digest_ops = *s;
+	crypto_digest_prio = priority;
         return 0;
   }
   return GNUTLS_E_CRYPTO_ALREADY_REGISTERED;

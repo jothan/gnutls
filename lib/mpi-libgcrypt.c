@@ -317,7 +317,7 @@ cleanup:
 
 }
 
-int crypto_bigint_prio = INT_MIN;
+int crypto_bigint_prio = INT_MAX;
 
 gnutls_crypto_bigint_st _gnutls_mpi_ops = {
   .bigint_new = gcry_mpi_new,
