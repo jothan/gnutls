@@ -97,7 +97,7 @@ _gnutls_mpi_release (mpi_t * x)
   if (*x == NULL)
     return;
 
-  gnutls_mpi_ops.bigint_release (*x);
+  _gnutls_mpi_ops.bigint_release (*x);
   *x = NULL;
 }
 
@@ -106,7 +106,7 @@ _gnutls_mpi_release (mpi_t * x)
 int
 _gnutls_mpi_scan (mpi_t * ret_mpi, const void * buffer, size_t nbytes)
 {
-  *ret_mpi = gnutls_mpi_ops.bigint_scan (buffer, nbytes, GNUTLS_MPI_FORMAT_USG);
+  *ret_mpi = _gnutls_mpi_ops.bigint_scan (buffer, nbytes, GNUTLS_MPI_FORMAT_USG);
   if (*ret_mpi == NULL)
     {
       gnutls_assert();

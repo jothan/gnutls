@@ -34,7 +34,7 @@ gnutls_pk_params_st params;
 int ret;
 unsigned int i;
 	
-	ret = gnutls_pk_ops.generate( GNUTLS_PK_RSA, bits, &params);
+	ret = _gnutls_pk_ops.generate( GNUTLS_PK_RSA, bits, &params);
 
 	if (ret < 0) {
 		gnutls_assert();

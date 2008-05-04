@@ -757,7 +757,7 @@ static int wrap_gcry_pk_fixup(gnutls_pk_algorithm_t algo,
 
 int crypto_pk_prio = INT_MIN;
 
-gnutls_crypto_pk_st gnutls_pk_ops = {
+gnutls_crypto_pk_st _gnutls_pk_ops = {
   .encrypt = _wrap_gcry_pk_encrypt,
   .decrypt = _wrap_gcry_pk_decrypt,
   .sign = _wrap_gcry_pk_sign,

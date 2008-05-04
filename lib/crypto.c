@@ -28,6 +28,7 @@
 #include <crypto.h>
 #include <gnutls_mpi.h>
 #include <pk-generic.h>
+#include <random.h>
 
 typedef struct algo_list {
   int algorithm;
@@ -39,7 +40,6 @@ typedef struct algo_list {
 #define cipher_list algo_list
 #define mac_list algo_list
 #define digest_list algo_list
-#define rnd_list algo_list
 
 static int _algo_register( algo_list* al, int algorithm, int priority, void* s)
 {
@@ -103,7 +103,6 @@ cipher_list* cl;
 static cipher_list glob_cl = { GNUTLS_CIPHER_NULL, 0, NULL, NULL };
 static mac_list glob_ml = { GNUTLS_MAC_NULL, 0, NULL, NULL };
 static digest_list glob_dl = { GNUTLS_MAC_NULL, 0, NULL, NULL };
-static rnd_list glob_rnd = { 0, 0, NULL, NULL };
 
 static void _deregister(algo_list* cl)
 {
@@ -126,7 +125,6 @@ void _gnutls_crypto_deregister(void)
   _deregister( &glob_cl);
   _deregister( &glob_ml);
   _deregister( &glob_dl);
-  _deregister( &glob_rnd);
 }
 
 /**
@@ -174,12 +172,12 @@ gnutls_crypto_cipher_st *_gnutls_get_crypto_cipher( gnutls_cipher_algorithm_t al
   **/
 int gnutls_crypto_rnd_register( int priority, gnutls_crypto_rnd_st* s)
 {
-  return _algo_register( &glob_rnd, 1, priority, s);
-}
-
-gnutls_crypto_rnd_st *_gnutls_get_crypto_rnd()
-{
-  return _get_algo( &glob_rnd, 1);
+  if (crypto_rnd_prio < priority) {
+	_gnutls_rnd_ops = *s;
+	crypto_rnd_prio = priority;
+        return 0;
+  }
+  return GNUTLS_E_CRYPTO_ALREADY_REGISTERED;
 }
 
 /**
@@ -258,7 +256,7 @@ gnutls_crypto_digest_st *_gnutls_get_crypto_digest( gnutls_digest_algorithm_t al
 int gnutls_crypto_bigint_register( int priority, gnutls_crypto_bigint_st* s)
 {
   if (crypto_bigint_prio < priority) {
-	gnutls_mpi_ops = *s;
+	_gnutls_mpi_ops = *s;
 	crypto_bigint_prio = priority;
         return 0;
   }
@@ -287,7 +285,7 @@ int gnutls_crypto_bigint_register( int priority, gnutls_crypto_bigint_st* s)
 int gnutls_crypto_pk_register( int priority, gnutls_crypto_pk_st* s)
 {
   if (crypto_pk_prio < priority) {
-	gnutls_pk_ops = *s;
+	_gnutls_pk_ops = *s;
 	crypto_pk_prio = priority;
         return 0;
   }

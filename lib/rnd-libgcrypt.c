@@ -22,47 +22,54 @@
  *
  */
 
-/* This file handles all the internal functions that cope with random data.
+/* Here is the libgcrypt random generator layer.
  */
 
 #include <gnutls_int.h>
+#include <libtasn1.h>
 #include <gnutls_errors.h>
-#include <random.h>
+#include <gnutls_num.h>
+#include <gnutls_mpi.h>
+#include <gcrypt.h>
 
-static void * rnd_ctx;
-
-int _gnutls_rnd_init ()
+static int wrap_gcry_rnd_init( void** ctx)
 {
-  int result;
+char c;
 
-  if (_gnutls_rnd_ops.init != NULL) {
-    if (_gnutls_rnd_ops.init(& rnd_ctx) < 0) {
-      gnutls_assert();
-      return GNUTLS_E_RANDOM_FAILED;
-    }
-  }
+  gcry_create_nonce ( &c, 1);
+  gcry_randomize(&c, 1, GCRY_STRONG_RANDOM);
   
   return 0;
 }
 
-void
-_gnutls_rnd_deinit ()
+static inline int gnutls_to_gcrypt_level( int level)
 {
-  if (_gnutls_rnd_ops.deinit != NULL) {
-    _gnutls_rnd_ops.deinit( rnd_ctx);
+  switch(level) {
+    case GNUTLS_RND_KEY:
+      return GCRY_VERY_STRONG_RANDOM;
+    case GNUTLS_RND_RANDOM:
+      return GCRY_STRONG_RANDOM;
+    case GNUTLS_RND_NONCE:
+      return GCRY_WEAK_RANDOM;
+    default:
+      return GCRY_STRONG_RANDOM;
   }
+}
+
+static int wrap_gcry_rnd( void* ctx, int level, void* data, int datasize)
+{
+  if (level == GNUTLS_RND_NONCE)
+     gcry_create_nonce ( data, datasize);
+  else
+     gcry_randomize( data, datasize, gnutls_to_gcrypt_level(level));
   
-  return;
+  return 0;
 }
 
-int
-_gnutls_rnd (int level, void *data, int len)
-{
-int ret = GC_OK;
+int crypto_rnd_prio = INT_MIN;
 
-  if (len > 0) {
-    return _gnutls_rnd_ops.rnd( rnd_ctx, level, data, len);
-  }
-
-}
-
+gnutls_crypto_rnd_st _gnutls_rnd_ops = {
+  .init = wrap_gcry_rnd_init,
+  .deinit = NULL,
+  .rnd = wrap_gcry_rnd,
+};
