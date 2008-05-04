@@ -42,27 +42,13 @@ char c;
   return 0;
 }
 
-static inline int gnutls_to_gcrypt_level( int level)
-{
-  switch(level) {
-    case GNUTLS_RND_KEY:
-      return GCRY_VERY_STRONG_RANDOM;
-    case GNUTLS_RND_RANDOM:
-      return GCRY_STRONG_RANDOM;
-    case GNUTLS_RND_NONCE:
-      return GCRY_WEAK_RANDOM;
-    default:
-      return GCRY_STRONG_RANDOM;
-  }
-}
-
 static int wrap_gcry_rnd( void* ctx, int level, void* data, int datasize)
 {
   if (level == GNUTLS_RND_NONCE)
      gcry_create_nonce ( data, datasize);
   else
-     gcry_randomize( data, datasize, gnutls_to_gcrypt_level(level));
-  
+     gcry_randomize( data, datasize, level);
+
   return 0;
 }
 

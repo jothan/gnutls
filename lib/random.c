@@ -33,8 +33,6 @@ static void * rnd_ctx;
 
 int _gnutls_rnd_init ()
 {
-  int result;
-
   if (_gnutls_rnd_ops.init != NULL) {
     if (_gnutls_rnd_ops.init(& rnd_ctx) < 0) {
       gnutls_assert();
@@ -58,11 +56,9 @@ _gnutls_rnd_deinit ()
 int
 _gnutls_rnd (int level, void *data, int len)
 {
-int ret = GC_OK;
-
   if (len > 0) {
     return _gnutls_rnd_ops.rnd( rnd_ctx, level, data, len);
   }
-
+  return 0;
 }
 

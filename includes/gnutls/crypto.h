@@ -67,9 +67,9 @@ typedef gnutls_crypto_mac_st gnutls_crypto_digest_st;
 
 typedef enum gnutls_rnd_level
 {
-  GNUTLS_RND_KEY = 0, /* fatal in many sessions if broken */
+  GNUTLS_RND_KEY = 2, /* fatal in many sessions if broken */
   GNUTLS_RND_RANDOM = 1, /* fatal in session if broken */
-  GNUTLS_RND_NONCE = 2, /* fatal in parts of session if broken - i.e. vulnerable to statistical analysis */
+  GNUTLS_RND_NONCE = 0, /* fatal in parts of session if broken - i.e. vulnerable to statistical analysis */
 } gnutls_rnd_level_t;
 
 typedef enum 
