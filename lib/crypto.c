@@ -143,6 +143,9 @@ void _gnutls_crypto_deregister(void)
   *
   * This function should be called before gnutls_global_init().
   *
+  * For simplicity you can use the convenience gnutls_crypto_single_cipher_register()
+  * macro.
+  *
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
   **/
@@ -174,6 +177,9 @@ gnutls_crypto_single_cipher_st *_gnutls_get_crypto_cipher( gnutls_cipher_algorit
   * priority will be used by gnutls.
   *
   * This function should be called before gnutls_global_init().
+  *
+  * For simplicity you can use the convenience gnutls_crypto_rnd_register()
+  * macro.
   *
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
@@ -209,6 +215,9 @@ int gnutls_crypto_rnd_register2( int priority, int version, gnutls_crypto_rnd_st
   *
   * This function should be called before gnutls_global_init().
   *
+  * For simplicity you can use the convenience gnutls_crypto_single_mac_register()
+  * macro.
+  *
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
   **/
@@ -242,6 +251,9 @@ gnutls_crypto_single_mac_st *_gnutls_get_crypto_mac( gnutls_mac_algorithm_t algo
   * priority will be used by gnutls.
   *
   * This function should be called before gnutls_global_init().
+  *
+  * For simplicity you can use the convenience gnutls_crypto_single_digest_register()
+  * macro.
   *
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
@@ -277,6 +289,9 @@ gnutls_crypto_single_digest_st *_gnutls_get_crypto_digest( gnutls_digest_algorit
   * gnutls_crypto_pk_register() should also be used.
   *
   * This function should be called before gnutls_global_init().
+  *
+  * For simplicity you can use the convenience gnutls_crypto_bigint_register()
+  * macro.
   *
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
@@ -314,6 +329,9 @@ int gnutls_crypto_bigint_register2( int priority, int version, gnutls_crypto_big
   *
   * This function should be called before gnutls_global_init().
   *
+  * For simplicity you can use the convenience gnutls_crypto_pk_register()
+  * macro.
+  *
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
   **/
@@ -345,6 +363,9 @@ int gnutls_crypto_pk_register2( int priority, int version, gnutls_crypto_pk_st* 
   * priority will be used by gnutls.
   *
   * This function should be called before gnutls_global_init().
+  *
+  * For simplicity you can use the convenience gnutls_crypto_cipher_register()
+  * macro.
   *
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
@@ -379,6 +400,9 @@ int gnutls_crypto_cipher_register2( int priority, int version, gnutls_crypto_cip
   *
   * This function should be called before gnutls_global_init().
   *
+  * For simplicity you can use the convenience gnutls_crypto_mac_register()
+  * macro.
+  *
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
   **/
@@ -411,6 +435,9 @@ int gnutls_crypto_mac_register2( int priority, int version, gnutls_crypto_mac_st
   * priority will be used by gnutls.
   *
   * This function should be called before gnutls_global_init().
+  *
+  * For simplicity you can use the convenience gnutls_crypto_digest_register()
+  * macro.
   *
   * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
   *
