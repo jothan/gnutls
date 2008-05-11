@@ -41,7 +41,7 @@
 bigint_t
 wrap_gcry_mpi_scan (const void * buffer, size_t nbytes, gnutls_bigint_format_t format)
 {
-  gcry_bigint_t ret_mpi = NULL;
+  gcry_mpi_t ret_mpi = NULL;
   int ret;
 
   ret = gcry_mpi_scan (&ret_mpi, (format==GNUTLS_MPI_FORMAT_USG)?GCRYMPI_FMT_USG:GCRYMPI_FMT_STD, buffer, nbytes, NULL);
@@ -240,7 +240,7 @@ int wrap_gcry_generate_group( gnutls_group_st *group, unsigned int bits)
   bigint_t g = NULL, prime = NULL;
   gcry_error_t err;
   int result, times = 0, qbits;
-  gcry_bigint_t *factors = NULL;
+  gcry_mpi_t *factors = NULL;
 
   /* Calculate the size of a prime factor of (prime-1)/2.
    * This is an emulation of the values in "Selecting Cryptographic Key Sizes" paper.
@@ -266,7 +266,7 @@ int wrap_gcry_generate_group( gnutls_group_st *group, unsigned int bits)
 	  gcry_prime_release_factors (factors);
 	}
 
-      err = gcry_prime_generate ((gcry_bigint_t*)&prime, bits, qbits,
+      err = gcry_prime_generate ((gcry_mpi_t*)&prime, bits, qbits,
 				 &factors, NULL, NULL, GCRY_STRONG_RANDOM,
 				 GCRY_PRIME_FLAG_SPECIAL_FACTOR);
 
@@ -292,7 +292,7 @@ int wrap_gcry_generate_group( gnutls_group_st *group, unsigned int bits)
 
   /* generate the group generator.
    */
-  err = gcry_prime_group_generator ((gcry_bigint_t*)&g, prime, factors, NULL);
+  err = gcry_prime_group_generator ((gcry_mpi_t*)&g, prime, factors, NULL);
   if (err != 0)
     {
       gnutls_assert ();

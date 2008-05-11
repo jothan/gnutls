@@ -42,7 +42,7 @@ void
 doit (void)
 {
   int rc;
-  mpi_t n1, n2, n3, n4;
+  bigint_t n1, n2, n3, n4;
 
   gnutls_global_init();
 
