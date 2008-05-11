@@ -56,7 +56,7 @@ literal_decode (void *opaque, FILE *in, FILE *out)
   cdk_packet_t pkt;
   cdk_pkt_literal_t pt;
   byte buf[BUFSIZE];
-  size_t nread;
+  ssize_t nread;
   int bufsize;
   cdk_error_t rc;
 
@@ -138,7 +138,7 @@ literal_decode (void *opaque, FILE *in, FILE *out)
       if (pfx->blkmode.on)
 	{	
 	  pfx->blkmode.size = _cdk_pkt_read_len (in, &pfx->blkmode.on);
-	  if (pfx->blkmode.size == (size_t)EOF)
+	  if ((ssize_t)pfx->blkmode.size == EOF)
 	    return CDK_Inv_Packet;
         }
       if (pt->len <= 0 && !pfx->blkmode.on)

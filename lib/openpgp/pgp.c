@@ -165,7 +165,7 @@ int _gnutls_openpgp_export (cdk_kbnode_t node,
 
   if (format == GNUTLS_OPENPGP_FMT_BASE64)
     {
-      unsigned char *in = cdk_calloc (1, *output_data_size);
+      unsigned char *in = gnutls_calloc (1, *output_data_size);
       memcpy (in, output_data, *output_data_size);
       
       /* Calculate the size of the encoded data and check if the provided
@@ -174,7 +174,7 @@ int _gnutls_openpgp_export (cdk_kbnode_t node,
 				    NULL, 0, &calc_size, private?CDK_ARMOR_SECKEY:CDK_ARMOR_PUBKEY);
       if (rc || calc_size > input_data_size)
 	{
-	  cdk_free (in);
+	  gnutls_free (in);
 	  *output_data_size = calc_size;
 	  gnutls_assert ();
 	  return GNUTLS_E_SHORT_MEMORY_BUFFER;
@@ -183,7 +183,7 @@ int _gnutls_openpgp_export (cdk_kbnode_t node,
       rc = cdk_armor_encode_buffer (in, *output_data_size,
 				    output_data, input_data_size, &calc_size,
 				    private?CDK_ARMOR_SECKEY:CDK_ARMOR_PUBKEY);
-      cdk_free (in);
+      gnutls_free (in);
       *output_data_size = calc_size;
     }
 

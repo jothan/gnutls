@@ -261,7 +261,7 @@ gnutls_openpgp_get_key (gnutls_datum_t * key,
   rc = cdk_kbnode_write_to_mem_alloc (knode, &buf, &len);
   if (!rc)
     datum_append (key, buf, len);
-  cdk_free (buf);
+  gnutls_free (buf);
 
 leave:
   cdk_kbnode_release (knode);

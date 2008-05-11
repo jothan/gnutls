@@ -283,7 +283,7 @@ cdk_pkt_release (cdk_packet_t pkt)
  * Allocate a new packet structure with the given packet type.
  **/
 cdk_error_t
-cdk_pkt_alloc (cdk_packet_t *r_pkt, int pkttype)
+cdk_pkt_alloc (cdk_packet_t *r_pkt, cdk_packet_type_t pkttype)
 {
   cdk_packet_t pkt;
   int rc;

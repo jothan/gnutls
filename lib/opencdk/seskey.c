@@ -45,7 +45,8 @@ do_encode_md (byte **r_frame, size_t *r_flen, const byte *md, int algo,
 {
   byte *frame = NULL;
   size_t nframe = (nbits + 7) / 8;
-  size_t i, n = 0;
+  ssize_t i;
+  size_t n = 0;
 
   if (!asn || !md || !r_frame || !r_flen)
     return CDK_Inv_Value;
@@ -118,7 +119,7 @@ cdk_dek_encode_pkcs1 (cdk_dek_t dek, size_t nbits, gcry_mpi_t *r_enc)
   
   *r_enc = NULL;
   chksum = 0;
-  for (i = 0; i < dek->keylen; i++)
+  for (i = 0; i < (size_t)dek->keylen; i++)
     chksum += dek->key[i];
   nframe = (nbits + 7) / 8;
   frame = cdk_salloc (nframe + 1, 1);

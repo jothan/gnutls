@@ -650,7 +650,7 @@ cdk_pk_get_mpi (cdk_pubkey_t pk, size_t idx,
 {
   if (!pk || !r_nwritten)
     return CDK_Inv_Value;
-  if (idx > cdk_pk_get_npkey (pk->pubkey_algo))
+  if ((ssize_t)idx > cdk_pk_get_npkey (pk->pubkey_algo))
     return CDK_Inv_Value;
   return mpi_to_buffer (pk->mpi[idx], buf, buflen, r_nwritten, r_nbits);
 }
@@ -674,7 +674,7 @@ cdk_sk_get_mpi (cdk_pkt_seckey_t sk, size_t idx,
 {
   if (!sk || !r_nwritten)
     return CDK_Inv_Value;
-  if (idx > cdk_pk_get_nskey (sk->pubkey_algo))
+  if ((ssize_t)idx > cdk_pk_get_nskey (sk->pubkey_algo))
     return CDK_Inv_Value;
   return mpi_to_buffer (sk->mpi[idx], buf, buflen, r_nwritten, r_nbits);
 }
@@ -685,7 +685,7 @@ checksum_mpi (gcry_mpi_t m)
 {
   byte buf[MAX_MPI_BYTES+2];
   size_t nread;
-  int i;
+  unsigned int i;
   u16 chksum = 0;
 
   if (!m)
@@ -713,7 +713,8 @@ cdk_sk_unprotect (cdk_pkt_seckey_t sk, const char *pw)
   byte *data = NULL;
   u16 chksum = 0;
   size_t ndata, nbits, nbytes;
-  int i, dlen, pos = 0, nskey;
+  size_t dlen;
+  unsigned int i, pos = 0, nskey;
   cdk_error_t rc;
   gcry_error_t err;
   

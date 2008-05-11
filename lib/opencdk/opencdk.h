@@ -587,48 +587,8 @@ struct cdk_packet_s {
 };
 typedef struct cdk_packet_s *cdk_packet_t;
 
-/* memory routines */
-typedef void (*cdk_log_fnc_t) (void *, int, const char *, va_list);
-
-/* Set the log level. */
-void cdk_set_log_level (int lvl);
-
-/* Set a custom log handler which is used for logging. */
-void cdk_set_log_handler (cdk_log_fnc_t logfnc, void *opaque);
-
 /* Return a human readable error description of the given error coe. */
 const char* cdk_strerror (int ec);
-
-/* Allow the user to set custom hooks for memory allocation.
-   If this function is not used, the standard allocation functions
-   will be used. Extra care must be taken for the 'secure' alloc
-   function. */
-void cdk_set_malloc_hooks (void *(*new_alloc_func) (size_t n),
-                           void *(*new_alloc_secure_func) (size_t n),
-                           void *(*new_realloc_func) (void *p, size_t n),
-                           void *(*new_calloc_func) (size_t m, size_t n),
-                           void (*new_free_func) (void *));
-			   
-/* Return 1 if the malloc hooks were already set via the function above. */
-int cdk_malloc_hook_initialized (void);
-
-/* Standard memory wrapper. */
-void *cdk_malloc (size_t size);
-void *cdk_calloc (size_t n, size_t m);
-void *cdk_realloc (void * ptr, size_t size);
-void *cdk_salloc (size_t size, int clear);
-char *cdk_strdup (const char * ptr);
-void cdk_free (void * ptr);
-
-/* Startup routines. */
-
-/* This function has to be called before any other 
-   CDK function is executed. */
-void cdk_lib_startup (void);
-
-/* This function should be called before the application exists
-   to allow the lib to cleanup its internal structures. */
-void cdk_lib_shutdown (void);
 
 /* Session handle routines */
 cdk_error_t cdk_handle_new (cdk_ctx_t *r_ctx);
@@ -707,7 +667,7 @@ cdk_verify_result_t cdk_handle_verify_get_result (cdk_ctx_t hd);
 
 /* Allocate a new packet or a new packet with the given packet type. */
 cdk_error_t cdk_pkt_new (cdk_packet_t *r_pkt);
-cdk_error_t cdk_pkt_alloc (cdk_packet_t *r_pkt, int pkttype);
+cdk_error_t cdk_pkt_alloc (cdk_packet_t *r_pkt, cdk_packet_type_t pkttype);
 
 /* Only release the contents of the packet but not @PKT itself. */
 void cdk_pkt_free (cdk_packet_t pkt);
@@ -1035,17 +995,17 @@ cdk_error_t cdk_kbnode_write_to_mem (cdk_kbnode_t node,
 cdk_error_t cdk_kbnode_write_to_mem_alloc (cdk_kbnode_t node,
              				   unsigned char **r_buf, 
 					   size_t *r_buflen);
-			       
+
 void cdk_kbnode_release (cdk_kbnode_t node);
 cdk_kbnode_t cdk_kbnode_walk (cdk_kbnode_t root, cdk_kbnode_t * ctx, int all);
-cdk_packet_t cdk_kbnode_find_packet (cdk_kbnode_t node, int pkttype);
+cdk_packet_t cdk_kbnode_find_packet (cdk_kbnode_t node, cdk_packet_type_t pkttype);
 cdk_packet_t cdk_kbnode_get_packet (cdk_kbnode_t node);
-cdk_kbnode_t cdk_kbnode_find (cdk_kbnode_t node, int pkttype);
+cdk_kbnode_t cdk_kbnode_find (cdk_kbnode_t node, cdk_packet_type_t pkttype);
 cdk_kbnode_t cdk_kbnode_find_prev (cdk_kbnode_t root, cdk_kbnode_t node,
-                                   int pkttype);
-cdk_kbnode_t cdk_kbnode_find_next (cdk_kbnode_t node, int pkttype);
+                                   cdk_packet_type_t pkttype);
+cdk_kbnode_t cdk_kbnode_find_next (cdk_kbnode_t node, cdk_packet_type_t pkttype);
 cdk_error_t cdk_kbnode_hash (cdk_kbnode_t node, gcry_md_hd_t md, int is_v4,
-                             int pkttype, int flags);
+                             cdk_packet_type_t pkttype, int flags);
 
 /* Check each signature in the key node and return a summary of the
    key status in @r_status. Values of cdk_key_flag_t are used. */

@@ -27,6 +27,21 @@
 #include <gcrypt.h>
 #include "types.h"
 
+#include <gnutls_mem.h>
+#include <gnutls/gnutls.h>
+#include <gnutls_errors.h>
+
+#define _cdk_log_debug _gnutls_debug_log
+#define _cdk_log_info _gnutls_x509_log
+#define _cdk_get_log_level() _gnutls_log_level
+
+#define cdk_malloc gnutls_malloc
+#define cdk_free gnutls_free
+#define cdk_calloc gnutls_calloc
+#define cdk_realloc gnutls_realloc_fast
+#define cdk_strdup gnutls_strdup
+#define cdk_salloc gnutls_secure_calloc
+
 /* The general size of a buffer for the variou modules. */
 #define BUFSIZE 8192
 
@@ -58,9 +73,9 @@
 #define DEBUG_PKT (_cdk_get_log_level () == (CDK_LOG_DEBUG+1))
 
 /* Helper to find out if a key has the requested capability. */
-#define KEY_CAN_ENCRYPT(a) (_cdk_pk_algo_usage ((a)) & CDK_KEY_USG_ENCR)
-#define KEY_CAN_SIGN(a)    (_cdk_pk_algo_usage ((a)) & CDK_KEY_USG_SIGN)
-#define KEY_CAN_AUTH(a)    (_cdk_pk_algo_usage ((a)) & CDK_KEY_USG_AUTH)
+#define KEY_CAN_ENCRYPT(a) ((_cdk_pk_algo_usage ((a))) & CDK_KEY_USG_ENCR)
+#define KEY_CAN_SIGN(a)    ((_cdk_pk_algo_usage ((a))) & CDK_KEY_USG_SIGN)
+#define KEY_CAN_AUTH(a)    ((_cdk_pk_algo_usage ((a))) & CDK_KEY_USG_AUTH)
 
 /* Helper macro to make sure the buffer is overwritten. */
 #define wipemem(_ptr,_len) do { \
@@ -77,9 +92,6 @@
 const char * _cdk_armor_get_lineend (void);
      
 /*-- main.c --*/
-int _cdk_get_log_level (void);
-void _cdk_log_info (const char * fmt, ...);
-void _cdk_log_debug (const char * fmt, ...);
 char * _cdk_passphrase_get (cdk_ctx_t hd, const char *prompt);
 
 /*-- misc.c --*/

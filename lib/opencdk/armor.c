@@ -296,7 +296,7 @@ is_armored (int ctb)
 static u32
 update_crc (u32 crc, const byte *buf, size_t buflen)
 {
-  int j;
+  unsigned int j;
   
   if (!crc)
     crc = CRCINIT;
@@ -424,7 +424,7 @@ armor_decode (void *opaque, FILE *in, FILE *out)
   char buf[127];
   byte raw[128], crcbuf[4];
   u32 crc2 = 0;
-  size_t nread = 0;
+  ssize_t nread = 0;
   int i, pgp_data = 0;
   cdk_error_t rc = 0;
   

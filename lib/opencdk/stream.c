@@ -1127,13 +1127,14 @@ cdk_stream_set_literal_flag (cdk_stream_t s, cdk_lit_format_t mode,
 cdk_error_t
 cdk_stream_set_cipher_flag (cdk_stream_t s, cdk_dek_t dek, int use_mdc)
 {
-  struct stream_filter_s * f;
   
   _cdk_log_debug ("stream: enable cipher mode\n");
   if (!s)
     return CDK_Inv_Value;
 
 #if 0
+  struct stream_filter_s * f;
+
   f = filter_add (s, _cdk_filter_cipher, fCIPHER);
   if (!f)
     return CDK_Out_Of_Core;
@@ -1167,11 +1168,12 @@ cdk_stream_set_cipher_flag (cdk_stream_t s, cdk_dek_t dek, int use_mdc)
 cdk_error_t
 cdk_stream_set_compress_flag (cdk_stream_t s, int algo, int level)
 {
-  struct stream_filter_s *f;
   
   return CDK_Not_Implemented;
 
 #if 0
+  struct stream_filter_s *f;
+
   if (!s)
     return CDK_Inv_Value;
   f = filter_add (s, _cdk_filter_compress, fCOMPRESS);
@@ -1334,7 +1336,7 @@ cdk_stream_mmap_part (cdk_stream_t s, off_t off, size_t len,
 {
   cdk_error_t rc;
   off_t oldpos;
-  int n;  
+  unsigned int n;  
   
   if (!ret_buf || !ret_buflen)
     return CDK_Inv_Value;
