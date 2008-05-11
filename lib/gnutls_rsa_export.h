@@ -22,5 +22,5 @@
  *
  */
 
-const mpi_t *_gnutls_rsa_params_to_mpi (gnutls_rsa_params_t);
+const bigint_t *_gnutls_rsa_params_to_mpi (gnutls_rsa_params_t);
 int _gnutls_peers_cert_less_512 (gnutls_session_t session);

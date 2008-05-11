@@ -44,7 +44,7 @@
 int
 _gnutls_pkcs1_rsa_encrypt (gnutls_datum_t * ciphertext,
 			   const gnutls_datum_t * plaintext,
-			   mpi_t * params, unsigned params_len,
+			   bigint_t * params, unsigned params_len,
 			   unsigned btype)
 {
   unsigned int i, pad;
@@ -204,7 +204,7 @@ _gnutls_pkcs1_rsa_encrypt (gnutls_datum_t * ciphertext,
 int
 _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
 			   const gnutls_datum_t * ciphertext,
-			   mpi_t * params, unsigned params_len,
+			   bigint_t * params, unsigned params_len,
 			   unsigned btype)
 {
   unsigned k, i;
@@ -314,7 +314,7 @@ _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
 
 int
 _gnutls_rsa_verify (const gnutls_datum_t * vdata,
-		    const gnutls_datum_t * ciphertext, mpi_t * params,
+		    const gnutls_datum_t * ciphertext, bigint_t * params,
 		    int params_len, int btype)
 {
 
@@ -352,7 +352,7 @@ _gnutls_rsa_verify (const gnutls_datum_t * vdata,
 /* encodes the Dss-Sig-Value structure
  */
 int
-_gnutls_encode_ber_rs (gnutls_datum_t * sig_value, mpi_t r, mpi_t s)
+_gnutls_encode_ber_rs (gnutls_datum_t * sig_value, bigint_t r, bigint_t s)
 {
   ASN1_TYPE sig;
   int result, tot_len;
@@ -402,7 +402,7 @@ _gnutls_encode_ber_rs (gnutls_datum_t * sig_value, mpi_t r, mpi_t s)
  */
 int
 _gnutls_dsa_sign (gnutls_datum_t * signature,
-		  const gnutls_datum_t * hash, mpi_t * params,
+		  const gnutls_datum_t * hash, bigint_t * params,
 		  unsigned params_len)
 {
   int ret;
@@ -434,7 +434,7 @@ _gnutls_dsa_sign (gnutls_datum_t * signature,
 /* decodes the Dss-Sig-Value structure
  */
 int
-_gnutls_decode_ber_rs (const gnutls_datum_t * sig_value, mpi_t * r, mpi_t * s)
+_gnutls_decode_ber_rs (const gnutls_datum_t * sig_value, bigint_t * r, bigint_t * s)
 {
   ASN1_TYPE sig;
   int result;
@@ -482,7 +482,7 @@ _gnutls_decode_ber_rs (const gnutls_datum_t * sig_value, mpi_t * r, mpi_t * s)
  */
 int
 _gnutls_dsa_verify (const gnutls_datum_t * vdata,
-		    const gnutls_datum_t * sig_value, mpi_t * params,
+		    const gnutls_datum_t * sig_value, bigint_t * params,
 		    int params_len)
 {
 
@@ -512,7 +512,7 @@ _gnutls_dsa_verify (const gnutls_datum_t * vdata,
 
 /* some generic pk functions */
 static
-int _generate_params(int algo, mpi_t * resarr, unsigned int *resarr_len, int bits)
+int _generate_params(int algo, bigint_t * resarr, unsigned int *resarr_len, int bits)
 {
 gnutls_pk_params_st params;
 int ret;
@@ -538,22 +538,22 @@ unsigned int i;
 
 
 
-int _gnutls_rsa_generate_params (mpi_t * resarr, unsigned int *resarr_len, int bits)
+int _gnutls_rsa_generate_params (bigint_t * resarr, unsigned int *resarr_len, int bits)
 {
 	return _generate_params( GNUTLS_PK_RSA, resarr, resarr_len, bits);
 }
 
-int _gnutls_dsa_generate_params (mpi_t * resarr, unsigned int *resarr_len, int bits)
+int _gnutls_dsa_generate_params (bigint_t * resarr, unsigned int *resarr_len, int bits)
 {
 	return _generate_params( GNUTLS_PK_DSA, resarr, resarr_len, bits);
 }
 
-int _gnutls_pk_params_copy( gnutls_pk_params_st* dst, mpi_t* params, int params_len)
+int _gnutls_pk_params_copy( gnutls_pk_params_st* dst, bigint_t* params, int params_len)
 {
 int i,j;
 	dst->params_nr = 0;
 
-	dst->params = gnutls_malloc( sizeof(mpi_t)*params_len);
+	dst->params = gnutls_malloc( sizeof(bigint_t)*params_len);
 	if (dst->params == NULL) {
 		gnutls_assert();
 		return GNUTLS_E_MEMORY_ERROR;

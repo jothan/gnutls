@@ -2029,7 +2029,7 @@ rsadsa_get_key_id (gnutls_x509_crt_t crt, int pk,
 		   unsigned char *output_data,
 		   size_t * output_data_size)
 {
-  mpi_t params[MAX_PUBLIC_PARAMS_SIZE];
+  bigint_t params[MAX_PUBLIC_PARAMS_SIZE];
   int params_size = MAX_PUBLIC_PARAMS_SIZE;
   int i, result = 0;
   gnutls_datum_t der = { NULL, 0 };
@@ -2576,7 +2576,7 @@ gnutls_x509_crt_get_pk_rsa_raw (gnutls_x509_crt_t crt,
 				gnutls_datum_t * m, gnutls_datum_t * e)
 {
   int ret;
-  mpi_t params[MAX_PUBLIC_PARAMS_SIZE];
+  bigint_t params[MAX_PUBLIC_PARAMS_SIZE];
   int params_size = MAX_PUBLIC_PARAMS_SIZE;
   int i;
 
@@ -2645,7 +2645,7 @@ gnutls_x509_crt_get_pk_dsa_raw (gnutls_x509_crt_t crt,
 				gnutls_datum_t * g, gnutls_datum_t * y)
 {
   int ret;
-  mpi_t params[MAX_PUBLIC_PARAMS_SIZE];
+  bigint_t params[MAX_PUBLIC_PARAMS_SIZE];
   int params_size = MAX_PUBLIC_PARAMS_SIZE;
   int i;
 

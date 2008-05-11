@@ -39,12 +39,12 @@
 #define clearbit(v,n)    ((unsigned char)(v) & ~( (unsigned char)(1) << (unsigned)(n)))
 
 /* FIXME: test this function */
-mpi_t _gnutls_mpi_randomize( mpi_t r, unsigned int bits, gnutls_rnd_level_t level)
+bigint_t _gnutls_mpi_randomize( bigint_t r, unsigned int bits, gnutls_rnd_level_t level)
 {
 opaque * buf = NULL;
 int size = 1+(bits/8), ret;
 int rem, i;
-mpi_t tmp;
+bigint_t tmp;
 
   buf = gnutls_malloc( size);
   if (buf == NULL)
@@ -92,7 +92,7 @@ cleanup:
 }
 
 void
-_gnutls_mpi_release (mpi_t * x)
+_gnutls_mpi_release (bigint_t * x)
 {
   if (*x == NULL)
     return;
@@ -104,7 +104,7 @@ _gnutls_mpi_release (mpi_t * x)
 /* returns zero on success
  */
 int
-_gnutls_mpi_scan (mpi_t * ret_mpi, const void * buffer, size_t nbytes)
+_gnutls_mpi_scan (bigint_t * ret_mpi, const void * buffer, size_t nbytes)
 {
   *ret_mpi = _gnutls_mpi_ops.bigint_scan (buffer, nbytes, GNUTLS_MPI_FORMAT_USG);
   if (*ret_mpi == NULL)
@@ -119,7 +119,7 @@ _gnutls_mpi_scan (mpi_t * ret_mpi, const void * buffer, size_t nbytes)
 /* returns zero on success. Fails if the number is zero.
  */
 int
-_gnutls_mpi_scan_nz (mpi_t *ret_mpi, const void * buffer, size_t nbytes)
+_gnutls_mpi_scan_nz (bigint_t *ret_mpi, const void * buffer, size_t nbytes)
 {
 int ret;
 
@@ -141,7 +141,7 @@ int ret;
 
 /* Always has the first bit zero */
 int
-_gnutls_mpi_dprint_lz (const mpi_t a, gnutls_datum_t * dest)
+_gnutls_mpi_dprint_lz (const bigint_t a, gnutls_datum_t * dest)
 {
   int ret;
   opaque *buf = NULL;
@@ -170,7 +170,7 @@ _gnutls_mpi_dprint_lz (const mpi_t a, gnutls_datum_t * dest)
 }
 
 int
-_gnutls_mpi_dprint (const mpi_t a, gnutls_datum_t * dest)
+_gnutls_mpi_dprint (const bigint_t a, gnutls_datum_t * dest)
 {
   int ret;
   opaque *buf = NULL;
@@ -202,7 +202,7 @@ _gnutls_mpi_dprint (const mpi_t a, gnutls_datum_t * dest)
  * the output value is left padded with zeros.
  */
 int
-_gnutls_mpi_dprint_size (const mpi_t a, gnutls_datum_t * dest, size_t size)
+_gnutls_mpi_dprint_size (const bigint_t a, gnutls_datum_t * dest, size_t size)
 {
   int ret;
   opaque *buf = NULL;
@@ -245,7 +245,7 @@ _gnutls_mpi_dprint_size (const mpi_t a, gnutls_datum_t * dest, size_t size)
  * steps.
  */
 int
-_gnutls_x509_read_int (ASN1_TYPE node, const char *value, mpi_t * ret_mpi)
+_gnutls_x509_read_int (ASN1_TYPE node, const char *value, bigint_t * ret_mpi)
 {
   int result;
   opaque *tmpstr = NULL;
@@ -289,7 +289,7 @@ _gnutls_x509_read_int (ASN1_TYPE node, const char *value, mpi_t * ret_mpi)
 /* Writes the specified integer into the specified node.
  */
 int
-_gnutls_x509_write_int (ASN1_TYPE node, const char *value, mpi_t mpi, int lz)
+_gnutls_x509_write_int (ASN1_TYPE node, const char *value, bigint_t mpi, int lz)
 {
   opaque *tmpstr;
   size_t s_len;

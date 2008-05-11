@@ -438,7 +438,7 @@ _gnutls_dh_get_allowed_prime_bits (gnutls_session_t session)
 }
 
 int
-_gnutls_dh_set_peer_public (gnutls_session_t session, mpi_t public)
+_gnutls_dh_set_peer_public (gnutls_session_t session, bigint_t public)
 {
   dh_info_st *dh;
   int ret;
@@ -538,7 +538,7 @@ _gnutls_dh_set_secret_bits (gnutls_session_t session, unsigned bits)
  */
 int
 _gnutls_rsa_export_set_pubkey (gnutls_session_t session,
-			       mpi_t exponent, mpi_t modulus)
+			       bigint_t exponent, bigint_t modulus)
 {
   cert_auth_info_t info;
   int ret;
@@ -569,7 +569,7 @@ _gnutls_rsa_export_set_pubkey (gnutls_session_t session,
 /* Sets the prime and the generator in the auth info structure.
  */
 int
-_gnutls_dh_set_group (gnutls_session_t session, mpi_t gen, mpi_t prime)
+_gnutls_dh_set_group (gnutls_session_t session, bigint_t gen, bigint_t prime)
 {
   dh_info_st *dh;
   int ret;

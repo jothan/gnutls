@@ -992,7 +992,7 @@ gnutls_openpgp_crt_get_subkey_usage (gnutls_openpgp_crt_t key,
   return 0;
 }
 
-int _gnutls_read_pgp_mpi( cdk_packet_t pkt, unsigned int priv, size_t idx, mpi_t* m)
+int _gnutls_read_pgp_mpi( cdk_packet_t pkt, unsigned int priv, size_t idx, bigint_t* m)
 {
 size_t buf_size = 512;
 opaque * buf = gnutls_malloc( buf_size);
@@ -1068,7 +1068,7 @@ unsigned int max_pub_params = 0;
  */
 int
 _gnutls_openpgp_crt_get_mpis (gnutls_openpgp_crt_t cert, uint32_t *keyid /* [2] */,
-			   mpi_t * params, int *params_size)
+			   bigint_t * params, int *params_size)
 {
   int result, i;
   int pk_algorithm, local_params;
@@ -1139,7 +1139,7 @@ int _get_pk_rsa_raw(gnutls_openpgp_crt_t crt, gnutls_openpgp_keyid_t keyid,
   int pk_algorithm, ret, i;
   cdk_packet_t pkt;
   uint32_t kid32[2];
-  mpi_t params[MAX_PUBLIC_PARAMS_SIZE];
+  bigint_t params[MAX_PUBLIC_PARAMS_SIZE];
   int params_size = MAX_PUBLIC_PARAMS_SIZE;
 
   if (crt == NULL)
@@ -1205,7 +1205,7 @@ int _get_pk_dsa_raw(gnutls_openpgp_crt_t crt, gnutls_openpgp_keyid_t keyid,
   int pk_algorithm, ret, i;
   cdk_packet_t pkt;
   uint32_t kid32[2];
-  mpi_t params[MAX_PUBLIC_PARAMS_SIZE];
+  bigint_t params[MAX_PUBLIC_PARAMS_SIZE];
   int params_size = MAX_PUBLIC_PARAMS_SIZE;
 
   if (crt == NULL)

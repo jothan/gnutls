@@ -117,7 +117,7 @@ _gnutls_handshake2str (gnutls_handshake_description_t handshake)
 }
 
 void
-_gnutls_dump_mpi (const char *prefix, mpi_t a)
+_gnutls_dump_mpi (const char *prefix, bigint_t a)
 {
   opaque mpi_buf[1024];
   opaque buf[1024];

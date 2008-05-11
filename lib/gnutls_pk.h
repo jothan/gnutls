@@ -40,36 +40,36 @@ _gnutls_pk_fixup( gnutls_pk_algorithm_t algo, gnutls_direction_t direction, gnut
 	return 0;
 }
 
-int _gnutls_pk_params_copy( gnutls_pk_params_st* dst, mpi_t* params, int params_len);
+int _gnutls_pk_params_copy( gnutls_pk_params_st* dst, bigint_t* params, int params_len);
 void gnutls_pk_params_release( gnutls_pk_params_st* p);
 void gnutls_pk_params_init( gnutls_pk_params_st* p);
 
-int _gnutls_rsa_generate_params (mpi_t * resarr, unsigned int *resarr_len, int bits);
-int _gnutls_dsa_generate_params (mpi_t * resarr, unsigned int *resarr_len, int bits);
+int _gnutls_rsa_generate_params (bigint_t * resarr, unsigned int *resarr_len, int bits);
+int _gnutls_dsa_generate_params (bigint_t * resarr, unsigned int *resarr_len, int bits);
 
 /* The internal PK interface */
 int _gnutls_pkcs1_rsa_encrypt (gnutls_datum_t * ciphertext,
 			       const gnutls_datum_t * plaintext,
-			       mpi_t * params, unsigned params_len,
+			       bigint_t * params, unsigned params_len,
 			       unsigned btype);
 int _gnutls_dsa_sign (gnutls_datum_t * signature,
-		      const gnutls_datum_t * plaintext, mpi_t * params,
+		      const gnutls_datum_t * plaintext, bigint_t * params,
 		      unsigned params_len);
 int _gnutls_pkcs1_rsa_decrypt (gnutls_datum_t * plaintext,
 			       const gnutls_datum_t * ciphertext,
-			       mpi_t * params, unsigned params_len,
+			       bigint_t * params, unsigned params_len,
 			       unsigned btype);
 int _gnutls_rsa_verify (const gnutls_datum_t * vdata,
-			const gnutls_datum_t * ciphertext, mpi_t * params,
+			const gnutls_datum_t * ciphertext, bigint_t * params,
 			int params_len, int btype);
 int _gnutls_dsa_verify (const gnutls_datum_t * vdata,
-			const gnutls_datum_t * sig_value, mpi_t * params,
+			const gnutls_datum_t * sig_value, bigint_t * params,
 			int params_len);
 
 int
-_gnutls_encode_ber_rs (gnutls_datum_t * sig_value, mpi_t r, mpi_t s);
+_gnutls_encode_ber_rs (gnutls_datum_t * sig_value, bigint_t r, bigint_t s);
 
 int
-_gnutls_decode_ber_rs (const gnutls_datum_t * sig_value, mpi_t * r, mpi_t * s);
+_gnutls_decode_ber_rs (const gnutls_datum_t * sig_value, bigint_t * r, bigint_t * s);
 
 #endif /* GNUTLS_PK_H */

@@ -36,7 +36,7 @@
 
 /* returns the prime and the generator of DH params.
  */
-const mpi_t *
+const bigint_t *
 _gnutls_dh_params_to_mpi (gnutls_dh_params_t dh_primes)
 {
   if (dh_primes == NULL || dh_primes->params[1] == NULL ||
@@ -68,7 +68,7 @@ gnutls_dh_params_import_raw (gnutls_dh_params_t dh_params,
 			     const gnutls_datum_t * prime,
 			     const gnutls_datum_t * generator)
 {
-  mpi_t tmp_prime, tmp_g;
+  bigint_t tmp_prime, tmp_g;
   size_t siz;
 
   siz = prime->size;

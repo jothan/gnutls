@@ -38,10 +38,10 @@
 
 /* returns zero on success
  */
-mpi_t
+bigint_t
 wrap_gcry_mpi_scan (const void * buffer, size_t nbytes, gnutls_bigint_format_t format)
 {
-  gcry_mpi_t ret_mpi = NULL;
+  gcry_bigint_t ret_mpi = NULL;
   int ret;
 
   ret = gcry_mpi_scan (&ret_mpi, (format==GNUTLS_MPI_FORMAT_USG)?GCRYMPI_FMT_USG:GCRYMPI_FMT_STD, buffer, nbytes, NULL);
@@ -52,7 +52,7 @@ wrap_gcry_mpi_scan (const void * buffer, size_t nbytes, gnutls_bigint_format_t f
 }
 
 int
-wrap_gcry_mpi_print (const mpi_t a, void *buffer, size_t * nbytes, gnutls_bigint_format_t format)
+wrap_gcry_mpi_print (const bigint_t a, void *buffer, size_t * nbytes, gnutls_bigint_format_t format)
 {
   int ret;
 
@@ -74,9 +74,9 @@ wrap_gcry_mpi_print (const mpi_t a, void *buffer, size_t * nbytes, gnutls_bigint
 #undef _gnutls_mpi_alloc_like
 #define _gnutls_mpi_alloc_like(x) gcry_mpi_new(gcry_mpi_get_nbits(x))
 
-mpi_t wrap_gcry_mpi_mod( const mpi_t a, const mpi_t b)
+bigint_t wrap_gcry_mpi_mod( const bigint_t a, const bigint_t b)
 {
-  mpi_t r = _gnutls_mpi_alloc_like (b);
+  bigint_t r = _gnutls_mpi_alloc_like (b);
   
   if (r == NULL)
     return NULL;
@@ -86,7 +86,7 @@ mpi_t wrap_gcry_mpi_mod( const mpi_t a, const mpi_t b)
   return r;
 }
 
-mpi_t wrap_gcry_mpi_powm( mpi_t w, const mpi_t b, const mpi_t e, const mpi_t m)
+bigint_t wrap_gcry_mpi_powm( bigint_t w, const bigint_t b, const bigint_t e, const bigint_t m)
 {
   if (w == NULL)
     w = _gnutls_mpi_alloc_like (m);
@@ -99,7 +99,7 @@ mpi_t wrap_gcry_mpi_powm( mpi_t w, const mpi_t b, const mpi_t e, const mpi_t m)
   return w;
 }
 
-mpi_t wrap_gcry_mpi_addm( mpi_t w, const mpi_t a, const mpi_t b, const mpi_t m)
+bigint_t wrap_gcry_mpi_addm( bigint_t w, const bigint_t a, const bigint_t b, const bigint_t m)
 {
   if (w == NULL)
     w = _gnutls_mpi_alloc_like (m);
@@ -112,7 +112,7 @@ mpi_t wrap_gcry_mpi_addm( mpi_t w, const mpi_t a, const mpi_t b, const mpi_t m)
   return w;
 }
 
-mpi_t wrap_gcry_mpi_subm( mpi_t w, const mpi_t a, const mpi_t b, const mpi_t m)
+bigint_t wrap_gcry_mpi_subm( bigint_t w, const bigint_t a, const bigint_t b, const bigint_t m)
 {
   if (w == NULL)
     w = _gnutls_mpi_alloc_like (m);
@@ -125,7 +125,7 @@ mpi_t wrap_gcry_mpi_subm( mpi_t w, const mpi_t a, const mpi_t b, const mpi_t m)
   return w;
 }
 
-mpi_t wrap_gcry_mpi_mulm( mpi_t w, const mpi_t a, const mpi_t b, const mpi_t m)
+bigint_t wrap_gcry_mpi_mulm( bigint_t w, const bigint_t a, const bigint_t b, const bigint_t m)
 {
   if (w == NULL)
     w = _gnutls_mpi_alloc_like (m);
@@ -138,7 +138,7 @@ mpi_t wrap_gcry_mpi_mulm( mpi_t w, const mpi_t a, const mpi_t b, const mpi_t m)
   return w;
 }
 
-mpi_t wrap_gcry_mpi_add( mpi_t w, const mpi_t a, const mpi_t b)
+bigint_t wrap_gcry_mpi_add( bigint_t w, const bigint_t a, const bigint_t b)
 {
   if (w == NULL)
     w = _gnutls_mpi_alloc_like (b);
@@ -151,7 +151,7 @@ mpi_t wrap_gcry_mpi_add( mpi_t w, const mpi_t a, const mpi_t b)
   return w;
 }
 
-mpi_t wrap_gcry_mpi_sub( mpi_t w, const mpi_t a, const mpi_t b)
+bigint_t wrap_gcry_mpi_sub( bigint_t w, const bigint_t a, const bigint_t b)
 {
   if (w == NULL)
     w = _gnutls_mpi_alloc_like (b);
@@ -164,7 +164,7 @@ mpi_t wrap_gcry_mpi_sub( mpi_t w, const mpi_t a, const mpi_t b)
   return w;
 }
 
-mpi_t wrap_gcry_mpi_mul( mpi_t w, const mpi_t a, const mpi_t b)
+bigint_t wrap_gcry_mpi_mul( bigint_t w, const bigint_t a, const bigint_t b)
 {
   if (w == NULL)
     w = _gnutls_mpi_alloc_like (b);
@@ -178,7 +178,7 @@ mpi_t wrap_gcry_mpi_mul( mpi_t w, const mpi_t a, const mpi_t b)
 }
 
 /* q = a / b */
-mpi_t wrap_gcry_mpi_div( mpi_t q, const mpi_t a, const mpi_t b)
+bigint_t wrap_gcry_mpi_div( bigint_t q, const bigint_t a, const bigint_t b)
 {
   if (q == NULL)
     q = _gnutls_mpi_alloc_like (a);
@@ -191,7 +191,7 @@ mpi_t wrap_gcry_mpi_div( mpi_t q, const mpi_t a, const mpi_t b)
   return q;
 }
 
-mpi_t wrap_gcry_mpi_add_ui( mpi_t w, const mpi_t a, unsigned long b)
+bigint_t wrap_gcry_mpi_add_ui( bigint_t w, const bigint_t a, unsigned long b)
 {
   if (w == NULL)
     w = _gnutls_mpi_alloc_like (a);
@@ -204,7 +204,7 @@ mpi_t wrap_gcry_mpi_add_ui( mpi_t w, const mpi_t a, unsigned long b)
   return w;
 }
 
-mpi_t wrap_gcry_mpi_sub_ui( mpi_t w, const mpi_t a, unsigned long b)
+bigint_t wrap_gcry_mpi_sub_ui( bigint_t w, const bigint_t a, unsigned long b)
 {
   if (w == NULL)
     w = _gnutls_mpi_alloc_like (a);
@@ -217,7 +217,7 @@ mpi_t wrap_gcry_mpi_sub_ui( mpi_t w, const mpi_t a, unsigned long b)
   return w;
 }
 
-mpi_t wrap_gcry_mpi_mul_ui( mpi_t w, const mpi_t a, unsigned long b)
+bigint_t wrap_gcry_mpi_mul_ui( bigint_t w, const bigint_t a, unsigned long b)
 {
   if (w == NULL)
     w = _gnutls_mpi_alloc_like (a);
@@ -230,17 +230,17 @@ mpi_t wrap_gcry_mpi_mul_ui( mpi_t w, const mpi_t a, unsigned long b)
   return w;
 }
 
-int wrap_gcry_prime_check( mpi_t pp)
+int wrap_gcry_prime_check( bigint_t pp)
 {
   return gcry_prime_check( pp, 0);
 }
 
 int wrap_gcry_generate_group( gnutls_group_st *group, unsigned int bits)
 {
-  mpi_t g = NULL, prime = NULL;
+  bigint_t g = NULL, prime = NULL;
   gcry_error_t err;
   int result, times = 0, qbits;
-  gcry_mpi_t *factors = NULL;
+  gcry_bigint_t *factors = NULL;
 
   /* Calculate the size of a prime factor of (prime-1)/2.
    * This is an emulation of the values in "Selecting Cryptographic Key Sizes" paper.
@@ -266,7 +266,7 @@ int wrap_gcry_generate_group( gnutls_group_st *group, unsigned int bits)
 	  gcry_prime_release_factors (factors);
 	}
 
-      err = gcry_prime_generate ((gcry_mpi_t*)&prime, bits, qbits,
+      err = gcry_prime_generate ((gcry_bigint_t*)&prime, bits, qbits,
 				 &factors, NULL, NULL, GCRY_STRONG_RANDOM,
 				 GCRY_PRIME_FLAG_SPECIAL_FACTOR);
 
@@ -292,7 +292,7 @@ int wrap_gcry_generate_group( gnutls_group_st *group, unsigned int bits)
 
   /* generate the group generator.
    */
-  err = gcry_prime_group_generator ((gcry_mpi_t*)&g, prime, factors, NULL);
+  err = gcry_prime_group_generator ((gcry_bigint_t*)&g, prime, factors, NULL);
   if (err != 0)
     {
       gnutls_assert ();

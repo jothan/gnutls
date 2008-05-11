@@ -75,10 +75,10 @@ const mod_auth_st srp_auth_struct = {
  * all are ok.
  */
 inline static int
-check_b_mod_n (mpi_t b, mpi_t n)
+check_b_mod_n (bigint_t b, bigint_t n)
 {
   int ret;
-  mpi_t r;
+  bigint_t r;
 
   r = _gnutls_mpi_mod (b, n);
 
@@ -106,10 +106,10 @@ check_b_mod_n (mpi_t b, mpi_t n)
  * all are ok.
  */
 inline static int
-check_a_mod_n (mpi_t a, mpi_t n)
+check_a_mod_n (bigint_t a, bigint_t n)
 {
   int ret;
-  mpi_t r;
+  bigint_t r;
 
   r = _gnutls_mpi_mod (a, n);
   if (r == NULL)
@@ -598,9 +598,9 @@ check_g_n (const opaque * g, size_t n_g, const opaque * n, size_t n_n)
  * Otherwise only the included parameters must be used.
  */
 static int
-group_check_g_n (mpi_t g, mpi_t n)
+group_check_g_n (bigint_t g, bigint_t n)
 {
-  mpi_t q = NULL, two = NULL, w = NULL;
+  bigint_t q = NULL, two = NULL, w = NULL;
   int ret;
 
   if (_gnutls_mpi_get_nbits (n) < 2048)

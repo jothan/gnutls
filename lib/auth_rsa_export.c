@@ -69,7 +69,7 @@ static int
 gen_rsa_export_server_kx (gnutls_session_t session, opaque ** data)
 {
   gnutls_rsa_params_t rsa_params;
-  const mpi_t *rsa_mpis;
+  const bigint_t *rsa_mpis;
   size_t n_e, n_m;
   uint8_t *data_e, *data_m;
   int ret = 0, data_size;

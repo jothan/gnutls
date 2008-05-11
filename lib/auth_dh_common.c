@@ -54,7 +54,7 @@ _gnutls_free_dh_info (dh_info_st * dh)
 int
 _gnutls_proc_dh_common_client_kx (gnutls_session_t session,
 				  opaque * data, size_t _data_size,
-				  mpi_t g, mpi_t p)
+				  bigint_t g, bigint_t p)
 {
   uint16_t n_Y;
   size_t _n_Y;
@@ -122,7 +122,7 @@ _gnutls_proc_dh_common_client_kx (gnutls_session_t session,
 int
 _gnutls_gen_dh_common_client_kx (gnutls_session_t session, opaque ** data)
 {
-  mpi_t x = NULL, X = NULL;
+  bigint_t x = NULL, X = NULL;
   size_t n_X;
   int ret;
 
@@ -305,9 +305,9 @@ _gnutls_proc_dh_common_server_kx (gnutls_session_t session,
  * be inserted */
 int
 _gnutls_dh_common_print_server_kx (gnutls_session_t session,
-				   mpi_t g, mpi_t p, opaque ** data, int psk)
+				   bigint_t g, bigint_t p, opaque ** data, int psk)
 {
-  mpi_t x, X;
+  bigint_t x, X;
   size_t n_X, n_g, n_p;
   int ret, data_size, pos;
   uint8_t *pdata;

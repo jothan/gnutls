@@ -589,7 +589,7 @@ gnutls_openpgp_privkey_get_subkey_id (gnutls_openpgp_privkey_t key,
  */
 int
 _gnutls_openpgp_privkey_get_mpis (gnutls_openpgp_privkey_t pkey, uint32_t *keyid /*[2]*/,
-			   mpi_t * params, int *params_size)
+			   bigint_t * params, int *params_size)
 {
   int result, i;
   int pk_algorithm, local_params;
@@ -663,7 +663,7 @@ int _get_sk_rsa_raw(gnutls_openpgp_privkey_t pkey, gnutls_openpgp_keyid_t keyid,
   int pk_algorithm, ret, i;
   cdk_packet_t pkt;
   uint32_t kid32[2];
-  mpi_t params[MAX_PRIV_PARAMS_SIZE];
+  bigint_t params[MAX_PRIV_PARAMS_SIZE];
   int params_size = MAX_PRIV_PARAMS_SIZE;
 
   if (pkey == NULL)
@@ -772,7 +772,7 @@ int _get_sk_dsa_raw(gnutls_openpgp_privkey_t pkey, gnutls_openpgp_keyid_t keyid,
   int pk_algorithm, ret, i;
   cdk_packet_t pkt;
   uint32_t kid32[2];
-  mpi_t params[MAX_PRIV_PARAMS_SIZE];
+  bigint_t params[MAX_PRIV_PARAMS_SIZE];
   int params_size = MAX_PRIV_PARAMS_SIZE;
 
   if (pkey == NULL)

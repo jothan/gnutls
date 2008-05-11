@@ -55,7 +55,7 @@ _wrap_gcry_pk_encrypt(gnutls_pk_algorithm_t algo,
   gcry_sexp_t s_ciph = NULL, s_data = NULL, s_pkey = NULL;
   int rc = -1;
   int ret;
-  mpi_t data = NULL;
+  bigint_t data = NULL;
 
   if (_gnutls_mpi_scan_nz(&data, plaintext->data, plaintext->size) != 0) {
     gnutls_assert();
@@ -105,7 +105,7 @@ _wrap_gcry_pk_encrypt(gnutls_pk_algorithm_t algo,
     goto cleanup;
   } else {
     gcry_sexp_t list = gcry_sexp_find_token(s_ciph, "a", 0);
-    mpi_t res;
+    bigint_t res;
 
     if (list == NULL) {
       gnutls_assert();
@@ -155,7 +155,7 @@ _wrap_gcry_pk_decrypt(gnutls_pk_algorithm_t algo,
   gcry_sexp_t s_plain = NULL, s_data = NULL, s_pkey = NULL;
   int rc = -1;
   int ret;
-  mpi_t data;
+  bigint_t data;
 
   if (_gnutls_mpi_scan_nz(&data, ciphertext->data, ciphertext->size) != 0) {
     gnutls_assert();
@@ -202,7 +202,7 @@ _wrap_gcry_pk_decrypt(gnutls_pk_algorithm_t algo,
     gnutls_assert();
     return GNUTLS_E_PK_DECRYPTION_FAILED;
   } else {
-    mpi_t res;
+    bigint_t res;
     res = gcry_sexp_nth_mpi(s_plain, 0, 0);
     gcry_sexp_release(s_plain);
 
@@ -248,8 +248,8 @@ _wrap_gcry_pk_sign(gnutls_pk_algorithm_t algo, gnutls_datum_t * signature,
   gcry_sexp_t s_hash = NULL, s_key = NULL, s_sig = NULL;
   gcry_sexp_t list = NULL;
   int rc = -1, ret;
-  mpi_t hash;
-  mpi_t res[2] = { NULL, NULL };
+  bigint_t hash;
+  bigint_t res[2] = { NULL, NULL };
 
   if (_gnutls_mpi_scan_nz(&hash, vdata->data, vdata->size) != 0) {
     gnutls_assert();
@@ -382,8 +382,8 @@ int _wrap_gcry_pk_verify( gnutls_pk_algorithm_t algo,
 {
   gcry_sexp_t s_sig, s_hash, s_pkey;
   int rc = -1, ret;
-  mpi_t hash;
-  mpi_t tmp[2] = { NULL, NULL };
+  bigint_t hash;
+  bigint_t tmp[2] = { NULL, NULL };
 
   if (_gnutls_mpi_scan_nz(&hash, vdata->data, vdata->size) != 0) {
     gnutls_assert();
@@ -489,7 +489,7 @@ cleanup:
   return ret;
 }
 
-static int _dsa_generate_params(mpi_t * resarr, int *resarr_len, int bits)
+static int _dsa_generate_params(bigint_t * resarr, int *resarr_len, int bits)
 {
 
   int ret;
@@ -588,7 +588,7 @@ static int _dsa_generate_params(mpi_t * resarr, int *resarr_len, int bits)
 
 }
 
-static int _rsa_generate_params(mpi_t * resarr, int *resarr_len, int bits)
+static int _rsa_generate_params(bigint_t * resarr, int *resarr_len, int bits)
 {
 
   int ret;
@@ -697,7 +697,7 @@ int wrap_gcry_pk_generate_params(gnutls_pk_algorithm_t algo,
 
   case GNUTLS_PK_DSA:
     params->params_nr = RSA_PRIVATE_PARAMS;
-    params->params = gnutls_malloc(sizeof(mpi_t)*params->params_nr);
+    params->params = gnutls_malloc(sizeof(bigint_t)*params->params_nr);
     if (params->params == NULL)
       {
         gnutls_assert();
@@ -707,7 +707,7 @@ int wrap_gcry_pk_generate_params(gnutls_pk_algorithm_t algo,
 
   case GNUTLS_PK_RSA:
     params->params_nr = DSA_PRIVATE_PARAMS;
-    params->params = gnutls_malloc(sizeof(mpi_t)*params->params_nr);
+    params->params = gnutls_malloc(sizeof(bigint_t)*params->params_nr);
     if (params->params == NULL)
       {
         gnutls_assert();

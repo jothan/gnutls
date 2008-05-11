@@ -888,7 +888,7 @@ gnutls_openpgp_privkey_sign_hash (gnutls_openpgp_privkey_t key,
 				  gnutls_datum_t * signature)
 {
   int result, i;
-  mpi_t params[MAX_PUBLIC_PARAMS_SIZE];
+  bigint_t params[MAX_PUBLIC_PARAMS_SIZE];
   int params_size = MAX_PUBLIC_PARAMS_SIZE;
   int pk_algorithm;
   gnutls_openpgp_keyid_t keyid;

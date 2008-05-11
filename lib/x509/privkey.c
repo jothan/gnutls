@@ -34,8 +34,8 @@
 #include <x509_int.h>
 #include <gnutls_pk.h>
 
-static int _gnutls_asn1_encode_rsa (ASN1_TYPE * c2, mpi_t * params);
-int _gnutls_asn1_encode_dsa (ASN1_TYPE * c2, mpi_t * params);
+static int _gnutls_asn1_encode_rsa (ASN1_TYPE * c2, bigint_t * params);
+int _gnutls_asn1_encode_dsa (ASN1_TYPE * c2, bigint_t * params);
 
 /* remove this when libgcrypt can handle the PKCS #1 coefficients from
  * rsa keys
@@ -155,7 +155,7 @@ _gnutls_privkey_decode_pkcs1_rsa_key (const gnutls_datum_t * raw_key,
 {
   int result;
   ASN1_TYPE pkey_asn;
-  mpi_t temp_params[RSA_PRIVATE_PARAMS];
+  bigint_t temp_params[RSA_PRIVATE_PARAMS];
   gnutls_pk_params_st pk_params;
   
   pk_params.params = temp_params;
@@ -170,10 +170,10 @@ _gnutls_privkey_decode_pkcs1_rsa_key (const gnutls_datum_t * raw_key,
       return NULL;
     }
 
-  if ((sizeof (pkey->params) / sizeof (mpi_t)) < RSA_PRIVATE_PARAMS)
+  if ((sizeof (pkey->params) / sizeof (bigint_t)) < RSA_PRIVATE_PARAMS)
     {
       gnutls_assert ();
-      /* internal error. Increase the mpi_ts in params */
+      /* internal error. Increase the bigint_ts in params */
       return NULL;
     }
 
@@ -273,10 +273,10 @@ decode_dsa_key (const gnutls_datum_t * raw_key, gnutls_x509_privkey_t pkey)
       return NULL;
     }
 
-  if ((sizeof (pkey->params) / sizeof (mpi_t)) < DSA_PRIVATE_PARAMS)
+  if ((sizeof (pkey->params) / sizeof (bigint_t)) < DSA_PRIVATE_PARAMS)
     {
       gnutls_assert ();
-      /* internal error. Increase the mpi_ts in params */
+      /* internal error. Increase the bigint_ts in params */
       return NULL;
     }
 
@@ -482,7 +482,7 @@ gnutls_x509_privkey_import_rsa_raw (gnutls_x509_privkey_t key,
 {
   int i = 0, ret;
   size_t siz = 0;
-  mpi_t temp_params[RSA_PRIVATE_PARAMS];
+  bigint_t temp_params[RSA_PRIVATE_PARAMS];
   gnutls_pk_params_st pk_params;
   
   pk_params.params = temp_params;
@@ -960,14 +960,14 @@ gnutls_x509_privkey_export_dsa_raw (gnutls_x509_privkey_t key,
 /* Encodes the RSA parameters into an ASN.1 RSA private key structure.
  */
 static int
-_gnutls_asn1_encode_rsa (ASN1_TYPE * c2, mpi_t * params)
+_gnutls_asn1_encode_rsa (ASN1_TYPE * c2, bigint_t * params)
 {
   int result, i;
   size_t size[8], total;
   opaque *m_data, *pube_data, *prie_data;
   opaque *p1_data, *p2_data, *u_data, *exp1_data, *exp2_data;
   opaque *all_data = NULL, *p;
-  mpi_t exp1 = NULL, exp2 = NULL, q1 = NULL, p1 = NULL;
+  bigint_t exp1 = NULL, exp2 = NULL, q1 = NULL, p1 = NULL;
   opaque null = '\0';
   gnutls_pk_params_st pk_params;
 
@@ -1193,7 +1193,7 @@ cleanup:
 /* Encodes the DSA parameters into an ASN.1 DSAPrivateKey structure.
  */
 int
-_gnutls_asn1_encode_dsa (ASN1_TYPE * c2, mpi_t * params)
+_gnutls_asn1_encode_dsa (ASN1_TYPE * c2, bigint_t * params)
 {
   int result, i;
   size_t size[DSA_PRIVATE_PARAMS], total;

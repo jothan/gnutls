@@ -61,8 +61,8 @@ _gnutls_pkcs12_string_to_key (unsigned int id, const opaque * salt,
   int rc;
   unsigned int i, j;
   digest_hd_st md;
-  mpi_t num_b1 = NULL, num_ij = NULL;
-  mpi_t mpi512 = NULL;
+  bigint_t num_b1 = NULL, num_ij = NULL;
+  bigint_t mpi512 = NULL;
   unsigned int pwlen;
   opaque hash[20], buf_b[64], buf_i[128], *p;
   size_t cur_keylen;

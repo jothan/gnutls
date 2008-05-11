@@ -43,9 +43,9 @@
 
 int
 _gnutls_srp_gx (opaque * text, size_t textsize, opaque ** result,
-		mpi_t g, mpi_t prime, gnutls_alloc_function galloc_func)
+		bigint_t g, bigint_t prime, gnutls_alloc_function galloc_func)
 {
-  mpi_t x, e;
+  bigint_t x, e;
   size_t result_size;
 
   if (_gnutls_mpi_scan_nz (&x, text, textsize))
@@ -88,11 +88,11 @@ _gnutls_srp_gx (opaque * text, size_t textsize, opaque ** result,
  * where k == SHA1(N|g)
  * Return: B and if ret_b is not NULL b.
  */
-mpi_t
-_gnutls_calc_srp_B (mpi_t * ret_b, mpi_t g, mpi_t n, mpi_t v)
+bigint_t
+_gnutls_calc_srp_B (bigint_t * ret_b, bigint_t g, bigint_t n, bigint_t v)
 {
-  mpi_t tmpB = NULL, tmpV = NULL;
-  mpi_t b = NULL, B = NULL, k = NULL;
+  bigint_t tmpB = NULL, tmpV = NULL;
+  bigint_t b = NULL, B = NULL, k = NULL;
   int bits;
 
 
@@ -160,15 +160,15 @@ error:
 /* This calculates the SHA1(A | B)
  * A and B will be left-padded with zeros to fill n_size.
  */
-mpi_t
-_gnutls_calc_srp_u (mpi_t A, mpi_t B, mpi_t n)
+bigint_t
+_gnutls_calc_srp_u (bigint_t A, bigint_t B, bigint_t n)
 {
   size_t b_size, a_size;
   opaque *holder, hd[MAX_HASH_SIZE];
   size_t holder_size, hash_size, n_size;
   digest_hd_st td;
   int ret;
-  mpi_t res;
+  bigint_t res;
 
   /* get the size of n in bytes */
   _gnutls_mpi_print (n, NULL, &n_size);
@@ -219,11 +219,11 @@ _gnutls_calc_srp_u (mpi_t A, mpi_t B, mpi_t n)
 /* S = (A * v^u) ^ b % N 
  * this is our shared key (server premaster secret)
  */
-mpi_t
-_gnutls_calc_srp_S1 (mpi_t A, mpi_t b, mpi_t u, mpi_t v, mpi_t n)
+bigint_t
+_gnutls_calc_srp_S1 (bigint_t A, bigint_t b, bigint_t u, bigint_t v, bigint_t n)
 {
-  mpi_t tmp1 = NULL, tmp2 = NULL;
-  mpi_t S = NULL;
+  bigint_t tmp1 = NULL, tmp2 = NULL;
+  bigint_t S = NULL;
 
   S = _gnutls_mpi_alloc_like (n);
   if (S == NULL)
@@ -253,11 +253,11 @@ freeall:
 /* A = g^a % N 
  * returns A and a (which is random)
  */
-mpi_t
-_gnutls_calc_srp_A (mpi_t * a, mpi_t g, mpi_t n)
+bigint_t
+_gnutls_calc_srp_A (bigint_t * a, bigint_t g, bigint_t n)
 {
-  mpi_t tmpa;
-  mpi_t A;
+  bigint_t tmpa;
+  bigint_t A;
   int bits;
 
   bits = _gnutls_mpi_get_nbits (n);
@@ -332,11 +332,11 @@ _gnutls_calc_srp_x (char *username, char *password, opaque * salt,
 /* S = (B - k*g^x) ^ (a + u * x) % N
  * this is our shared key (client premaster secret)
  */
-mpi_t
-_gnutls_calc_srp_S2 (mpi_t B, mpi_t g, mpi_t x, mpi_t a, mpi_t u, mpi_t n)
+bigint_t
+_gnutls_calc_srp_S2 (bigint_t B, bigint_t g, bigint_t x, bigint_t a, bigint_t u, bigint_t n)
 {
-  mpi_t S = NULL, tmp1 = NULL, tmp2 = NULL;
-  mpi_t tmp4 = NULL, tmp3 = NULL, k = NULL;
+  bigint_t S = NULL, tmp1 = NULL, tmp2 = NULL;
+  bigint_t tmp4 = NULL, tmp3 = NULL, k = NULL;
 
   S = _gnutls_mpi_alloc_like (n);
   if (S == NULL)
@@ -683,7 +683,7 @@ gnutls_srp_verifier (const char *username, const char *password,
 		     const gnutls_datum_t * generator,
 		     const gnutls_datum_t * prime, gnutls_datum_t * res)
 {
-  mpi_t _n, _g;
+  bigint_t _n, _g;
   int ret;
   size_t digest_size = 20, size;
   opaque digest[20];
