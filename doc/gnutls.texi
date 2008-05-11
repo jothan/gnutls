@@ -3453,6 +3453,7 @@ expressions.
 
 @include guile.texi
 
+
 @node Internal architecture of GnuTLS
 @chapter Internal Architecture of GnuTLS
 @cindex Internal architecture
@@ -3462,6 +3463,15 @@ way @acronym{GnuTLS} works. The focus is to give an idea
 to potential developers and those who want to know what
 happens inside the black box.
 
+@menu
+* The TLS Protocol::
+* TLS Handshake Protocol::
+* TLS Authentication Methods::
+* TLS Extension Handling::
+* Cryptographic Backend::
+@end menu
+
+@node The TLS Protocol
 @section The TLS Protocol
 The main needs for the TLS protocol to be used are
 shown in the image below.
@@ -3474,6 +3484,7 @@ object are just structures with attributes. The operations listed
 are functions that require the first parameter to be that object.
 @image{gnutls-objects,15cm}
 
+@node TLS Handshake Protocol
 @section TLS Handshake Protocol
 The @acronym{GnuTLS} handshake protocol is implemented as a state
 machine that waits for input or returns immediately when the non-blocking
@@ -3491,6 +3502,7 @@ certificate ciphersuite.
 
 @image{gnutls-handshake-sequence,12cm}
 
+@node TLS Authentication Methods
 @section TLS Authentication Methods
 In @acronym{GnuTLS} authentication methods can be implemented quite easily.
 Since the required changes to add a new authentication method affect only the
@@ -3508,6 +3520,7 @@ for PSK ciphersuites and @code{auth_srp.c} for SRP ciphersuites. After implement
 the structure holding its pointers has to be registered in @code{gnutls_algorithms.c}
 in the @code{_gnutls_kx_algorithms} structure.
 
+@node TLS Extension Handling
 @section TLS Extension Handling
 As with authentication methods, the TLS extensions handlers can be implemented
 using the following interface.
