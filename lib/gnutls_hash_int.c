@@ -138,14 +138,18 @@ _gnutls_hash_deinit (digest_hd_st* handle, void *digest)
 
   maclen = _gnutls_hash_get_algo_len (handle->algorithm);
 
-  if (handle->registered && handle->hd.rh.ctx != NULL) {
-    handle->hd.rh.cc->output( handle->hd.rh.ctx, digest, maclen);
-    handle->hd.rh.cc->deinit( handle->hd.rh.ctx);
-    return;
-  }
+  if (handle->registered && handle->hd.rh.ctx != NULL) 
+    {
+      handle->hd.rh.cc->output( handle->hd.rh.ctx, digest, maclen);
+      handle->hd.rh.cc->deinit( handle->hd.rh.ctx);
+      return;
+    }
 
-  _gnutls_digest_ops.output( handle->hd.gc, digest, maclen);
-  _gnutls_digest_ops.deinit( handle->hd.gc);
+  if (digest != NULL)
+    {
+      _gnutls_digest_ops.output( handle->hd.gc, digest, maclen);
+    }
+    _gnutls_digest_ops.deinit( handle->hd.gc);
 }
 
 /* HMAC interface */
@@ -221,13 +225,17 @@ _gnutls_hmac_deinit (digest_hd_st* handle, void *digest)
 
   maclen = _gnutls_hmac_get_algo_len (handle->algorithm);
 
-  if (handle->registered && handle->hd.rh.ctx != NULL) {
-    handle->hd.rh.cc->output( handle->hd.rh.ctx, digest, maclen);
-    handle->hd.rh.cc->deinit( handle->hd.rh.ctx);
-    return;
-  }
+  if (handle->registered && handle->hd.rh.ctx != NULL) 
+    {
+      handle->hd.rh.cc->output( handle->hd.rh.ctx, digest, maclen);
+      handle->hd.rh.cc->deinit( handle->hd.rh.ctx);
+      return;
+    }
 
-  _gnutls_mac_ops.output( handle->hd.gc, digest, maclen);
+  if (digest != NULL)
+    {
+      _gnutls_mac_ops.output( handle->hd.gc, digest, maclen);
+    }
   _gnutls_mac_ops.deinit( handle->hd.gc);
 
 }
