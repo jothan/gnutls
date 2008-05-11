@@ -61,6 +61,7 @@ int _gnutls_hmac (const digest_hd_st* handle, const void *text,
 		  size_t textlen);
 
 void _gnutls_hmac_deinit (digest_hd_st* handle, void *digest);
+void _gnutls_hmac_output (digest_hd_st* handle, void *digest);
 
 int _gnutls_mac_init_ssl3 (digest_hd_st*, gnutls_mac_algorithm_t algorithm, void *key,
 				int keylen);
@@ -71,6 +72,7 @@ int _gnutls_hash_get_algo_len (gnutls_digest_algorithm_t algorithm);
 int _gnutls_hash (const digest_hd_st* handle, const void *text,
 		  size_t textlen);
 void _gnutls_hash_deinit (digest_hd_st* handle, void *digest);
+void _gnutls_hash_output (digest_hd_st* handle, void *digest);
 
 int _gnutls_ssl3_generate_random (void *secret, int secret_len,
 				  void *rnd, int random_len, int bytes,

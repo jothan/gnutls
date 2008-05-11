@@ -131,8 +131,10 @@ int _gnutls_hash_copy (digest_hd_st* dst, digest_hd_st* src)
   return 0;
 }
 
+/* when the current output is needed without calling deinit
+ */
 void
-_gnutls_hash_deinit (digest_hd_st* handle, void *digest)
+_gnutls_hash_output (digest_hd_st* handle, void *digest)
 {
   int maclen;
 
@@ -140,8 +142,8 @@ _gnutls_hash_deinit (digest_hd_st* handle, void *digest)
 
   if (handle->registered && handle->hd.rh.ctx != NULL) 
     {
-      handle->hd.rh.cc->output( handle->hd.rh.ctx, digest, maclen);
-      handle->hd.rh.cc->deinit( handle->hd.rh.ctx);
+      if (digest != NULL)
+        handle->hd.rh.cc->output( handle->hd.rh.ctx, digest, maclen);
       return;
     }
 
@@ -149,8 +151,22 @@ _gnutls_hash_deinit (digest_hd_st* handle, void *digest)
     {
       _gnutls_digest_ops.output( handle->hd.gc, digest, maclen);
     }
-    _gnutls_digest_ops.deinit( handle->hd.gc);
 }
+
+void
+_gnutls_hash_deinit (digest_hd_st* handle, void *digest)
+{
+  _gnutls_hash_output( handle, digest);
+
+  if (handle->registered && handle->hd.rh.ctx != NULL) 
+    {
+      handle->hd.rh.cc->deinit( handle->hd.rh.ctx);
+      return;
+    }
+
+  _gnutls_digest_ops.deinit( handle->hd.gc);
+}
+
 
 /* HMAC interface */
 
@@ -219,7 +235,7 @@ _gnutls_hmac (const digest_hd_st* handle, const void *text, size_t textlen)
 }
 
 void
-_gnutls_hmac_deinit (digest_hd_st* handle, void *digest)
+_gnutls_hmac_output (digest_hd_st* handle, void *digest)
 {
   int maclen;
 
@@ -227,8 +243,8 @@ _gnutls_hmac_deinit (digest_hd_st* handle, void *digest)
 
   if (handle->registered && handle->hd.rh.ctx != NULL) 
     {
-      handle->hd.rh.cc->output( handle->hd.rh.ctx, digest, maclen);
-      handle->hd.rh.cc->deinit( handle->hd.rh.ctx);
+      if (digest != NULL)
+        handle->hd.rh.cc->output( handle->hd.rh.ctx, digest, maclen);
       return;
     }
 
@@ -236,8 +252,20 @@ _gnutls_hmac_deinit (digest_hd_st* handle, void *digest)
     {
       _gnutls_mac_ops.output( handle->hd.gc, digest, maclen);
     }
-  _gnutls_mac_ops.deinit( handle->hd.gc);
+}
 
+void
+_gnutls_hmac_deinit (digest_hd_st* handle, void *digest)
+{
+  _gnutls_hmac_output( handle, digest);
+
+  if (handle->registered && handle->hd.rh.ctx != NULL) 
+    {
+      handle->hd.rh.cc->deinit( handle->hd.rh.ctx);
+      return;
+    }
+
+  _gnutls_mac_ops.deinit( handle->hd.gc);
 }
 
 inline static int
