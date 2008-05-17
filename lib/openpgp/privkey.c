@@ -78,7 +78,7 @@ gnutls_openpgp_privkey_deinit (gnutls_openpgp_privkey_t key)
  * @key: The structure to store the parsed key.
  * @data: The RAW or BASE64 encoded key.
  * @format: One of gnutls_openpgp_crt_fmt_t elements.
- * @pass: Unused for now
+ * @password: (unused for now)
  * @flags: should be zero
  *
  * This function will convert the given RAW or Base64 encoded key to
@@ -91,7 +91,7 @@ int
 gnutls_openpgp_privkey_import (gnutls_openpgp_privkey_t key,
 			       const gnutls_datum_t * data,
 			       gnutls_openpgp_crt_fmt_t format,
-			       const char *pass, unsigned int flags)
+			       const char *password, unsigned int flags)
 {
   cdk_stream_t inp;
   cdk_packet_t pkt;
@@ -142,7 +142,7 @@ gnutls_openpgp_privkey_import (gnutls_openpgp_privkey_t key,
   * gnutls_openpgp_privkey_export - This function will export a RAW or BASE64 encoded key
   * @key: Holds the key.
   * @format: One of gnutls_openpgp_crt_fmt_t elements.
-  * @password: the password that will be used to encrypt the key. 
+  * @password: (unused for now)
   * @flags: zero for future compatibility
   * @output_data: will contain the key base64 encoded or raw
   * @output_data_size: holds the size of output_data (and will be replaced by the actual size of parameters)
