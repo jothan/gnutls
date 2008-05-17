@@ -64,10 +64,6 @@ typedef struct cdk_strlist_s *cdk_strlist_t;
 struct cdk_listkey_s;
 typedef struct cdk_listkey_s *cdk_listkey_t;
 
-/* Opaque Data Encryption Key (DEK) context. */
-struct cdk_dek_s;
-typedef struct cdk_dek_s *cdk_dek_t;
-
 /* Opaque String to Key (S2K) handle. */
 struct cdk_s2k_s;
 typedef struct cdk_s2k_s *cdk_s2k_t;
@@ -149,7 +145,6 @@ enum cdk_control_flags {
     CDK_CTLF_SET          =  0, /* Value to set an option */
     CDK_CTLF_GET          =  1, /* Value to get an option */
     CDK_CTL_DIGEST        = 10, /* Option to set the digest algorithm. */
-    CDK_CTL_CIPHER        = 11, /* Option to set the cipher algorithm. */
     CDK_CTL_ARMOR         = 12, /* Option to enable armor output. */
     CDK_CTL_COMPRESS      = 13, /* Option to enable compression. */
     CDK_CTL_COMPAT        = 14, /* Option to switch in compat mode. */
@@ -186,34 +181,6 @@ enum cdk_pubkey_algo_t {
     CDK_PK_ELG_E = 16,
     CDK_PK_DSA   = 17
 };
-
-
-/* All valid message digest algorithms in OpenPGP. */
-enum cdk_digest_algo_t {
-    CDK_MD_NONE    = 0,
-    CDK_MD_MD5     = 1,
-    CDK_MD_SHA1    = 2,
-    CDK_MD_RMD160  = 3,
-    CDK_MD_SHA256  = 8,
-    CDK_MD_SHA384  = 9,
-    CDK_MD_SHA512  = 10,
-    CDK_MD_SHA224  = 11 /* This algorithm is NOT available. */
-};
-
-
-/* All valid symmetric cipher algorithms in OpenPGP */
-enum cdk_cipher_algo_t {
-    CDK_CIPHER_NONE        = 0,
-    CDK_CIPHER_IDEA        = 1, /* This algorithm is NOT available */
-    CDK_CIPHER_3DES        = 2,
-    CDK_CIPHER_CAST5       = 3,
-    CDK_CIPHER_BLOWFISH    = 4,
-    CDK_CIPHER_AES         = 7,
-    CDK_CIPHER_AES192      = 8,
-    CDK_CIPHER_AES256      = 9,
-    CDK_CIPHER_TWOFISH     = 10
-};
-
 
 /* The valid 'String-To-Key' modes */
 enum cdk_s2k_type_t {
@@ -373,13 +340,11 @@ typedef enum {
     CDK_PKT_RESERVED      =  0,
     CDK_PKT_PUBKEY_ENC    =  1,
     CDK_PKT_SIGNATURE     =  2,
-    CDK_PKT_SYMKEY_ENC    =  3,
     CDK_PKT_ONEPASS_SIG   =  4,
     CDK_PKT_SECRET_KEY    =  5,
     CDK_PKT_PUBLIC_KEY    =  6,
     CDK_PKT_SECRET_SUBKEY =  7,
     CDK_PKT_COMPRESSED    =  8,
-    CDK_PKT_ENCRYPTED     =  9,
     CDK_PKT_MARKER        = 10,
     CDK_PKT_LITERAL       = 11,
     CDK_PKT_RING_TRUST    = 12,
@@ -387,7 +352,6 @@ typedef enum {
     CDK_PKT_PUBLIC_SUBKEY = 14,
     CDK_PKT_OLD_COMMENT   = 16,
     CDK_PKT_ATTRIBUTE     = 17,
-    CDK_PKT_ENCRYPTED_MDC = 18,
     CDK_PKT_MDC           = 19
 } cdk_packet_type_t;
 
@@ -525,17 +489,6 @@ struct cdk_pkt_pubkey_enc_s {
 };
 typedef struct cdk_pkt_pubkey_enc_s * cdk_pkt_pubkey_enc_t;
 
-
-struct cdk_pkt_symkey_enc_s {
-    unsigned char version;
-    unsigned char cipher_algo;
-    cdk_s2k_t s2k;
-    unsigned char seskeylen;
-    unsigned char seskey[32];
-};
-typedef struct cdk_pkt_symkey_enc_s *cdk_pkt_symkey_enc_t;
-
-
 struct cdk_pkt_encrypted_s {
     unsigned int len;
     int extralen;
@@ -583,7 +536,6 @@ struct cdk_packet_s {
         cdk_pkt_seckey_t secret_key;
         cdk_pkt_signature_t signature;
         cdk_pkt_pubkey_enc_t pubkey_enc;
-        cdk_pkt_symkey_enc_t symkey_enc;
         cdk_pkt_compressed_t compressed;
         cdk_pkt_encrypted_t encrypted;
         cdk_pkt_literal_t literal;
@@ -634,10 +586,6 @@ void cdk_handle_set_passphrase_cb (cdk_ctx_t hd,
    or pipes. */
 #define cdk_handle_set_blockmode(a, val) \
   cdk_handle_control ((a), CDK_CTLF_SET, CDK_CTL_BLOCKMODE_ON, (val))
-
-/* Set the symmetric cipher for encryption. */
-#define cdk_handle_set_cipher(a, val) \
-  cdk_handle_control ((a), CDK_CTLF_SET, CDK_CTL_CIPHER, (val))
 
 /* Set the digest for the PK signing operation. */
 #define cdk_handle_set_digest(a, val) \
@@ -778,10 +726,6 @@ unsigned int cdk_sig_get_keyid (cdk_pkt_signature_t sig,
 void cdk_pk_release (cdk_pubkey_t pk);
 void cdk_sk_release (cdk_seckey_t sk);
 				 
-/* Secret key related functions. */				 
-cdk_error_t cdk_sk_unprotect (cdk_seckey_t sk, const char *pw);
-cdk_error_t cdk_sk_protect (cdk_seckey_t sk, const char *pw);
-
 /* Create a public key with the data from the secret key @SK. */
 cdk_error_t cdk_pk_from_secret_key (cdk_seckey_t sk,
                                     cdk_pubkey_t *ret_pk);
@@ -792,36 +736,6 @@ cdk_error_t cdk_pubkey_to_sexp (cdk_pubkey_t pk,
 cdk_error_t cdk_seckey_to_sexp (cdk_seckey_t sk, 
 				char **sexp, size_t *len);    
 
-
-/* Data Encryption Key (DEK) routines */
-cdk_error_t cdk_dek_new (cdk_dek_t *r_dek);
-void cdk_dek_free (cdk_dek_t dek);
-
-/* Set the symmetric cipher algorithm which shall be used for this
-   DEK object. */   
-cdk_error_t cdk_dek_set_cipher (cdk_dek_t dek, int cipher_algo);
-
-/* Return the symmetric cipher which is used for this DEK object. */
-cdk_error_t cdk_dek_get_cipher (cdk_dek_t dek, int *r_cipher_algo);
-
-
-/* Set the session key for the given DEK object.
-   If @KEY and @KEYLEN are both NULL/0, a random key will be generated
-   and stored in the DEK object. */
-cdk_error_t cdk_dek_set_key (cdk_dek_t dek, const unsigned char *key,
-                             size_t keylen);
-			     
-/* Enable the MDC feature for the current DEK object. */
-void cdk_dek_set_mdc_flag (cdk_dek_t dek, int val);
-
-/* Return if the MDC feature is enabled for the current DEK object.*/
-int cdk_dek_get_mdc_flag (cdk_dek_t dek);
-			     
-/* Transform the given passphrase into a DEK.
-   If @rndsalt is set, a random salt will be generated. */
-cdk_error_t cdk_dek_from_passphrase (cdk_dek_t *ret_dek, int cipher_algo,
-                                     cdk_s2k_t s2k, int rndsalt, 
-				     const char *passphrase);
 
 /* String to Key routines. */
 cdk_error_t cdk_s2k_new (cdk_s2k_t *ret_s2k, int mode, int digest_algo,
@@ -896,8 +810,6 @@ cdk_error_t cdk_stream_set_literal_flag (cdk_stream_t s,
 	    				 cdk_lit_format_t mode,
                                          const char * fname);
 					 
-cdk_error_t cdk_stream_set_cipher_flag (cdk_stream_t s, cdk_dek_t dek,
-                                        int use_mdc);
 cdk_error_t cdk_stream_set_compress_flag (cdk_stream_t s, int algo, int level);
 cdk_error_t cdk_stream_set_hash_flag (cdk_stream_t s, int algo);
 cdk_error_t cdk_stream_set_text_flag (cdk_stream_t s, const char * lf);
@@ -1031,11 +943,6 @@ cdk_error_t cdk_pklist_build (cdk_keylist_t *ret_pkl, cdk_keydb_hd_t hd,
                               cdk_strlist_t remusr, int use);
 void cdk_pklist_release (cdk_keylist_t pkl);
 
-/* Encrypt the given DEK key with the list of public keys given
-   in @PKL. The result will be written to the stream output @OUT. */
-cdk_error_t cdk_pklist_encrypt (cdk_keylist_t pkl, cdk_dek_t dek,
-                                cdk_stream_t out);
-				
 /* Secret key lists */
 cdk_error_t cdk_sklist_build (cdk_keylist_t * ret_skl,
                               cdk_keydb_hd_t db, cdk_ctx_t hd,

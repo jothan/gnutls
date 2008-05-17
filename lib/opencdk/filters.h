@@ -34,7 +34,6 @@ typedef struct {
   gcry_cipher_hd_t hd;
   digest_hd_st mdc;
   int mdc_method;
-  cdk_dek_t dek;
   u32 datalen;
   struct {
     size_t on;

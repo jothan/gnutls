@@ -33,7 +33,7 @@
 #include "main.h"
 #include "packet.h"
 #include "types.h"
-
+#include <gnutls_algorithms.h>
 
 /* The version of the MDC packet considering the lastest OpenPGP draft. */
 #define MDC_PKT_VER 1
@@ -159,98 +159,6 @@ _cdk_pkt_read_len (FILE *inp, size_t *ret_partial)
   else
     pktlen = 1 << (c1 & 0x1f);
   return pktlen;
-}
-
-
-static cdk_error_t
-read_encrypted (cdk_stream_t inp, size_t pktlen, cdk_pkt_encrypted_t enc,
-		int is_partial, int is_mdc)
-{
-  if (!inp || !enc)
-    return CDK_Inv_Value;
-
-  if (DEBUG_PKT)
-    _cdk_log_debug ("read_encrypted: %d octets\n", pktlen);
-  
-  if (is_mdc) 
-    {
-      int version = cdk_stream_getc (inp);
-      if (version != MDC_PKT_VER)
-	return CDK_Inv_Packet;
-      enc->mdc_method = CDK_MD_SHA1;
-      pktlen--;
-    }
-  /* The packet must at least contain blocksize + 2 octets. */
-  if (pktlen < 10)
-    return CDK_Inv_Packet;
-  if (is_partial)
-    _cdk_stream_set_blockmode (inp, pktlen);
-  enc->len = pktlen;
-  enc->buf = inp;
-  return 0;
-}
-
-
-static cdk_error_t
-read_symkey_enc (cdk_stream_t inp, size_t pktlen, cdk_pkt_symkey_enc_t ske)
-{
-  cdk_s2k_t s2k;
-  size_t minlen;
-  size_t nread, nleft;
-  
-  if (!inp || !ske)
-    return CDK_Inv_Value;
-  
-  if (DEBUG_PKT)
-    _cdk_log_debug ("read_symkey_enc: %d octets\n", pktlen);
-  
-  ske->version = cdk_stream_getc (inp);
-  if (ske->version != 4 || cdk_stream_eof (inp))
-    return CDK_Inv_Packet;
-  
-  s2k = ske->s2k = cdk_calloc (1, sizeof *ske->s2k);
-  if (!ske->s2k)
-    return CDK_Out_Of_Core;
-  
-  ske->cipher_algo = cdk_stream_getc (inp);
-  s2k->mode = cdk_stream_getc (inp);
-  switch (s2k->mode)
-    {
-    case CDK_S2K_SIMPLE    : minlen = 0; break;
-    case CDK_S2K_SALTED    : minlen = 8; break;
-    case CDK_S2K_ITERSALTED: minlen = 9; break;
-      
-    default:
-      /* Invalid S2K mode. */
-      return CDK_Inv_Packet;
-    }
-  
-  s2k->hash_algo = cdk_stream_getc (inp);
-  if (s2k->mode == CDK_S2K_SALTED || s2k->mode == CDK_S2K_ITERSALTED)
-    {
-      if (stream_read (inp, s2k->salt, DIM (s2k->salt), &nread))
-	return CDK_Inv_Packet;
-      if (nread != DIM (s2k->salt))
-	return CDK_Inv_Packet;
-      
-      if (s2k->mode == CDK_S2K_ITERSALTED)
-	s2k->count = cdk_stream_getc (inp);
-    }
-  
-  ske->seskeylen = pktlen - 4 - minlen;
-  /* We check if there is an encrypted session key and if it fits into
-     the buffer. The maximal key length is 256-bit. */
-  if (ske->seskeylen > DIM (ske->seskey))
-    return CDK_Inv_Packet;
-  nleft = ske->seskeylen;
-  for (nread = 0; nread < ske->seskeylen; nread++)
-    {
-      ske->seskey[nread] = cdk_stream_getc (inp);
-      if (cdk_stream_eof (inp) && --nleft > 0)
-	return CDK_Inv_Packet;
-    }
-  
-  return 0;
 }
 
 
@@ -390,6 +298,32 @@ read_public_subkey (cdk_stream_t inp, size_t pktlen, cdk_pkt_pubkey_t pk)
   return read_public_key (inp, pktlen, pk);
 }
 
+static int _pgp_to_gnutls_cipher(int cipher)
+{
+  switch (cipher) {
+    case 1:
+      return GNUTLS_CIPHER_IDEA_PGP_CFB;
+    case 2:
+      return GNUTLS_CIPHER_3DES_PGP_CFB;
+    case 3:
+      return GNUTLS_CIPHER_CAST5_PGP_CFB;
+    case 4:
+      return GNUTLS_CIPHER_BLOWFISH_PGP_CFB;
+    case 5:
+      return GNUTLS_CIPHER_SAFER_SK128_PGP_CFB;
+    case 7:
+      return GNUTLS_CIPHER_AES128_PGP_CFB;
+    case 8:
+      return GNUTLS_CIPHER_AES192_PGP_CFB;
+    case 9:
+      return GNUTLS_CIPHER_AES256_PGP_CFB;
+    case 10:
+      return GNUTLS_CIPHER_TWOFISH_PGP_CFB;
+    
+    default:
+      return GNUTLS_CIPHER_NULL;
+  }
+}
 
 static cdk_error_t
 read_secret_key (cdk_stream_t inp, size_t pktlen, cdk_pkt_seckey_t sk)
@@ -414,15 +348,15 @@ read_secret_key (cdk_stream_t inp, size_t pktlen, cdk_pkt_seckey_t sk)
   if (sk->s2k_usage == 254 || sk->s2k_usage == 255)
     {
       sk->protect.sha1chk = (sk->s2k_usage == 254);
-      sk->protect.algo = cdk_stream_getc (inp);
+      sk->protect.algo = _pgp_to_gnutls_cipher(cdk_stream_getc (inp));
       sk->protect.s2k = cdk_calloc (1, sizeof *sk->protect.s2k);
       if (!sk->protect.s2k)
 	return CDK_Out_Of_Core;
       rc = read_s2k (inp, sk->protect.s2k);
       if (rc) 
 	return rc;
-      sk->protect.ivlen = gcry_cipher_get_algo_blklen (sk->protect.algo);
-      if (!sk->protect.ivlen)
+      sk->protect.ivlen = _gnutls_cipher_get_block_size (sk->protect.algo);
+      if (sk->protect.ivlen <= 0)
 	return CDK_Inv_Packet;
       rc = stream_read (inp, sk->protect.iv, sk->protect.ivlen, &nread);
       if (rc)
@@ -870,7 +804,7 @@ read_literal (cdk_stream_t inp, size_t pktlen,
       rc = stream_read (inp, pt->name, pt->namelen, &nread);
       if (rc)
 	return rc;
-      if (nread != pt->namelen)
+      if ((int)nread != pt->namelen)
 	return CDK_Inv_Packet;
       pt->name[pt->namelen] = '\0';
     }
@@ -970,7 +904,6 @@ skip_packet (cdk_stream_t inp, size_t pktlen)
 cdk_error_t
 cdk_pkt_read (cdk_stream_t inp, cdk_packet_t pkt)
 {
-  int use_mdc = 0;
   int ctb, is_newctb;
   int pkttype;
   size_t pktlen = 0, pktsize = 0, is_partial = 0;
@@ -1096,23 +1029,6 @@ cdk_pkt_read (cdk_stream_t inp, cdk_packet_t pkt)
       if (!pkt->pkt.signature)
 	return CDK_Out_Of_Core;
       rc = read_signature (inp, pktlen, pkt->pkt.signature);
-      break;
-      
-    case CDK_PKT_ENCRYPTED_MDC:
-    case CDK_PKT_ENCRYPTED:
-      pkt->pkt.encrypted = cdk_calloc (1, sizeof *pkt->pkt.encrypted);
-      if (!pkt->pkt.encrypted)
-	return CDK_Out_Of_Core;
-      use_mdc = (pkt->pkttype == CDK_PKT_ENCRYPTED_MDC) ? 1 : 0;
-      rc = read_encrypted (inp, pktlen, pkt->pkt.encrypted,
-			   is_partial, use_mdc);
-      break;
-      
-    case CDK_PKT_SYMKEY_ENC:
-      pkt->pkt.symkey_enc = cdk_calloc (1, sizeof *pkt->pkt.symkey_enc);
-      if (!pkt->pkt.symkey_enc)
-	return CDK_Out_Of_Core;
-      rc = read_symkey_enc (inp, pktlen, pkt->pkt.symkey_enc);
       break;
       
     case CDK_PKT_PUBKEY_ENC:

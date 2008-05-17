@@ -193,11 +193,4 @@ cdk_error_t _cdk_pkt_write_fp( FILE * out, cdk_packet_t pkt );
 /*-- seskey.c --*/
 cdk_error_t _cdk_s2k_copy (cdk_s2k_t *r_dst, cdk_s2k_t src);
     
-cdk_error_t cdk_dek_encode_pkcs1 (cdk_dek_t dek, size_t nbits, 
-				  gcry_mpi_t *r_enc);
-cdk_error_t cdk_dek_decode_pkcs1 (cdk_dek_t * ret_dek, gcry_mpi_t esk);
-cdk_error_t cdk_dek_extract (cdk_dek_t * ret_dek, cdk_ctx_t hd,
-			     cdk_pkt_pubkey_enc_t enc,
-			     cdk_pkt_seckey_t sk );
-
 #endif /* CDK_MAIN_H */

@@ -41,7 +41,6 @@
 /* Set a default cipher algorithm and a digest algorithm.
    Even if AES and SHA-256 are not 'MUST' in the latest
    OpenPGP draft, AES seems to be a good choice. */
-#define DEFAULT_CIPHER_ALGO GCRY_CIPHER_AES
 #define DEFAULT_DIGEST_ALGO GNUTLS_DIG_SHA256
 
 /**
@@ -103,17 +102,6 @@ _cdk_passphrase_get (cdk_ctx_t hd, const char *prompt)
 
 
 static void
-handle_set_cipher (cdk_ctx_t hd, int cipher)
-{
-  if (!hd)
-    return;
-  if (gcry_cipher_test_algo (cipher))
-    cipher = DEFAULT_CIPHER_ALGO;
-  hd->cipher_algo = cipher;   
-}
-
-
-static void
 handle_set_digest (cdk_ctx_t hd, int digest)
 {
   if (!hd)
@@ -125,12 +113,10 @@ handle_set_digest (cdk_ctx_t hd, int digest)
 
 
 static void
-handle_set_s2k (cdk_ctx_t hd, int mode, int digest, int cipher)
+handle_set_s2k (cdk_ctx_t hd, int mode, int digest)
 {
   if (!hd)
     return;
-  if (gcry_cipher_test_algo (cipher))
-    cipher = DEFAULT_CIPHER_ALGO;
   if (_gnutls_hash_get_algo_len (digest) <= 0)
     digest = DEFAULT_DIGEST_ALGO;
   if (mode != CDK_S2K_SIMPLE &&
@@ -191,13 +177,6 @@ cdk_handle_control (cdk_ctx_t hd, int action, int cmd, ...)
 	val = hd->opt.armor;
       break;
 
-    case CDK_CTL_CIPHER:
-      if (set)
-	handle_set_cipher (hd, va_arg (arg_ptr, int));
-      else
-	val = hd->cipher_algo;
-      break;
-      
     case CDK_CTL_DIGEST:
       if (set)
 	handle_set_digest( hd, va_arg( arg_ptr, int ) );
@@ -227,8 +206,7 @@ cdk_handle_control (cdk_ctx_t hd, int action, int cmd, ...)
       if( set ) {
 	int mode = va_arg( arg_ptr, int );
 	int digest = va_arg( arg_ptr, int );
-	int cipher = va_arg( arg_ptr, int );
-	handle_set_s2k( hd, mode, digest, cipher );
+	handle_set_s2k( hd, mode, digest);
       }
       else
 	val = hd->_s2k.mode;
@@ -289,7 +267,6 @@ cdk_handle_new (cdk_ctx_t *r_ctx)
   c->opt.textmode = 0;
   
   c->digest_algo = DEFAULT_DIGEST_ALGO;
-  c->cipher_algo = DEFAULT_CIPHER_ALGO;
   
   c->compress.algo = CDK_COMPRESS_ZIP;
   c->compress.level = 6;
@@ -424,6 +401,5 @@ cdk_handle_free (cdk_ctx_t hd)
 	cdk_keydb_free (hd->db.sec);
       hd->db.pub = hd->db.sec = NULL;
     }  
-  cdk_free (hd->dek);
   cdk_free (hd);
 }

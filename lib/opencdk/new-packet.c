@@ -67,16 +67,6 @@ cdk_pkt_new (cdk_packet_t *r_pkt)
 
 
 static void
-free_symkey_enc (cdk_pkt_symkey_enc_t enc)
-{
-  if (!enc)
-    return;
-  cdk_s2k_free (enc->s2k);
-  cdk_free (enc);
-}
-
-
-static void
 free_pubkey_enc (cdk_pkt_pubkey_enc_t enc)
 {
   size_t nenc;
@@ -179,21 +169,6 @@ cdk_sk_release (cdk_seckey_t sk)
 }
 
 
-static void
-free_encrypted (cdk_pkt_encrypted_t enc)
-{
-  if (!enc)
-    return;
-  
-  /* This is just a reference for the filters to know where
-     the encrypted data starts and to read from the sream. It
-     us closed elsewhere and to close it here would double close it. */
-  /*cdk_stream_close (enc->buf);*/
-  enc->buf = NULL;
-  cdk_free (enc);
-}
-
-
 /* Detach the openpgp packet from the packet structure
    and release the packet structure itself. */
 void
@@ -242,10 +217,7 @@ cdk_pkt_free (cdk_packet_t pkt)
     case CDK_PKT_SECRET_SUBKEY: cdk_sk_release (pkt->pkt.secret_key); break;
     case CDK_PKT_SIGNATURE    : _cdk_free_signature (pkt->pkt.signature);break;
     case CDK_PKT_PUBKEY_ENC   : free_pubkey_enc (pkt->pkt.pubkey_enc); break;
-    case CDK_PKT_SYMKEY_ENC   : free_symkey_enc (pkt->pkt.symkey_enc); break;
     case CDK_PKT_MDC          : cdk_free (pkt->pkt.mdc); break;
-    case CDK_PKT_ENCRYPTED    :
-    case CDK_PKT_ENCRYPTED_MDC: free_encrypted (pkt->pkt.encrypted); break;
     case CDK_PKT_ONEPASS_SIG  : cdk_free (pkt->pkt.onepass_sig); break;
     case CDK_PKT_LITERAL      : free_literal (pkt->pkt.literal); break;
     case CDK_PKT_COMPRESSED   : cdk_free (pkt->pkt.compressed); break;
@@ -325,12 +297,6 @@ cdk_pkt_alloc (cdk_packet_t *r_pkt, cdk_packet_type_t pkttype)
 	return CDK_Out_Of_Core;
       break;
       
-    case CDK_PKT_SYMKEY_ENC:
-      pkt->pkt.symkey_enc = cdk_calloc (1, sizeof *pkt->pkt.symkey_enc);
-      if (!pkt->pkt.symkey_enc)
-	return CDK_Out_Of_Core;
-      break;
-      
     case CDK_PKT_PUBKEY_ENC:
       pkt->pkt.pubkey_enc = cdk_calloc (1, sizeof *pkt->pkt.pubkey_enc);
       if (!pkt->pkt.pubkey_enc)
@@ -340,13 +306,6 @@ cdk_pkt_alloc (cdk_packet_t *r_pkt, cdk_packet_type_t pkttype)
     case CDK_PKT_MDC:
       pkt->pkt.mdc = cdk_calloc (1, sizeof *pkt->pkt.mdc);
       if (!pkt->pkt.mdc)
-	return CDK_Out_Of_Core;
-      break;
-      
-    case CDK_PKT_ENCRYPTED_MDC:
-    case CDK_PKT_ENCRYPTED:
-      pkt->pkt.symkey_enc = cdk_calloc (1, sizeof *pkt->pkt.symkey_enc);
-      if (!pkt->pkt.symkey_enc)
 	return CDK_Out_Of_Core;
       break;
       

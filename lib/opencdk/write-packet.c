@@ -250,93 +250,6 @@ pkt_write_head (cdk_stream_t out, int old_ctb, size_t size, int type)
 }
 
 
-static cdk_error_t
-write_encrypted (cdk_stream_t out, cdk_pkt_encrypted_t enc, int old_ctb)
-{
-  size_t nbytes;
-  cdk_error_t rc;
-
-  assert (out);
-  assert (enc);
-  
-  if (DEBUG_PKT)
-    _cdk_log_debug ("write_encrypted: %lu bytes\n", enc->len);
-  
-  nbytes = enc->len ? (enc->len + enc->extralen) : 0;
-  rc = pkt_write_head (out, old_ctb, nbytes, CDK_PKT_ENCRYPTED);
-  /* The rest of the packet is ciphertext */
-  return rc;
-}
-
-
-static int
-write_encrypted_mdc (cdk_stream_t out, cdk_pkt_encrypted_t enc)
-{
-  size_t nbytes;
-  cdk_error_t rc;
-
-  assert (out);
-  assert (enc);
-
-  if (!enc->mdc_method)
-    return CDK_Inv_Packet;
-  
-  if (DEBUG_PKT)
-    _cdk_log_debug ("write_encrypted_mdc: %lu bytes\n", enc->len);
-  
-  nbytes = enc->len ? (enc->len + enc->extralen + 1) : 0;
-  rc = pkt_write_head (out, 0, nbytes, CDK_PKT_ENCRYPTED_MDC);
-  if (!rc)
-    rc = stream_putc (out, 1); /* version */
-  /* The rest of the packet is ciphertext */
-  return rc;
-}
-
-
-static cdk_error_t
-write_symkey_enc (cdk_stream_t out, cdk_pkt_symkey_enc_t ske)
-{
-  cdk_s2k_t s2k;
-  size_t size = 0, s2k_size = 0;
-  cdk_error_t rc;
-
-  assert (out);
-  assert (ske);
-
-  if (ske->version != 4)
-    return CDK_Inv_Packet;
-  
-  if (DEBUG_PKT)
-    _cdk_log_debug ("write_symkey_enc:\n");
-  
-  s2k = ske->s2k;
-  if (s2k->mode == CDK_S2K_SALTED || s2k->mode == CDK_S2K_ITERSALTED)
-    s2k_size = 8;
-  if (s2k->mode == CDK_S2K_ITERSALTED)
-    s2k_size++;
-  size = 4 + s2k_size + ske->seskeylen;
-  rc = pkt_write_head (out, 0, size, CDK_PKT_SYMKEY_ENC);
-  if (!rc)
-    rc = stream_putc (out, ske->version);
-  if (!rc)
-    rc = stream_putc (out, ske->cipher_algo);
-  if (!rc)
-    rc = stream_putc (out, s2k->mode);
-  if (!rc)
-    rc = stream_putc (out, s2k->hash_algo);
-  if (s2k->mode == CDK_S2K_SALTED || s2k->mode == CDK_S2K_ITERSALTED)
-    {
-      rc = stream_write (out, s2k->salt, 8);
-      if (!rc) 
-	{
-	  if (s2k->mode == CDK_S2K_ITERSALTED)
-	    rc = stream_putc (out, s2k->count);
-	}
-    }
-  return rc;
-}
-
-
 static int
 write_pubkey_enc (cdk_stream_t out, cdk_pkt_pubkey_enc_t pke, int old_ctb)
 {
@@ -851,15 +764,6 @@ cdk_pkt_write (cdk_stream_t out, cdk_packet_t pkt)
       break;
     case CDK_PKT_MDC:
       rc = write_mdc (out, pkt->pkt.mdc);
-      break;
-    case CDK_PKT_SYMKEY_ENC:
-      rc = write_symkey_enc (out, pkt->pkt.symkey_enc);
-      break;
-    case CDK_PKT_ENCRYPTED:
-      rc = write_encrypted (out, pkt->pkt.encrypted, pkt->old_ctb);
-      break;
-    case CDK_PKT_ENCRYPTED_MDC:
-      rc = write_encrypted_mdc (out, pkt->pkt.encrypted);
       break;
     case CDK_PKT_PUBKEY_ENC:
       rc = write_pubkey_enc (out, pkt->pkt.pubkey_enc, pkt->old_ctb);

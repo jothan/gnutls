@@ -278,7 +278,6 @@ is_armored (int ctb)
   switch (pkttype)
     {
     case CDK_PKT_MARKER:
-    case CDK_PKT_SYMKEY_ENC:
     case CDK_PKT_ONEPASS_SIG:
     case CDK_PKT_PUBLIC_KEY:
     case CDK_PKT_SECRET_KEY:
@@ -286,7 +285,6 @@ is_armored (int ctb)
     case CDK_PKT_SIGNATURE:
     case CDK_PKT_LITERAL:
     case CDK_PKT_COMPRESSED:
-    case CDK_PKT_ENCRYPTED:
       return 0; /* seems to be a regular packet: not armored */
     }
   return 1;

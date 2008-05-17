@@ -1114,47 +1114,6 @@ cdk_stream_set_literal_flag (cdk_stream_t s, cdk_lit_format_t mode,
 
 
 /**
- * cdk_stream_set_cipher_flag:
- * @s: the stream object
- * @dek: the data encryption key
- * @use_mdc: 1 means to use the MDC mode
- * 
- * In read mode it kicks off the cipher filter to decrypt the data
- * from the stream with the key given in @dek.
- * In write mode the stream data will be encrypted with the DEK object
- * and optionally, the @use_mdc parameter can be used to enable the MDC mode.
- **/
-cdk_error_t
-cdk_stream_set_cipher_flag (cdk_stream_t s, cdk_dek_t dek, int use_mdc)
-{
-  
-  _cdk_log_debug ("stream: enable cipher mode\n");
-  if (!s)
-    return CDK_Inv_Value;
-
-#if 0
-  struct stream_filter_s * f;
-
-  f = filter_add (s, _cdk_filter_cipher, fCIPHER);
-  if (!f)
-    return CDK_Out_Of_Core;
-  dek->use_mdc = use_mdc;
-  f->ctl = stream_get_mode (s);
-  f->u.cfx.dek = dek;
-  f->u.cfx.mdc_method = use_mdc? GCRY_MD_SHA1 : 0;
-  if (s->blkmode > 0)
-    {
-      f->u.cfx.blkmode.on = 1;
-      f->u.cfx.blkmode.size = s->blkmode;
-    }
-  return 0;
-#endif
-
-  return CDK_Not_Implemented;
-}
-
-
-/**
  * cdk_stream_set_compress_flag:
  * @s: the stream object
  * @algo: the compression algo
