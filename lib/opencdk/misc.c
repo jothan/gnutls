@@ -174,6 +174,18 @@ _cdk_map_gcry_error (gcry_error_t err)
   return (cdk_error_t)err;
 }
 
+cdk_error_t
+_cdk_map_gnutls_error (int err)
+{
+  switch (err)
+    {
+    case 0: return CDK_Success;
+    case GNUTLS_E_INVALID_REQUEST: return CDK_Inv_Value;
+    default:
+      return CDK_General_Error;
+    }
+}
+
 
 /* Remove all trailing white spaces from the string. */
 void

@@ -320,8 +320,8 @@ armor_encode (void *opaque, FILE *in, FILE *out)
   
   if (!afx)
     return CDK_Inv_Value;
-  if (afx->idx < 0 || afx->idx > DIM (armor_begin) ||
-      afx->idx2 < 0 || afx->idx2 > DIM (armor_end))
+  if (afx->idx < 0 || afx->idx > (int)DIM (armor_begin) ||
+      afx->idx2 < 0 || afx->idx2 > (int)DIM (armor_end))
         return CDK_Inv_Value;
 
   _cdk_log_debug ("armor filter: encode\n");

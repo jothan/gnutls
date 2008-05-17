@@ -27,10 +27,6 @@
 #include <gcrypt.h>
 #include "types.h"
 
-#include <gnutls_mem.h>
-#include <gnutls/gnutls.h>
-#include <gnutls_errors.h>
-
 #define _cdk_log_debug _gnutls_debug_log
 #define _cdk_log_info _gnutls_x509_log
 #define _cdk_get_log_level() _gnutls_log_level
@@ -41,6 +37,10 @@
 #define cdk_realloc gnutls_realloc_fast
 #define cdk_strdup gnutls_strdup
 #define cdk_salloc gnutls_secure_calloc
+
+#define map_gnutls_error _cdk_map_gnutls_error
+
+cdk_error_t map_gnutls_error(int err);
 
 /* The general size of a buffer for the variou modules. */
 #define BUFSIZE 8192
@@ -110,7 +110,7 @@ cdk_error_t _cdk_map_gcry_error (gcry_error_t err);
 cdk_error_t _cdk_proc_packets (cdk_ctx_t hd, cdk_stream_t inp,
 			       cdk_stream_t data,
 			       const char *output, cdk_stream_t outstream,
-			       gcry_md_hd_t md);
+			       digest_hd_st*md);
 cdk_error_t _cdk_pkt_write2 (cdk_stream_t out, int pkttype, void *pktctx);
 
 /*-- pubkey.c --*/
@@ -127,10 +127,10 @@ void _cdk_pkt_detach_free (cdk_packet_t pkt, int *r_pkttype, void **ctx);
 
 /*-- sig-check.c --*/
 cdk_error_t _cdk_sig_check (cdk_pkt_pubkey_t pk, cdk_pkt_signature_t sig,
-			    gcry_md_hd_t digest, int * r_expired);
-cdk_error_t _cdk_hash_sig_data (cdk_pkt_signature_t sig, gcry_md_hd_t hd);
-cdk_error_t _cdk_hash_userid (cdk_pkt_userid_t uid, int sig_version, gcry_md_hd_t md);
-cdk_error_t _cdk_hash_pubkey (cdk_pkt_pubkey_t pk, gcry_md_hd_t md, 
+			    digest_hd_st*digest, int * r_expired);
+cdk_error_t _cdk_hash_sig_data (cdk_pkt_signature_t sig, digest_hd_st*hd);
+cdk_error_t _cdk_hash_userid (cdk_pkt_userid_t uid, int sig_version, digest_hd_st*md);
+cdk_error_t _cdk_hash_pubkey (cdk_pkt_pubkey_t pk, digest_hd_st *md, 
 			      int use_fpr);
 cdk_error_t _cdk_pk_check_sig (cdk_keydb_hd_t hd,
 			       cdk_kbnode_t knode, 
@@ -161,7 +161,7 @@ int _cdk_sig_hash_for (cdk_pkt_pubkey_t pk);
 void _cdk_trim_string (char * s, int canon);
 cdk_error_t _cdk_sig_create (cdk_pkt_pubkey_t pk, cdk_pkt_signature_t sig);
 cdk_error_t _cdk_sig_complete (cdk_pkt_signature_t sig, cdk_pkt_seckey_t sk,
-			       gcry_md_hd_t hd);
+			       digest_hd_st *hd);
 
 /*-- stream.c --*/
 void _cdk_stream_set_compress_algo (cdk_stream_t s, int algo);   

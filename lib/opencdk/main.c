@@ -42,7 +42,7 @@
    Even if AES and SHA-256 are not 'MUST' in the latest
    OpenPGP draft, AES seems to be a good choice. */
 #define DEFAULT_CIPHER_ALGO GCRY_CIPHER_AES
-#define DEFAULT_DIGEST_ALGO GCRY_MD_SHA256
+#define DEFAULT_DIGEST_ALGO GNUTLS_DIG_SHA256
 
 /**
  * cdk_strerror:
@@ -118,7 +118,7 @@ handle_set_digest (cdk_ctx_t hd, int digest)
 {
   if (!hd)
     return;
-  if (gcry_md_test_algo (digest))
+  if (_gnutls_hash_get_algo_len (digest) <= 0)
     digest = DEFAULT_DIGEST_ALGO;
   hd->digest_algo = digest;   
 }
@@ -131,7 +131,7 @@ handle_set_s2k (cdk_ctx_t hd, int mode, int digest, int cipher)
     return;
   if (gcry_cipher_test_algo (cipher))
     cipher = DEFAULT_CIPHER_ALGO;
-  if (gcry_md_test_algo (digest))
+  if (_gnutls_hash_get_algo_len (digest) <= 0)
     digest = DEFAULT_DIGEST_ALGO;
   if (mode != CDK_S2K_SIMPLE &&
       mode != CDK_S2K_SALTED &&

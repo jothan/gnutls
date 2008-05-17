@@ -142,7 +142,7 @@ digest_to_sexp (gcry_sexp_t *r_md_sexp, int digest_algo,
     return CDK_Inv_Value;
 
   if (!mdlen)
-    mdlen = gcry_md_get_algo_dlen (digest_algo);
+    mdlen = _gnutls_hash_get_algo_len (digest_algo);
   if (!mdlen)
     return CDK_Inv_Algo;
   
@@ -761,7 +761,7 @@ cdk_sk_unprotect (cdk_pkt_seckey_t sk, const char *pw)
 	     with the key as used by the Klima/Rosa attack */
 	  sk->csum = 0;
 	  chksum = 1;
-	  dlen = gcry_md_get_algo_dlen (GCRY_MD_SHA1);
+	  dlen = _gnutls_hash_get_algo_len (GNUTLS_DIG_SHA1);
 	  if (ndata < dlen) 
 	    {
 	      cdk_free (data);
@@ -770,9 +770,19 @@ cdk_sk_unprotect (cdk_pkt_seckey_t sk, const char *pw)
 	  else 
 	    {
 	      byte mdcheck[20];
+	      digest_hd_st md;
+	      int err;
 	      
-	      gcry_md_hash_buffer (GCRY_MD_SHA1, 
-				   mdcheck, data, ndata-dlen);
+	      err = _gnutls_hash_init( &md, GNUTLS_DIG_SHA1);
+	      if (err < 0)
+	        {
+	           cdk_free (data);
+	           return CDK_Inv_Packet;
+                }
+
+	      _gnutls_hash( &md, data, ndata-dlen);
+	      _gnutls_hash_deinit( &md, mdcheck);
+
 	      if (!memcmp (mdcheck, data + ndata - dlen, dlen))
 		chksum = 0;	/* Digest does match */
 	    }
@@ -842,10 +852,11 @@ cdk_sk_protect (cdk_pkt_seckey_t sk, const char *pw)
   gcry_cipher_hd_t hd = NULL;
   cdk_dek_t dek = NULL;
   cdk_s2k_t s2k;
+  digest_hd_st md;
   byte *p = NULL, buf[MAX_MPI_BYTES+2];
   size_t enclen = 0, nskey, i, nbytes;
-  size_t dlen = gcry_md_get_algo_dlen (GCRY_MD_SHA1);
-  gcry_error_t err;
+  size_t dlen = _gnutls_hash_get_algo_len (GNUTLS_DIG_SHA1);
+  int err;
   cdk_error_t rc;
   
   nskey = cdk_pk_get_nskey (sk->pubkey_algo);
@@ -915,8 +926,17 @@ cdk_sk_protect (cdk_pkt_seckey_t sk, const char *pw)
   sk->protect.sha1chk = 1;
   sk->is_protected = 1;
   sk->csum = 0;
-  
-  gcry_md_hash_buffer (GCRY_MD_SHA1, buf, p, enclen-dlen);
+
+  err = _gnutls_hash_init( &md, GNUTLS_DIG_SHA1);
+  if (err < 0)
+    {
+	rc = map_gnutls_error(err);
+	goto leave;
+    }
+
+  _gnutls_hash( &md, p, enclen-dlen);
+  _gnutls_hash_deinit( &md, buf);
+
   memcpy (p + enclen - dlen, buf, dlen);
   gcry_cipher_encrypt (hd, p, enclen, NULL, 0);
   
@@ -943,64 +963,6 @@ cdk_pk_from_secret_key (cdk_pkt_seckey_t sk, cdk_pubkey_t *ret_pk)
   return _cdk_copy_pubkey (ret_pk, sk->pk);
 }
 
-
-#if 0 /* FIXME: Code is not finished yet. */
-cdk_error_t
-cdk_pk_revoke_cert_create (cdk_pkt_seckey_t sk, int code, const char *inf,
-			   char **ret_revcert)
-{
-  gcry_md_hd_t md;
-  cdk_subpkt_t node;
-  cdk_pkt_signature_t sig;
-  char *p = NULL, *dat;
-  gcry_error_t err;
-  cdk_error_t rc = 0;
-  size_t n;
-  
-  if (!sk || !ret_revcert)
-    return CDK_Inv_Value;
-  if(code < 0 || code > 3)
-    return CDK_Inv_Value;
-  
-  sig = cdk_calloc (1, sizeof *sig);
-  if (!sig)
-    return CDK_Out_Of_Core;
-  _cdk_sig_create (sk->pk, sig);
-  n = 1;
-  if (inf) 
-    {
-      n += strlen (p);
-      p = cdk_utf8_encode (inf);
-    }
-  dat = cdk_calloc (1, n+1);
-  if (!dat)
-    {
-      _cdk_free_signature (sig);
-      return CDK_Out_Of_Core;
-    }
-  dat[0] = code;
-  if (inf)
-    memcpy (dat+1, p, strlen (p));
-  cdk_free (p);
-  
-  node = cdk_subpkt_new (n);
-  if (node)
-    {
-      cdk_subpkt_init (node, CDK_SIGSUBPKT_REVOC_REASON, dat, n);
-      cdk_subpkt_add (sig->hashed, node);
-    }
-  cdk_free (dat);
-  
-  err = gcry_md_open (&md, GCRY_MD_SHA1, 0);
-  if (err)
-    rc = map_gcry_error (err);
-  else
-    _cdk_hash_pubkey (sk->pk, md, 0);
-  _cdk_free_signature (sig);
-  
-  return rc;
-}
-#endif
 
 int
 _cdk_sk_get_csum (cdk_pkt_seckey_t sk)
@@ -1029,26 +991,24 @@ _cdk_sk_get_csum (cdk_pkt_seckey_t sk)
 cdk_error_t
 cdk_pk_get_fingerprint (cdk_pubkey_t pk, byte *fpr)
 {
-  gcry_md_hd_t hd;
+  digest_hd_st hd;
   int md_algo;
   int dlen = 0;
-  gcry_error_t err;
+  int err;
 
   if (!pk || !fpr)
     return CDK_Inv_Value;
   
   if (pk->version < 4 && is_RSA (pk->pubkey_algo))
-    md_algo = GCRY_MD_MD5; /* special */
+    md_algo = GNUTLS_DIG_MD5; /* special */
   else
-    md_algo = GCRY_MD_SHA1;
-  dlen = gcry_md_get_algo_dlen (md_algo);
-  err = gcry_md_open (&hd, md_algo, 0);
-  if (err)
-    return map_gcry_error (err);
-  _cdk_hash_pubkey (pk, hd, 1);
-  gcry_md_final (hd);
-  memcpy (fpr, gcry_md_read (hd, md_algo), dlen);
-  gcry_md_close (hd);
+    md_algo = GNUTLS_DIG_SHA1;
+  dlen = _gnutls_hash_get_algo_len (md_algo);
+  err = _gnutls_hash_init (&hd, md_algo);
+  if (err < 0)
+    return map_gnutls_error (err);
+  _cdk_hash_pubkey (pk, &hd, 1);
+  _gnutls_hash_deinit( &hd, fpr);
   if (dlen == 16)
     memset (fpr + 16, 0, 4);
   return 0;

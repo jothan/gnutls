@@ -131,8 +131,8 @@ literal_decode (void *opaque, FILE *in, FILE *out)
 	  rc = CDK_File_Error;
 	  break;
 	}
-      if (pfx->md)
-	gcry_md_write (pfx->md, buf, nread);
+      if (pfx->md_initialized)
+	_gnutls_hash (&pfx->md, buf, nread);
       cdk_stream_write (so, buf, nread);
       pt->len -= nread;
       if (pfx->blkmode.on)

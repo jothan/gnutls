@@ -821,7 +821,7 @@ _cdk_stream_get_opaque (cdk_stream_t s, int fid)
   
   for (f = s->filters; f; f = f->next)
     {
-      if (f->type == fid)
+      if ((int)f->type == fid)
 	return f->opaque;
     }
   return NULL;

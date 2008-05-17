@@ -28,6 +28,11 @@
 #include <stddef.h> /* for size_t */
 #include <stdarg.h>
 #include <gcrypt.h>
+#include <gnutls_int.h>
+#include <gnutls_mem.h>
+#include <gnutls/gnutls.h>
+#include <gnutls_errors.h>
+#include <gnutls_hash_int.h>
 
 /* The OpenCDK version as a string. */
 #define OPENCDK_VERSION "0.6.6"
@@ -1004,7 +1009,7 @@ cdk_kbnode_t cdk_kbnode_find (cdk_kbnode_t node, cdk_packet_type_t pkttype);
 cdk_kbnode_t cdk_kbnode_find_prev (cdk_kbnode_t root, cdk_kbnode_t node,
                                    cdk_packet_type_t pkttype);
 cdk_kbnode_t cdk_kbnode_find_next (cdk_kbnode_t node, cdk_packet_type_t pkttype);
-cdk_error_t cdk_kbnode_hash (cdk_kbnode_t node, gcry_md_hd_t md, int is_v4,
+cdk_error_t cdk_kbnode_hash (cdk_kbnode_t node, digest_hd_st* md, int is_v4,
                              cdk_packet_type_t pkttype, int flags);
 
 /* Check each signature in the key node and return a summary of the
@@ -1038,7 +1043,7 @@ cdk_error_t cdk_sklist_build (cdk_keylist_t * ret_skl,
                               int unlock, unsigned int use);
 void cdk_sklist_release (cdk_keylist_t skl);
 cdk_error_t cdk_sklist_write (cdk_keylist_t skl, cdk_stream_t outp,
-                              gcry_md_hd_t mdctx,
+                              digest_hd_st* mdctx,
                               int sigclass, int sigver);
 cdk_error_t cdk_sklist_write_onepass (cdk_keylist_t skl, cdk_stream_t outp,
                                       int sigclass, int mdalgo);

@@ -37,7 +37,7 @@
 /* Hash all multi precision integers of the key PK with the given
    message digest context MD. */
 static int
-hash_mpibuf (cdk_pubkey_t pk, gcry_md_hd_t md, int usefpr)
+hash_mpibuf (cdk_pubkey_t pk, digest_hd_st* md, int usefpr)
 {
   byte buf[MAX_MPI_BYTES]; /* FIXME: do not use hardcoded length. */
   size_t nbytes;
@@ -55,9 +55,9 @@ hash_mpibuf (cdk_pubkey_t pk, gcry_md_hd_t md, int usefpr)
       if (err)
 	return map_gcry_error (err);
       if (!usefpr || pk->version == 4)
-	gcry_md_write (md, buf, nbytes);
+        _gnutls_hash( md, buf, nbytes);
       else /* without the prefix. */
-	gcry_md_write (md, buf + 2, nbytes - 2);
+        _gnutls_hash( md, buf+2, nbytes - 2);
     }
   return 0;
 }
@@ -67,7 +67,7 @@ hash_mpibuf (cdk_pubkey_t pk, gcry_md_hd_t md, int usefpr)
    MD. The @usefpr param is only valid for version 3 keys because of
    the different way to calculate the fingerprint. */
 cdk_error_t
-_cdk_hash_pubkey (cdk_pubkey_t pk, gcry_md_hd_t md, int usefpr)
+_cdk_hash_pubkey (cdk_pubkey_t pk, digest_hd_st* md, int usefpr)
 {
   byte buf[12];
   size_t i, n, npkey;
@@ -106,7 +106,7 @@ _cdk_hash_pubkey (cdk_pubkey_t pk, gcry_md_hd_t md, int usefpr)
       buf[i++] = a;
     }
   buf[i++] = pk->pubkey_algo;
-  gcry_md_write (md, buf, i);
+  _gnutls_hash( md, buf, i);
   return hash_mpibuf (pk, md, 0);
 }
 
@@ -114,7 +114,7 @@ _cdk_hash_pubkey (cdk_pubkey_t pk, gcry_md_hd_t md, int usefpr)
 /* Hash the user ID @uid with the given message digest @md.
    Use openpgp mode if @is_v4 is 1. */
 cdk_error_t
-_cdk_hash_userid (cdk_pkt_userid_t uid, int is_v4, gcry_md_hd_t md)
+_cdk_hash_userid (cdk_pkt_userid_t uid, int is_v4, digest_hd_st* md)
 {
   const byte *data;
   byte buf[5];
@@ -125,7 +125,7 @@ _cdk_hash_userid (cdk_pkt_userid_t uid, int is_v4, gcry_md_hd_t md)
 
   if (!is_v4)
     {
-      gcry_md_write (md, (byte*)uid->name, uid->len);
+      _gnutls_hash (md, (byte*)uid->name, uid->len);
       return 0;
     }
   
@@ -136,8 +136,8 @@ _cdk_hash_userid (cdk_pkt_userid_t uid, int is_v4, gcry_md_hd_t md)
   buf[2] = dlen >> 16;
   buf[3] = dlen >>  8;
   buf[4] = dlen >>  0;
-  gcry_md_write (md, buf, 5);
-  gcry_md_write (md, data, dlen);
+  _gnutls_hash (md, buf, 5);
+  _gnutls_hash (md, data, dlen);
   return 0;
 }
 
@@ -145,55 +145,59 @@ _cdk_hash_userid (cdk_pkt_userid_t uid, int is_v4, gcry_md_hd_t md)
 /* Hash all parts of the signature which are needed to derive
    the correct message digest to verify the sig. */
 cdk_error_t
-_cdk_hash_sig_data (cdk_pkt_signature_t sig, gcry_md_hd_t md)
+_cdk_hash_sig_data (cdk_pkt_signature_t sig, digest_hd_st* md)
 {
   byte buf[4];
+  byte tmp;
   
   if (!sig || !md)
     return CDK_Inv_Value;
   
   if (sig->version == 4)
-    gcry_md_putc (md, sig->version);
-  gcry_md_putc (md, sig->sig_class);
+    _gnutls_hash(md, &sig->version, 1);
+
+  _gnutls_hash(md, &sig->sig_class, 1);
   if (sig->version < 4) 
     {
       buf[0] = sig->timestamp >> 24;
       buf[1] = sig->timestamp >> 16;
       buf[2] = sig->timestamp >>  8;
       buf[3] = sig->timestamp >>  0;
-      gcry_md_write (md, buf, 4);
+      _gnutls_hash( md, buf, 4);
     }
   else
     {
       size_t n;
-      
-      gcry_md_putc (md, sig->pubkey_algo);
-      gcry_md_putc (md, sig->digest_algo);
+
+      _gnutls_hash( md, &sig->pubkey_algo, 1);
+      _gnutls_hash( md, &sig->digest_algo, 1);
       if (sig->hashed != NULL)
 	{
 	  byte *p = _cdk_subpkt_get_array (sig->hashed, 0, &n);
 	  assert (p != NULL);
 	  buf[0] = n >> 8;
 	  buf[1] = n >> 0;
-	  gcry_md_write (md, buf, 2);
-	  gcry_md_write (md, p, n);
+	  _gnutls_hash(md, buf, 2);
+	  _gnutls_hash(md, p, n);
 	  cdk_free (p);
 	  sig->hashed_size = n;
 	  n = sig->hashed_size + 6;
 	}
       else 
 	{
-	  gcry_md_putc (md, 0x00);
-	  gcry_md_putc (md, 0x00);
+	  tmp = 0x00;
+	  _gnutls_hash (md, &tmp, 1);
+	  _gnutls_hash (md, &tmp, 1);
 	  n = 6;
 	}
-      gcry_md_putc (md, sig->version);
-      gcry_md_putc (md, 0xFF);      
+      _gnutls_hash(md, &sig->version, 1);
+      tmp = 0xff;
+      _gnutls_hash(md, &tmp, 1); 
       buf[0] = n >> 24;
       buf[1] = n >> 16;
       buf[2] = n >>  8;      
       buf[3] = n >>  0;
-      gcry_md_write (md, buf, 4);
+      _gnutls_hash(md, buf, 4);
     }
   return 0;
 }
@@ -222,11 +226,11 @@ cache_sig_result (cdk_pkt_signature_t sig, int res)
    Use the digest handle @digest. */
 cdk_error_t
 _cdk_sig_check (cdk_pubkey_t pk, cdk_pkt_signature_t sig,
-                gcry_md_hd_t digest, int *r_expired)
+                digest_hd_st* digest, int *r_expired)
 {
   cdk_error_t rc;
   byte md[MAX_DIGEST_LEN];
-  time_t cur_time = (u32)time (NULL);  
+  time_t cur_time = (u32)time (NULL);
 
   if (!pk || !sig || !digest)
     return CDK_Inv_Value;
@@ -243,9 +247,7 @@ _cdk_sig_check (cdk_pubkey_t pk, cdk_pkt_signature_t sig,
     *r_expired = 1;
 
   _cdk_hash_sig_data (sig, digest);
-  gcry_md_final (digest);
-  memcpy (md, gcry_md_read (digest, sig->digest_algo),
-	  gcry_md_get_algo_dlen (sig->digest_algo));
+  _gnutls_hash_output( digest, md);
   
   if (md[0] != sig->digest_start[0] || 
       md[1] != sig->digest_start[1])
@@ -263,8 +265,8 @@ cdk_error_t
 _cdk_pk_check_sig (cdk_keydb_hd_t keydb, 
 		   cdk_kbnode_t knode, cdk_kbnode_t snode, int *is_selfsig)
 {
-  gcry_md_hd_t md;
-  gcry_error_t err;
+  digest_hd_st md;
+  int err;
   cdk_pubkey_t pk;
   cdk_pkt_signature_t sig;
   cdk_kbnode_t node;
@@ -282,15 +284,15 @@ _cdk_pk_check_sig (cdk_keydb_hd_t keydb,
   pk = knode->pkt->pkt.public_key;
   sig = snode->pkt->pkt.signature;
   
-  err = gcry_md_open (&md, sig->digest_algo, 0);  
-  if (err)
-    return map_gcry_error (err);
+  err = _gnutls_hash_init(&md, sig->digest_algo);
+  if (err < 0)
+    return map_gnutls_error (err);
 
   is_expired = 0;
   if (sig->sig_class == 0x20)
     { /* key revocation */
-      cdk_kbnode_hash (knode, md, 0, 0, 0);
-      rc = _cdk_sig_check (pk, sig, md, &is_expired);
+      cdk_kbnode_hash (knode, &md, 0, 0, 0);
+      rc = _cdk_sig_check (pk, sig, &md, &is_expired);
     }
   else if (sig->sig_class == 0x28)
     { /* subkey revocation */
@@ -300,9 +302,9 @@ _cdk_pk_check_sig (cdk_keydb_hd_t keydb,
 	  rc = CDK_Error_No_Key;
 	  goto fail;
 	}
-      cdk_kbnode_hash (knode, md, 0, 0, 0);
-      cdk_kbnode_hash (node, md, 0, 0, 0);
-      rc = _cdk_sig_check (pk, sig, md, &is_expired);
+      cdk_kbnode_hash (knode, &md, 0, 0, 0);
+      cdk_kbnode_hash (node, &md, 0, 0, 0);
+      rc = _cdk_sig_check (pk, sig, &md, &is_expired);
     }
   else if (sig->sig_class == 0x18 || sig->sig_class == 0x19)
     { /* primary/secondary key binding */
@@ -312,14 +314,14 @@ _cdk_pk_check_sig (cdk_keydb_hd_t keydb,
 	  rc = CDK_Error_No_Key;
 	  goto fail;
 	}
-      cdk_kbnode_hash (knode, md, 0, 0, 0);
-      cdk_kbnode_hash (node, md, 0, 0, 0);
-      rc = _cdk_sig_check (pk, sig, md, &is_expired);
+      cdk_kbnode_hash (knode, &md, 0, 0, 0);
+      cdk_kbnode_hash (node, &md, 0, 0, 0);
+      rc = _cdk_sig_check (pk, sig, &md, &is_expired);
     }
   else if (sig->sig_class == 0x1F)
     { /* direct key signature */
-      cdk_kbnode_hash (knode, md, 0, 0, 0);
-      rc = _cdk_sig_check (pk, sig, md, &is_expired);
+      cdk_kbnode_hash (knode, &md, 0, 0, 0);
+      rc = _cdk_sig_check (pk, sig, &md, &is_expired);
     }
   else 
     { /* all other classes */
@@ -329,26 +331,25 @@ _cdk_pk_check_sig (cdk_keydb_hd_t keydb,
 	  rc = CDK_Error_No_Key;
 	  goto fail;
 	}
-      cdk_kbnode_hash (knode, md, 0, 0, 0);
-      cdk_kbnode_hash (node, md, sig->version==4, 0, 0);
+      cdk_kbnode_hash (knode, &md, 0, 0, 0);
+      cdk_kbnode_hash (node, &md, sig->version==4, 0, 0);
       if (pk->keyid[0] == sig->keyid[0] && pk->keyid[1] == sig->keyid[1])
 	{
-	  rc = _cdk_sig_check (pk, sig, md, &is_expired);
+	  rc = _cdk_sig_check (pk, sig, &md, &is_expired);
 	  if (is_selfsig)
 	    *is_selfsig = 1;
 	}
       else if (keydb != NULL)
 	{
 	  cdk_pubkey_t sig_pk;
-	  
 	  rc = cdk_keydb_get_pk (keydb, sig->keyid, &sig_pk);
 	  if (!rc)
-	    rc = _cdk_sig_check (sig_pk, sig, md, &is_expired);
+	    rc = _cdk_sig_check (sig_pk, sig, &md, &is_expired);
 	  cdk_pk_release (sig_pk);
 	}
     }
   fail:
-  gcry_md_close (md);
+  _gnutls_hash_deinit( &md, NULL);
   return rc;
 }
 
