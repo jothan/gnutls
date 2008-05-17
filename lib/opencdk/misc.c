@@ -31,6 +31,7 @@
 
 #include "opencdk.h"
 #include "main.h"
+#include "../random.h"
 
 
 u32
@@ -230,7 +231,7 @@ my_tmpfile (void)
   FILE *fp;
   int fd, i;
   
-  gcry_create_nonce (rnd, DIM (rnd));
+  _gnutls_rnd( GNUTLS_RND_NONCE, rnd, DIM(rnd));
   for (i=0; i < DIM (rnd)-1; i++)
     {
       char c = letters[(unsigned char)rnd[i] % 26];
