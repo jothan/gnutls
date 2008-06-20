@@ -22,6 +22,8 @@
  *
  */
 
+#if INTERNAL_GNUTLS_CRYPTO_H_ENABLE_UNSUPPORTED_API
+
 #ifndef GNUTLS_CRYPTO_H
 # define GNUTLS_CRYPTO_H
 
@@ -213,5 +215,7 @@ int gnutls_crypto_digest_register2( int priority, int version, gnutls_crypto_dig
 int gnutls_crypto_rnd_register2( int priority, int version, gnutls_crypto_rnd_st* s);
 int gnutls_crypto_pk_register2( int priority, int version, gnutls_crypto_pk_st* s);
 int gnutls_crypto_bigint_register2( int priority, int version, gnutls_crypto_bigint_st* s);
+
+#endif
 
 #endif

@@ -40,7 +40,8 @@
   *
   * This function will initialize an X.509 certificate structure.
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   **/
 int
@@ -74,7 +75,8 @@ gnutls_x509_crt_init (gnutls_x509_crt_t * cert)
   *
   * This function will copy an X.509 certificate structure. 
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   -*/
 int
@@ -154,7 +156,8 @@ gnutls_x509_crt_deinit (gnutls_x509_crt_t cert)
   * If the Certificate is PEM encoded it should have a header of "X509 CERTIFICATE", or
   * "CERTIFICATE".
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   **/
 int
@@ -233,7 +236,7 @@ cleanup:
 
 /**
   * gnutls_x509_crt_get_issuer_dn - This function returns the Certificate's issuer distinguished name
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @buf: a pointer to a structure to hold the name (may be null)
   * @sizeof_buf: initially holds the size of @buf
   *
@@ -244,7 +247,7 @@ cleanup:
   *
   * If @buf is null then only the size will be filled.
   *
-  * Returns GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
+  * Returns: GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
   * long enough, and in that case the *sizeof_buf will be updated with
   * the required size.  On success 0 is returned.
   *
@@ -266,7 +269,7 @@ gnutls_x509_crt_get_issuer_dn (gnutls_x509_crt_t cert, char *buf,
 
 /**
   * gnutls_x509_crt_get_issuer_dn_by_oid - This function returns the Certificate's issuer distinguished name
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @oid: holds an Object Identified in null terminated string
   * @indx: In case multiple same OIDs exist in the RDN, this specifies which to send. Use zero to get the first one.
   * @raw_flag: If non zero returns the raw DER data of the DN part.
@@ -286,7 +289,7 @@ gnutls_x509_crt_get_issuer_dn (gnutls_x509_crt_t cert, char *buf,
   *
   * If @buf is null then only the size will be filled.
   *
-  * Returns GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
+  * Returns: GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
   * long enough, and in that case the *sizeof_buf will be updated with
   * the required size.  On success 0 is returned.
   *
@@ -310,7 +313,7 @@ gnutls_x509_crt_get_issuer_dn_by_oid (gnutls_x509_crt_t cert,
 
 /**
   * gnutls_x509_crt_get_issuer_dn_oid - This function returns the Certificate's issuer distinguished name OIDs
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @indx: This specifies which OID to return. Use zero to get the first one.
   * @oid: a pointer to a buffer to hold the OID (may be null)
   * @sizeof_oid: initially holds the size of @oid
@@ -320,7 +323,7 @@ gnutls_x509_crt_get_issuer_dn_by_oid (gnutls_x509_crt_t cert,
   *
   * If @oid is null then only the size will be filled.
   *
-  * Returns GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
+  * Returns: GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
   * long enough, and in that case the *sizeof_oid will be updated with
   * the required size.  On success 0 is returned.
   *
@@ -342,7 +345,7 @@ gnutls_x509_crt_get_issuer_dn_oid (gnutls_x509_crt_t cert,
 
 /**
   * gnutls_x509_crt_get_dn - This function returns the Certificate's distinguished name
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @buf: a pointer to a structure to hold the name (may be null)
   * @sizeof_buf: initially holds the size of @buf
   *
@@ -353,7 +356,7 @@ gnutls_x509_crt_get_issuer_dn_oid (gnutls_x509_crt_t cert,
   *
   * If @buf is null then only the size will be filled.
   *
-  * Returns GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
+  * Returns: GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
   * long enough, and in that case the *sizeof_buf will be updated with
   * the required size.  On success 0 is returned.
   *
@@ -375,7 +378,7 @@ gnutls_x509_crt_get_dn (gnutls_x509_crt_t cert, char *buf,
 
 /**
   * gnutls_x509_crt_get_dn_by_oid - This function returns the Certificate's distinguished name
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @oid: holds an Object Identified in null terminated string
   * @indx: In case multiple same OIDs exist in the RDN, this specifies which to send. Use zero to get the first one.
   * @raw_flag: If non zero returns the raw DER data of the DN part.
@@ -395,7 +398,7 @@ gnutls_x509_crt_get_dn (gnutls_x509_crt_t cert, char *buf,
   *
   * If @buf is null then only the size will be filled.
   *
-  * Returns GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
+  * Returns: GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
   * long enough, and in that case the *sizeof_buf will be updated with
   * the required size.  On success 0 is returned.
   *
@@ -418,7 +421,7 @@ gnutls_x509_crt_get_dn_by_oid (gnutls_x509_crt_t cert, const char *oid,
 
 /**
   * gnutls_x509_crt_get_dn_oid - This function returns the Certificate's subject distinguished name OIDs
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @indx: This specifies which OID to return. Use zero to get the first one.
   * @oid: a pointer to a buffer to hold the OID (may be null)
   * @sizeof_oid: initially holds the size of @oid
@@ -428,7 +431,7 @@ gnutls_x509_crt_get_dn_by_oid (gnutls_x509_crt_t cert, const char *oid,
   *
   * If oid is null then only the size will be filled.
   *
-  * Returns GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
+  * Returns: GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
   * long enough, and in that case the *sizeof_oid will be updated with
   * the required size.  On success 0 is returned.
   *
@@ -450,13 +453,13 @@ gnutls_x509_crt_get_dn_oid (gnutls_x509_crt_t cert,
 
 /**
   * gnutls_x509_crt_get_signature_algorithm - This function returns the Certificate's signature algorithm
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   *
-  * This function will return a value of the gnutls_sign_algorithm_t enumeration that 
-  * is the signature algorithm. 
+  * This function will return a value of the #gnutls_sign_algorithm_t
+  * enumeration that is the signature algorithm.
   *
-  * Returns a negative value on error.
-  *
+  * Returns: a #gnutls_sign_algorithm_t value, or a negative value on
+  *   error.
   **/
 int
 gnutls_x509_crt_get_signature_algorithm (gnutls_x509_crt_t cert)
@@ -492,13 +495,14 @@ gnutls_x509_crt_get_signature_algorithm (gnutls_x509_crt_t cert)
 
 /**
  * gnutls_x509_crt_get_signature - Returns the Certificate's signature
- * @cert: should contain a gnutls_x509_crt_t structure
+ * @cert: should contain a #gnutls_x509_crt_t structure
  * @sig: a pointer where the signature part will be copied (may be null).
  * @sizeof_sig: initially holds the size of @sig
  *
  * This function will extract the signature field of a certificate.
  *
- * Returns 0 on success, and a negative value on error.
+ * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+ *   negative error value. and a negative value on error.
  **/
 int
 gnutls_x509_crt_get_signature (gnutls_x509_crt_t cert,
@@ -546,14 +550,13 @@ gnutls_x509_crt_get_signature (gnutls_x509_crt_t cert,
 }
 
 /**
-  * gnutls_x509_crt_get_version - This function returns the Certificate's version number
-  * @cert: should contain a gnutls_x509_crt_t structure
-  *
-  * This function will return the version of the specified Certificate.
-  *
-  * Returns a negative value on error.
-  *
-  **/
+ * gnutls_x509_crt_get_version - return the Certificate's version number
+ * @cert: should contain a #gnutls_x509_crt_t structure
+ *
+ * This function will return the version of the specified Certificate.
+ *
+ * Returns: version of certificate, or a negative value on error.
+ **/
 int
 gnutls_x509_crt_get_version (gnutls_x509_crt_t cert)
 {
@@ -582,12 +585,13 @@ gnutls_x509_crt_get_version (gnutls_x509_crt_t cert)
 }
 
 /**
-  * gnutls_x509_crt_get_activation_time - This function returns the Certificate's activation time
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * gnutls_x509_crt_get_activation_time - returns the Certificate's activation time
+  * @cert: should contain a #gnutls_x509_crt_t structure
   *
-  * This function will return the time this Certificate was or will be activated.
+  * This function will return the time this Certificate was or will be
+  * activated.
   *
-  * Returns (time_t)-1 on error.
+  * Returns: activation time, or (time_t)-1 on error.
   *
   **/
 time_t
@@ -604,14 +608,15 @@ gnutls_x509_crt_get_activation_time (gnutls_x509_crt_t cert)
 }
 
 /**
-  * gnutls_x509_crt_get_expiration_time - This function returns the Certificate's expiration time
-  * @cert: should contain a gnutls_x509_crt_t structure
-  *
-  * This function will return the time this Certificate was or will be expired.
-  *
-  * Returns (time_t)-1 on error.
-  *
-  **/
+ * gnutls_x509_crt_get_expiration_time - returns the Certificate's expiration time
+ * @cert: should contain a #gnutls_x509_crt_t structure
+ *
+ * This function will return the time this Certificate was or will be
+ * expired.
+ *
+ * Returns: expiration time, or (time_t)-1 on error.
+ *
+ **/
 time_t
 gnutls_x509_crt_get_expiration_time (gnutls_x509_crt_t cert)
 {
@@ -627,7 +632,7 @@ gnutls_x509_crt_get_expiration_time (gnutls_x509_crt_t cert)
 
 /**
   * gnutls_x509_crt_get_serial - This function returns the certificate's serial number
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @result: The place where the serial number will be copied
   * @result_size: Holds the size of the result field.
   *
@@ -637,7 +642,8 @@ gnutls_x509_crt_get_expiration_time (gnutls_x509_crt_t cert)
   * large serial numbers, thus it may be wise to handle it as something
   * opaque. 
   *
-  * Returns 0 on success and a negative value in case of an error.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.and a negative value in case of an error.
   *
   **/
 int
@@ -668,7 +674,7 @@ gnutls_x509_crt_get_serial (gnutls_x509_crt_t cert, void *result,
 
 /**
   * gnutls_x509_crt_get_subject_key_id - This function returns the certificate's key identifier
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @ret: The place where the identifier will be copied
   * @ret_size: Holds the size of the result field.
   * @critical: will be non zero if the extension is marked as critical (may be null)
@@ -677,7 +683,8 @@ gnutls_x509_crt_get_serial (gnutls_x509_crt_t cert, void *result,
   * This is obtained by the X.509 Subject Key identifier extension
   * field (2.5.29.14). 
   *
-  * Returns 0 on success and a negative value in case of an error.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.and a negative value in case of an error.
   *
   **/
 int
@@ -754,7 +761,7 @@ gnutls_x509_crt_get_subject_key_id (gnutls_x509_crt_t cert, void *ret,
 
 /**
   * gnutls_x509_crt_get_authority_key_id - This function returns the certificate authority's identifier
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @result: The place where the identifier will be copied
   * @result_size: Holds the size of the result field.
   * @critical: will be non zero if the extension is marked as critical (may be null)
@@ -764,7 +771,8 @@ gnutls_x509_crt_get_subject_key_id (gnutls_x509_crt_t cert, void *ret,
   * field (2.5.29.35). Note that this function only returns the keyIdentifier
   * field of the extension.
   *
-  * Returns 0 on success and a negative value in case of an error.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.and a negative value in case of an error.
   *
   **/
 int
@@ -841,8 +849,8 @@ gnutls_x509_crt_get_authority_key_id (gnutls_x509_crt_t cert, void *ret,
 }
 
 /**
-  * gnutls_x509_crt_get_pk_algorithm - This function returns the certificate's PublicKey algorithm
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * gnutls_x509_crt_get_pk_algorithm - return the certificate's PublicKey algorithm
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @bits: if bits is non null it will hold the size of the parameters' in bits
   *
   * This function will return the public key algorithm of an X.509 
@@ -853,9 +861,8 @@ gnutls_x509_crt_get_authority_key_id (gnutls_x509_crt_t cert, void *ret,
   * For DSA the bits returned are of the public
   * exponent.
   *
-  * Returns a member of the gnutls_pk_algorithm_t enumeration on success,
-  * or a negative value on error.
-  *
+  * Returns: a member of the #gnutls_pk_algorithm_t enumeration on
+  * success, or a negative value on error.
   **/
 int
 gnutls_x509_crt_get_pk_algorithm (gnutls_x509_crt_t cert, unsigned int *bits)
@@ -1139,7 +1146,7 @@ get_subject_alt_name (gnutls_x509_crt_t cert,
 
 /**
   * gnutls_x509_crt_get_subject_alt_name - Get certificate's alternative name, if any
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @seq: specifies the sequence number of the alt name (0 for the first one, 1 for the second etc.)
   * @ret: is the place where the alternative name will be copied to
   * @ret_size: holds the size of ret.
@@ -1162,14 +1169,13 @@ get_subject_alt_name (gnutls_x509_crt_t cert,
   * it yourself.  Currently, only the RFC 3920 id-on-xmppAddr SAN is
   * recognized.
   *
-  * Returns the alternative subject name type on success.  The type is
-  * one of the enumerated gnutls_x509_subject_alt_name_t.  It will
-  * return %GNUTLS_E_SHORT_MEMORY_BUFFER if @ret_size is not large
-  * enough to hold the value.  In that case @ret_size will be updated
-  * with the required size.  If the certificate does not have an
-  * Alternative name with the specified sequence number then
+  * Returns: the alternative subject name type on success, one of the
+  * enumerated #gnutls_x509_subject_alt_name_t.  It will return
+  * %GNUTLS_E_SHORT_MEMORY_BUFFER if @ret_size is not large enough to
+  * hold the value.  In that case @ret_size will be updated with the
+  * required size.  If the certificate does not have an Alternative
+  * name with the specified sequence number then
   * %GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE is returned.
-  *
   **/
 int
 gnutls_x509_crt_get_subject_alt_name (gnutls_x509_crt_t cert,
@@ -1182,7 +1188,7 @@ gnutls_x509_crt_get_subject_alt_name (gnutls_x509_crt_t cert,
 
 /**
   * gnutls_x509_crt_get_subject_alt_name2 - Get certificate's alternative name, if any
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @seq: specifies the sequence number of the alt name (0 for the first one, 1 for the second etc.)
   * @ret: is the place where the alternative name will be copied to
   * @ret_size: holds the size of ret.
@@ -1210,7 +1216,7 @@ gnutls_x509_crt_get_subject_alt_name2 (gnutls_x509_crt_t cert,
 
 /**
  * gnutls_x509_crt_get_subject_alt_othername_oid - Get SAN otherName OID
- * @cert: should contain a gnutls_x509_crt_t structure
+ * @cert: should contain a #gnutls_x509_crt_t structure
  * @seq: specifies the sequence number of the alt name (0 for the first one, 1 for the second etc.)
  * @ret: is the place where the otherName OID will be copied to
  * @ret_size: holds the size of ret.
@@ -1223,16 +1229,16 @@ gnutls_x509_crt_get_subject_alt_name2 (gnutls_x509_crt_t cert,
  * gnutls_x509_crt_get_subject_alt_name() returned
  * %GNUTLS_SAN_OTHERNAME.
  *
- * Returns the alternative subject name type on success.  The type is
- * one of the enumerated gnutls_x509_subject_alt_name_t.  For
- * supported OIDs, it will return one of the virtual
- * (GNUTLS_SAN_OTHERNAME_*) types, e.g. %GNUTLS_SAN_OTHERNAME_XMPP,
- * and %GNUTLS_SAN_OTHERNAME for unknown OIDs.  It will return
- * %GNUTLS_E_SHORT_MEMORY_BUFFER if @ret_size is not large enough to
- * hold the value.  In that case @ret_size will be updated with the
- * required size.  If the certificate does not have an Alternative
- * name with the specified sequence number and with the otherName type
- * then %GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE is returned.
+ * Returns: the alternative subject name type on success, one of the
+ * enumerated gnutls_x509_subject_alt_name_t.  For supported OIDs, it
+ * will return one of the virtual (GNUTLS_SAN_OTHERNAME_*) types,
+ * e.g. %GNUTLS_SAN_OTHERNAME_XMPP, and %GNUTLS_SAN_OTHERNAME for
+ * unknown OIDs.  It will return %GNUTLS_E_SHORT_MEMORY_BUFFER if
+ * @ret_size is not large enough to hold the value.  In that case
+ * @ret_size will be updated with the required size.  If the
+ * certificate does not have an Alternative name with the specified
+ * sequence number and with the otherName type then
+ * %GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE is returned.
  **/
 int
 gnutls_x509_crt_get_subject_alt_othername_oid (gnutls_x509_crt_t cert,
@@ -1245,7 +1251,7 @@ gnutls_x509_crt_get_subject_alt_othername_oid (gnutls_x509_crt_t cert,
 
 /**
  * gnutls_x509_crt_get_basic_constraints - This function returns the certificate basic constraints
- * @cert: should contain a gnutls_x509_crt_t structure
+ * @cert: should contain a #gnutls_x509_crt_t structure
  * @critical: will be non zero if the extension is marked as critical
  * @ca: pointer to output integer indicating CA status, may be NULL,
  *   value is 1 if the certificate CA flag is set, 0 otherwise.
@@ -1312,7 +1318,7 @@ gnutls_x509_crt_get_basic_constraints (gnutls_x509_crt_t cert,
 
 /**
  * gnutls_x509_crt_get_ca_status - This function returns the certificate CA status
- * @cert: should contain a gnutls_x509_crt_t structure
+ * @cert: should contain a #gnutls_x509_crt_t structure
  * @critical: will be non zero if the extension is marked as critical
  *
  * This function will return certificates CA status, by reading the
@@ -1337,7 +1343,7 @@ gnutls_x509_crt_get_ca_status (gnutls_x509_crt_t cert, unsigned int *critical)
 
 /**
   * gnutls_x509_crt_get_key_usage - return the certificate's key usage
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @key_usage: where the key usage bits will be stored
   * @critical: will be non zero if the extension is marked as critical
   *
@@ -1399,7 +1405,7 @@ gnutls_x509_crt_get_key_usage (gnutls_x509_crt_t cert,
 
 /**
  * gnutls_x509_crt_get_proxy - This function returns the proxy certificate info
- * @cert: should contain a gnutls_x509_crt_t structure
+ * @cert: should contain a #gnutls_x509_crt_t structure
  * @critical: will be non zero if the extension is marked as critical
  * @pathlen: pointer to output integer indicating path length (may be
  *   NULL), non-negative values indicate a present pCPathLenConstraint
@@ -1463,7 +1469,7 @@ gnutls_x509_crt_get_proxy (gnutls_x509_crt_t cert,
 
 /**
   * gnutls_x509_crt_get_extension_by_oid - This function returns the specified extension
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @oid: holds an Object Identified in null terminated string
   * @indx: In case multiple same OIDs exist in the extensions, this specifies which to send. Use zero to get the first one.
   * @buf: a pointer to a structure to hold the name (may be null)
@@ -1528,7 +1534,7 @@ gnutls_x509_crt_get_extension_by_oid (gnutls_x509_crt_t cert,
 
 /**
   * gnutls_x509_crt_get_extension_oid - This function returns the specified extension OID
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @indx: Specifies which extension OID to send. Use zero to get the first one.
   * @oid: a pointer to a structure to hold the OID (may be null)
   * @sizeof_oid: initially holds the size of @oid
@@ -1565,16 +1571,21 @@ gnutls_x509_crt_get_extension_oid (gnutls_x509_crt_t cert, int indx,
 
 /**
  * gnutls_x509_crt_get_extension_info - Get extension id and criticality
- * @cert: should contain a gnutls_x509_crt_t structure
+ * @cert: should contain a #gnutls_x509_crt_t structure
  * @indx: Specifies which extension OID to send. Use zero to get the first one.
  * @oid: a pointer to a structure to hold the OID
- * @sizeof_oid: initially holds the size of @oid
+ * @sizeof_oid: initially holds the maximum size of @oid, on return
+ *   holds actual size of @oid.
  * @critical: output variable with critical flag, may be NULL.
  *
  * This function will return the requested extension OID in the
  * certificate, and the critical flag for it.  The extension OID will
  * be stored as a string in the provided buffer.  Use
  * gnutls_x509_crt_get_extension_data() to extract the data.
+ *
+ * If the buffer provided is not long enough to hold the output, then
+ * *@sizeof_oid is updated and %GNUTLS_E_SHORT_MEMORY_BUFFER will be
+ * returned.
  *
  * Return 0 on success.  A negative value may be returned in case of
  * parsing error.  If you have reached the last extension available
@@ -1636,7 +1647,7 @@ gnutls_x509_crt_get_extension_info (gnutls_x509_crt_t cert, int indx,
 
 /**
  * gnutls_x509_crt_get_extension_data - Get the specified extension data
- * @cert: should contain a gnutls_x509_crt_t structure
+ * @cert: should contain a #gnutls_x509_crt_t structure
  * @indx: Specifies which extension OID to send. Use zero to get the first one.
  * @data: a pointer to a structure to hold the data (may be null)
  * @sizeof_data: initially holds the size of @oid
@@ -1746,13 +1757,14 @@ cleanup:
 
 /**
  * gnutls_x509_crt_get_raw_issuer_dn - This function returns the issuer's DN DER encoded
- * @cert: should contain a gnutls_x509_crt_t structure
+ * @cert: should contain a #gnutls_x509_crt_t structure
  * @start: will hold the starting point of the DN
  *
  * This function will return a pointer to the DER encoded DN structure
  * and the length.
  *
- * Returns 0 on success or a negative value on error.
+ * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+ *   negative error value.or a negative value on error.
  *
  **/
 int
@@ -1764,13 +1776,14 @@ gnutls_x509_crt_get_raw_issuer_dn (gnutls_x509_crt_t cert,
 
 /**
  * gnutls_x509_crt_get_raw_dn - This function returns the subject's DN DER encoded
- * @cert: should contain a gnutls_x509_crt_t structure
+ * @cert: should contain a #gnutls_x509_crt_t structure
  * @start: will hold the starting point of the DN
  *
  * This function will return a pointer to the DER encoded DN structure and
  * the length.
  *
- * Returns 0 on success, or a negative value on error.
+ * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+ *   negative error value. or a negative value on error.
  *
  **/
 int
@@ -1790,7 +1803,7 @@ get_dn (gnutls_x509_crt_t cert, const char *whom, gnutls_x509_dn_t *dn)
 
 /**
  * gnutls_x509_crt_get_subject: get opaque subject DN pointer
- * @cert: should contain a gnutls_x509_crt_t structure
+ * @cert: should contain a #gnutls_x509_crt_t structure
  * @dn: output variable with pointer to opaque DN.
  *
  * Return the Certificate's Subject DN as an opaque data type.  You
@@ -1811,7 +1824,7 @@ gnutls_x509_crt_get_subject (gnutls_x509_crt_t cert,
 
 /**
  * gnutls_x509_crt_get_issuer: get opaque issuer DN pointer
- * @cert: should contain a gnutls_x509_crt_t structure
+ * @cert: should contain a #gnutls_x509_crt_t structure
  * @dn: output variable with pointer to opaque DN
  *
  * Return the Certificate's Issuer DN as an opaque data type.  You may
@@ -1930,7 +1943,7 @@ gnutls_x509_dn_get_rdn_ava (gnutls_x509_dn_t dn,
 
 /**
   * gnutls_x509_crt_get_fingerprint - This function returns the Certificate's fingerprint
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @algo: is a digest algorithm
   * @buf: a pointer to a structure to hold the fingerprint (may be null)
   * @sizeof_buf: initially holds the size of @buf
@@ -2186,7 +2199,7 @@ gnutls_x509_crt_get_key_id (gnutls_x509_crt_t crt, unsigned int flags,
 
 /**
   * gnutls_x509_crt_check_revocation - This function checks if the given certificate is revoked
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @crl_list: should contain a list of gnutls_x509_crl_t structures
   * @crl_list_length: the length of the crl_list
   *
@@ -2329,7 +2342,7 @@ gnutls_x509_crt_verify_data (gnutls_x509_crt_t crt, unsigned int flags,
 
 /**
   * gnutls_x509_crt_get_crl_dist_points - This function returns the CRL distribution points
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @seq: specifies the sequence number of the distribution point (0 for the first one, 1 for the second etc.)
   * @ret: is the place where the distribution point will be copied to
   * @ret_size: holds the size of ret.
@@ -2353,7 +2366,7 @@ gnutls_x509_crt_verify_data (gnutls_x509_crt_t crt, unsigned int flags,
   * return the distribution point type, or a negative error code on
   * error.
   *
-  * Returns %GNUTLS_E_SHORT_MEMORY_BUFFER and updates &@ret_size if
+  * Returns: %GNUTLS_E_SHORT_MEMORY_BUFFER and updates &@ret_size if
   * &@ret_size is not enough to hold the distribution point, or the
   * type of the distribution point if everything was ok. The type is
   * one of the enumerated %gnutls_x509_subject_alt_name_t.  If the
@@ -2464,7 +2477,7 @@ gnutls_x509_crt_get_crl_dist_points (gnutls_x509_crt_t cert,
 
 /**
   * gnutls_x509_crt_get_key_purpose_oid - This function returns the Certificate's key purpose OIDs
-  * @cert: should contain a gnutls_x509_crt_t structure
+  * @cert: should contain a #gnutls_x509_crt_t structure
   * @indx: This specifies which OID to return. Use zero to get the first one.
   * @oid: a pointer to a buffer to hold the OID (may be null)
   * @sizeof_oid: initially holds the size of @oid

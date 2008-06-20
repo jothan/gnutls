@@ -63,7 +63,8 @@ lib_LTLIBRARIES = libgnutls.la
 SRP_COBJECTS = ext_srp.c gnutls_srp.c auth_srp.c auth_srp_passwd.c	\
 	auth_srp_sb64.c auth_srp_rsa.c
 
-PSK_COBJECTS = auth_psk.c auth_psk_passwd.c gnutls_psk.c auth_dhe_psk.c
+PSK_COBJECTS = auth_psk.c auth_psk_passwd.c gnutls_psk.c	\
+	auth_dhe_psk.c gnutls_psk_netconf.c
 
 OPRFI_COBJECTS = ext_oprfi.c
 
@@ -147,13 +148,13 @@ endif
 # C++ library
 
 if ENABLE_CXX
-CPP_OBJECTS = gnutlsxx.cpp
+libgnutlsxx_la_CPPFLAGS = -I$(top_srcdir)/includes -I../includes
 
 AM_CXXFLAGS = -I$(top_srcdir)/includes/
 
 lib_LTLIBRARIES += libgnutlsxx.la
 
-libgnutlsxx_la_SOURCES = $(CPP_OBJECTS) libgnutlsxx.vers
+libgnutlsxx_la_SOURCES = gnutlsxx.cpp libgnutlsxx.vers
 
 libgnutlsxx_la_LDFLAGS = -no-undefined \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)

@@ -23,8 +23,10 @@ SUBDIRS = rsa-md5-collision pkcs1-padding pkcs8-decode pkcs12-decode	\
 	userid pathlen key-id sha2 hostname-check
 
 if ENABLE_OPENPGP
-SUBDIRS += openpgp
+SUBDIRS += openpgp openpgp-certs
 endif
+
+EXTRA_DIST = libgcrypt.supp
 
 AM_CPPFLAGS = -I$(top_srcdir)/lgl -I$(top_builddir)/lgl			\
 	-I$(top_srcdir)/gl -I$(top_builddir)/gl				\
@@ -37,16 +39,25 @@ LDADD = ../lib/libgnutls.la ../gl/libgnu.la ../lgl/liblgnu.la libutils.la
 noinst_LTLIBRARIES = libutils.la
 libutils_la_SOURCES = utils.h utils.c
 
-ctests = simple openssl gc set_pkcs12_cred certder	\
-	certificate_set_x509_crl dn parse_ca moredn mpi crypto_rng
+ctests = simple openssl gc set_pkcs12_cred certder			\
+	certificate_set_x509_crl dn parse_ca moredn crypto_rng mini
 openssl_LDADD = $(LDADD) ../libextra/libgnutls-openssl.la
+
 if HAVE_FORK
-ctests +=  openpgpself x509self x509signself x509dn anonself pskself dhepskself tlsia resume
+ctests += x509self x509signself x509dn anonself pskself dhepskself	\
+	tlsia resume netconf-psk
+
+if ENABLE_OPENPGP
+ctests += openpgpself 
+endif
+
 tlsia_LDADD = ../libextra/libgnutls-extra.la $(LDADD) @LTLIBREADLINE@
 endif
+
 if ENABLE_OPRFI
 ctests +=  oprfi
 endif
+
 gc_LDADD = $(LDADD) $(LIBGCRYPT_LIBS)
 
 check_PROGRAMS = $(ctests)

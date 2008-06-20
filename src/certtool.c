@@ -34,6 +34,9 @@
 #include <certtool-cfg.h>
 #include <gcrypt.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 /* Gnulib portability files. */
 #include <read-file.h>
@@ -219,7 +222,7 @@ print_private_key (gnutls_x509_privkey_t key)
       else
 	flags = GNUTLS_PKCS_USE_PKCS12_3DES;
 
-      if ((pass = get_pass ()) == NULL || *pass == '\0')
+      if ((pass = get_confirmed_pass (true)) == NULL || *pass == '\0')
 	flags = GNUTLS_PKCS_PLAIN;
 
       size = sizeof (buffer);
@@ -230,6 +233,7 @@ print_private_key (gnutls_x509_privkey_t key)
 	error (EXIT_FAILURE, 0, "privkey_export_pkcs8: %s",
 	       gnutls_strerror (ret));
     }
+
 
   fwrite (buffer, 1, size, outfile);
 }
@@ -815,6 +819,26 @@ update_signed_certificate (void)
   gnutls_x509_crt_deinit (crt);
 }
 
+FILE* safe_open_rw(const char* file)
+{
+  mode_t oldmask;
+  FILE *fh;
+
+  if (info.privkey_op != 0)
+    {
+      oldmask = umask (S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+    }
+
+  fh = fopen (file, "wb");
+
+  if (info.privkey_op != 0)
+    {
+      umask (oldmask);
+    }
+
+  return fh;
+}
+
 void
 gaa_parser (int argc, char **argv)
 {
@@ -829,7 +853,7 @@ gaa_parser (int argc, char **argv)
 
   if (info.outfile)
     {
-      outfile = fopen (info.outfile, "wb");
+      outfile = safe_open_rw (info.outfile);
       if (outfile == NULL)
 	error (EXIT_FAILURE, errno, "%s", info.outfile);
     }
@@ -2217,7 +2241,6 @@ generate_pkcs8 (void)
     {
       flags = GNUTLS_PKCS_PLAIN;
     }
-
 
   size = sizeof (buffer);
   result =

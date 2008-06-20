@@ -1569,7 +1569,7 @@ keydb_parse_allsigs (cdk_kbnode_t knode, cdk_keydb_hd_t hd, int check)
 		{
 		  kb->pkt->pkt.public_key->is_revoked = 1;
 		  if (check)
-		    _cdk_pk_check_sig (hd, kb, node, NULL);
+		    _cdk_pk_check_sig (hd, kb, node, NULL, NULL);
 		}
 	      else
 		return CDK_Error_No_Key;
@@ -1582,7 +1582,7 @@ keydb_parse_allsigs (cdk_kbnode_t knode, cdk_keydb_hd_t hd, int check)
 		{
 		  kb->pkt->pkt.public_key->is_revoked = 1;
 		  if (check)
-		    _cdk_pk_check_sig (hd, kb, node, NULL);
+		    _cdk_pk_check_sig (hd, kb, node, NULL, NULL);
 		}
 	      else
 		return CDK_Error_No_Key;
@@ -1597,7 +1597,7 @@ keydb_parse_allsigs (cdk_kbnode_t knode, cdk_keydb_hd_t hd, int check)
 		{
 		  kb->pkt->pkt.user_id->is_revoked = 1;
 		  if (check)
-		    _cdk_pk_check_sig (hd, kb, node, NULL);
+		    _cdk_pk_check_sig (hd, kb, node, NULL, NULL);
 		}
 	      else
 		return CDK_Error_No_Key;
@@ -1619,7 +1619,7 @@ keydb_parse_allsigs (cdk_kbnode_t knode, cdk_keydb_hd_t hd, int check)
 		      pk->has_expired = pk->expiredate > curtime? 0 : 1;
 		    }
 		  if (check)
-		    _cdk_pk_check_sig (hd, kb, node, NULL);
+		    _cdk_pk_check_sig (hd, kb, node, NULL, NULL);
 		}
 	      else
 		return CDK_Error_No_Key;
@@ -1641,7 +1641,7 @@ keydb_parse_allsigs (cdk_kbnode_t knode, cdk_keydb_hd_t hd, int check)
 		      pk->has_expired = pk->expiredate > curtime? 0 : 1;
 		    }
 		  if (check)
-		    _cdk_pk_check_sig (hd, kb, node, NULL);
+		    _cdk_pk_check_sig (hd, kb, node, NULL, NULL);
 		}
 	    else
 	      return CDK_Error_No_Key;

@@ -44,7 +44,8 @@
   *
   * This function will initialize a PKCS10 certificate request structure. 
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   **/
 int
@@ -101,7 +102,8 @@ gnutls_x509_crq_deinit (gnutls_x509_crq_t crq)
   *
   * If the Certificate is PEM encoded it should have a header of "NEW CERTIFICATE REQUEST".
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   **/
 int
@@ -179,7 +181,7 @@ cleanup:
   *
   * If @buf is null then only the size will be filled.
   *
-  * Returns GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
+  * Returns: GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
   * long enough, and in that case the *sizeof_buf will be updated with
   * the required size.  On success 0 is returned.
   *
@@ -221,7 +223,7 @@ gnutls_x509_crq_get_dn (gnutls_x509_crq_t crq, char *buf, size_t * sizeof_buf)
   *
   * If @buf is null then only the size will be filled.
   *
-  * Returns GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
+  * Returns: GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
   * long enough, and in that case the *sizeof_buf will be updated with
   * the required size.  On success 0 is returned.
   *
@@ -254,7 +256,7 @@ gnutls_x509_crq_get_dn_by_oid (gnutls_x509_crq_t crq, const char *oid,
   *
   * If oid is null then only the size will be filled.
   *
-  * Returns GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
+  * Returns: GNUTLS_E_SHORT_MEMORY_BUFFER if the provided buffer is not
   * long enough, and in that case the *sizeof_oid will be updated with
   * the required size.  On success 0 is returned.
   *
@@ -424,7 +426,8 @@ cleanup:
   * This function will return the challenge password in the
   * request.
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   **/
 int
@@ -451,7 +454,8 @@ gnutls_x509_crq_get_challenge_password (gnutls_x509_crq_t crq,
   * This function will set the attribute in the certificate request specified
   * by the given Object ID. The attribute must be be DER encoded.
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   **/
 int
@@ -505,7 +509,8 @@ gnutls_x509_crq_set_attribute_by_oid (gnutls_x509_crq_t crq,
   * This function will return the attribute in the certificate request specified
   * by the given Object ID. The attribute will be DER encoded.
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   **/
 int
@@ -540,7 +545,8 @@ gnutls_x509_crq_get_attribute_by_oid (gnutls_x509_crq_t crq,
   * not known (by gnutls) you should properly DER encode your data, and
   * call this function with raw_flag set.
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   **/
 int
@@ -566,7 +572,8 @@ gnutls_x509_crq_set_dn_by_oid (gnutls_x509_crq_t crq, const char *oid,
   * This function will set the version of the certificate request. For
   * version 1 requests this must be one.
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   **/
 int
@@ -601,8 +608,8 @@ gnutls_x509_crq_set_version (gnutls_x509_crq_t crq, unsigned int version)
   *
   * This function will return the version of the specified Certificate request.
   *
-  * Returns a negative value on error.
-  *
+  * Returns: version of certificate request, or a negative value on
+  *   error.
   **/
 int
 gnutls_x509_crq_get_version (gnutls_x509_crq_t crq)
@@ -639,7 +646,8 @@ gnutls_x509_crq_get_version (gnutls_x509_crq_t crq)
   * This function will set the public parameters from the given private key to the
   * request. Only RSA keys are currently supported.
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   **/
 int
@@ -675,7 +683,8 @@ gnutls_x509_crq_set_key (gnutls_x509_crq_t crq, gnutls_x509_privkey_t key)
   *
   * This function will set a challenge password to be used when revoking the request.
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   **/
 int
@@ -809,7 +818,8 @@ gnutls_x509_crq_sign2 (gnutls_x509_crq_t crq, gnutls_x509_privkey_t key,
   * This function is the same a gnutls_x509_crq_sign2() with no flags, and
   * SHA1 as the hash algorithm.
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   **/
 int
@@ -868,9 +878,8 @@ gnutls_x509_crq_export (gnutls_x509_crq_t crq,
   * For DSA the bits returned are of the public
   * exponent.
   *
-  * Returns a member of the gnutls_pk_algorithm_t enumeration on success,
-  * or a negative value on error.
-  *
+  * Returns: a member of the #gnutls_pk_algorithm_t enumeration on
+  *   success, or a negative value on error.
   **/
 int
 gnutls_x509_crq_get_pk_algorithm (gnutls_x509_crq_t crq, unsigned int *bits)

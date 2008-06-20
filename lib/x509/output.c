@@ -607,7 +607,7 @@ print_cert (gnutls_string * str, gnutls_x509_crt_t cert, int notsigned)
       {
 	const char *name = gnutls_pk_algorithm_get_name (err);
 	if (name == NULL)
-	  name = "Unknown";
+	  name = _("unknown");
 
 	addf (str, _("\tSubject Public Key Algorithm: %s\n"), name);
 	switch (err)
@@ -878,7 +878,7 @@ print_cert (gnutls_string * str, gnutls_x509_crt_t cert, int notsigned)
 	{
 	  const char *name = gnutls_sign_algorithm_get_name (err);
 	  if (name == NULL)
-	    name = "Unknown";
+	    name = _("unknown");
 	  addf (str, _("\tSignature Algorithm: %s\n"), name);
 	}
       if (err == GNUTLS_SIGN_RSA_MD5 || err == GNUTLS_SIGN_RSA_MD2)
@@ -1119,7 +1119,8 @@ print_oneline (gnutls_string * str, gnutls_x509_crt_t cert)
  *
  * The output @out needs to be deallocate using gnutls_free().
  *
- * Returns 0 on success.
+ * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+ *   negative error value.
  **/
 int
 gnutls_x509_crt_print (gnutls_x509_crt_t cert,
@@ -1287,7 +1288,7 @@ print_crl (gnutls_string *str,
 	{
 	  const char *name = gnutls_sign_algorithm_get_name (err);
 	  if (name == NULL)
-	    name = "Unknown";
+	    name = _("unknown");
 	  addf (str, _("\tSignature Algorithm: %s\n"), name);
 	}
       if (err == GNUTLS_SIGN_RSA_MD5 || err == GNUTLS_SIGN_RSA_MD2)
@@ -1335,7 +1336,8 @@ print_crl (gnutls_string *str,
  *
  * The output @out needs to be deallocate using gnutls_free().
  *
- * Returns 0 on success.
+ * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+ *   negative error value.
  **/
 int
 gnutls_x509_crl_print (gnutls_x509_crl_t crl,

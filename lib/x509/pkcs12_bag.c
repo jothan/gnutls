@@ -43,7 +43,8 @@
   * usually contain private keys, lists of X.509 Certificates and X.509 Certificate
   * revocation lists.
   *
-  * Returns 0 on success.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.
   *
   **/
 int
@@ -145,7 +146,8 @@ gnutls_pkcs12_bag_get_count (gnutls_pkcs12_bag_t bag)
   * that is stored into the bag. Should not be accessed after the bag
   * is deleted.
   *
-  * Returns 0 on success and a negative error code on error.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value.and a negative error code on error.
   *
   **/
 int
@@ -325,18 +327,17 @@ cleanup:
 
 
 /**
-  * gnutls_pkcs12_bag_set_data - This function inserts data into the bag
-  * @bag: The bag
-  * @type: The data's type
-  * @data: the data to be copied.
-  *
-  * This function will insert the given data of the given type into the
-  * bag. 
-  *
-  * Returns the index of the added bag on success, or a negative
-  * value on error.
-  *
-  **/
+ * gnutls_pkcs12_bag_set_data - This function inserts data into the bag
+ * @bag: The bag
+ * @type: The data's type
+ * @data: the data to be copied.
+ *
+ * This function will insert the given data of the given type into
+ * the bag.
+ *
+ * Returns: the index of the added bag on success, or a negative
+ * value on error.
+ **/
 int
 gnutls_pkcs12_bag_set_data (gnutls_pkcs12_bag_t bag,
 			    gnutls_pkcs12_bag_type_t type,
@@ -389,17 +390,16 @@ gnutls_pkcs12_bag_set_data (gnutls_pkcs12_bag_t bag,
 }
 
 /**
-  * gnutls_pkcs12_bag_set_crt - This function inserts a certificate into the bag
-  * @bag: The bag
-  * @crt: the certificate to be copied.
-  *
-  * This function will insert the given certificate into the
-  * bag. This is just a wrapper over gnutls_pkcs12_bag_set_data().
-  *
-  * Returns the index of the added bag on success, or a negative
-  * value on failure.
-  *
-  **/
+ * gnutls_pkcs12_bag_set_crt - This function inserts a certificate into the bag
+ * @bag: The bag
+ * @crt: the certificate to be copied.
+ *
+ * This function will insert the given certificate into the
+ * bag. This is just a wrapper over gnutls_pkcs12_bag_set_data().
+ *
+ * Returns: the index of the added bag on success, or a negative
+ * value on failure.
+ **/
 int
 gnutls_pkcs12_bag_set_crt (gnutls_pkcs12_bag_t bag, gnutls_x509_crt_t crt)
 {
@@ -427,17 +427,16 @@ gnutls_pkcs12_bag_set_crt (gnutls_pkcs12_bag_t bag, gnutls_x509_crt_t crt)
 }
 
 /**
-  * gnutls_pkcs12_bag_set_crl - This function inserts the CRL into the bag
-  * @bag: The bag
-  * @crl: the CRL to be copied.
-  *
-  * This function will insert the given CRL into the
-  * bag. This is just a wrapper over gnutls_pkcs12_bag_set_data().
-  *
-  * Returns the index of the added bag on success, or a negative
-  * value on failure.
-  *
-  **/
+ * gnutls_pkcs12_bag_set_crl - insert the CRL into the bag
+ * @bag: The bag
+ * @crl: the CRL to be copied.
+ *
+ * This function will insert the given CRL into the
+ * bag. This is just a wrapper over gnutls_pkcs12_bag_set_data().
+ *
+ * Returns: the index of the added bag on success, or a negative value
+ * on failure.
+ **/
 int
 gnutls_pkcs12_bag_set_crl (gnutls_pkcs12_bag_t bag, gnutls_x509_crl_t crl)
 {
@@ -475,7 +474,8 @@ gnutls_pkcs12_bag_set_crl (gnutls_pkcs12_bag_t bag, gnutls_x509_crl_t crl)
   * element. The key ID will be encoded as a 'Local key identifier' bag attribute,
   * which is usually used to distinguish the local private key and the certificate pair.
   * 
-  * Returns 0 on success, or a negative value on error.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value. or a negative value on error.
   *
   **/
 int
@@ -518,7 +518,8 @@ gnutls_pkcs12_bag_set_key_id (gnutls_pkcs12_bag_t bag, int indx,
   * This function will return the key ID, of the specified bag element.
   * The key ID is usually used to distinguish the local private key and the certificate pair.
   * 
-  * Returns 0 on success, or a negative value on error.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value. or a negative value on error.
   *
   **/
 int
@@ -552,7 +553,8 @@ gnutls_pkcs12_bag_get_key_id (gnutls_pkcs12_bag_t bag, int indx,
   * This function will return the friendly name, of the specified bag element.
   * The key ID is usually used to distinguish the local private key and the certificate pair.
   * 
-  * Returns 0 on success, or a negative value on error.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value. or a negative value on error.
   *
   **/
 int
@@ -587,7 +589,8 @@ gnutls_pkcs12_bag_get_friendly_name (gnutls_pkcs12_bag_t bag, int indx,
   * element. The name will be encoded as a 'Friendly name' bag attribute,
   * which is usually used to set a user name to the local private key and the certificate pair.
   * 
-  * Returns 0 on success, or a negative value on error.
+  * Returns: On success, %GNUTLS_E_SUCCESS is returned, otherwise a
+  *   negative error value. or a negative value on error.
   *
   **/
 int

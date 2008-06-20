@@ -134,7 +134,7 @@ cdk_error_t _cdk_hash_pubkey (cdk_pkt_pubkey_t pk, digest_hd_st *md,
 			      int use_fpr);
 cdk_error_t _cdk_pk_check_sig (cdk_keydb_hd_t hd,
 			       cdk_kbnode_t knode, 
-			       cdk_kbnode_t snode, int *is_selfsig);
+			       cdk_kbnode_t snode, int *is_selfsig, char** ret_uid);
 
 /*-- kbnode.c --*/
 void _cdk_kbnode_add (cdk_kbnode_t root, cdk_kbnode_t node);

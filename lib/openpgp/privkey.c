@@ -40,7 +40,7 @@
  *
  * This function will initialize an OpenPGP key structure.
  *
- * Returns 0 on success.
+ * Returns: %GNUTLS_E_SUCCESS on success, or an error code.
  **/
 int
 gnutls_openpgp_privkey_init (gnutls_openpgp_privkey_t * key)
@@ -85,7 +85,7 @@ gnutls_openpgp_privkey_deinit (gnutls_openpgp_privkey_t key)
  * the native gnutls_openpgp_privkey_t format.  The output will be
  * stored in 'key'.
  *
- * Returns 0 on success.
+ * Returns: %GNUTLS_E_SUCCESS on success, or an error code.
  **/
 int
 gnutls_openpgp_privkey_import (gnutls_openpgp_privkey_t key,
@@ -139,21 +139,23 @@ gnutls_openpgp_privkey_import (gnutls_openpgp_privkey_t key,
 }
 
 /**
-  * gnutls_openpgp_privkey_export - This function will export a RAW or BASE64 encoded key
-  * @key: Holds the key.
-  * @format: One of gnutls_openpgp_crt_fmt_t elements.
-  * @password: (unused for now)
-  * @flags: zero for future compatibility
-  * @output_data: will contain the key base64 encoded or raw
-  * @output_data_size: holds the size of output_data (and will be replaced by the actual size of parameters)
-  *
-  * This function will convert the given key to RAW or Base64 format.
-  * If the buffer provided is not long enough to hold the output, then
-  * GNUTLS_E_SHORT_MEMORY_BUFFER will be returned.
-  *
-  * Returns 0 on success.
-  *
-  **/
+ * gnutls_openpgp_privkey_export - export a RAW or BASE64 encoded key
+ * @key: Holds the key.
+ * @format: One of gnutls_openpgp_crt_fmt_t elements.
+ * @password: the password that will be used to encrypt the key. (unused for now)
+ * @flags: zero for future compatibility
+ * @output_data: will contain the key base64 encoded or raw
+ * @output_data_size: holds the size of output_data (and will be
+ *   replaced by the actual size of parameters)
+ *
+ * This function will convert the given key to RAW or Base64 format.
+ * If the buffer provided is not long enough to hold the output, then
+ * GNUTLS_E_SHORT_MEMORY_BUFFER will be returned.
+ *
+ * Returns: %GNUTLS_E_SUCCESS on success, or an error code.
+ *
+ * Since: 2.4.0
+ **/
 int
 gnutls_openpgp_privkey_export (gnutls_openpgp_privkey_t key,
 			   gnutls_openpgp_crt_fmt_t format,
@@ -166,7 +168,7 @@ gnutls_openpgp_privkey_export (gnutls_openpgp_privkey_t key,
 
 
 /**
- * gnutls_openpgp_privkey_get_pk_algorithm - This function returns the key's PublicKey algorithm
+ * gnutls_openpgp_privkey_get_pk_algorithm - return the key's PublicKey algorithm
  * @key: is an OpenPGP key
  * @bits: if bits is non null it will hold the size of the parameters' in bits
  *
@@ -174,12 +176,13 @@ gnutls_openpgp_privkey_export (gnutls_openpgp_privkey_t key,
  * certificate.
  *
  * If bits is non null, it should have enough size to hold the parameters
- * size in bits. For RSA the bits returned is the modulus. 
+ * size in bits. For RSA the bits returned is the modulus.
  * For DSA the bits returned are of the public exponent.
  *
- * Returns a member of the GNUTLS_PKAlgorithm enumeration on success,
- * or a negative value on error.
+ * Returns: a member of the #gnutls_pk_algorithm_t enumeration on
+ *   success, or a negative value on error.
  *
+ * Since: 2.4.0
  **/
 gnutls_pk_algorithm_t
 gnutls_openpgp_privkey_get_pk_algorithm (gnutls_openpgp_privkey_t key,
@@ -231,6 +234,7 @@ int algo;
  * Returns: true (1) if the key has been revoked, or false (0) if it
  *   has not, or a negative value indicates an error.
  *
+ * Since: 2.4.0
  **/
 int
 gnutls_openpgp_privkey_get_revoked_status (gnutls_openpgp_privkey_t key)
@@ -261,6 +265,8 @@ gnutls_openpgp_privkey_get_revoked_status (gnutls_openpgp_privkey_t key)
  * algorithm, the fingerprint can be 16 or 20 bytes.
  *
  * Returns: On success, 0 is returned, or an error code.
+ *
+ * Since: 2.4.0
  **/
 int
 gnutls_openpgp_privkey_get_fingerprint (gnutls_openpgp_privkey_t key,
@@ -303,6 +309,8 @@ gnutls_openpgp_privkey_get_fingerprint (gnutls_openpgp_privkey_t key,
  * Get key-id.
  *
  * Returns: the 64-bit keyID of the OpenPGP key.
+ *
+ * Since: 2.4.0
  **/
 int
 gnutls_openpgp_privkey_get_key_id (gnutls_openpgp_privkey_t key,
@@ -337,6 +345,8 @@ gnutls_openpgp_privkey_get_key_id (gnutls_openpgp_privkey_t key,
  * given OpenPGP certificate.
  *
  * Returns: the number of subkeys, or a negative value on error.
+ *
+ * Since: 2.4.0
  **/
 int
 gnutls_openpgp_privkey_get_subkey_count (gnutls_openpgp_privkey_t key)
@@ -391,6 +401,8 @@ static cdk_packet_t _get_secret_subkey(gnutls_openpgp_privkey_t key, unsigned in
  *
  * Returns: true (1) if the key has been revoked, or false (0) if it
  *   has not, or a negative value indicates an error.
+ *
+ * Since: 2.4.0
  **/
 int
 gnutls_openpgp_privkey_get_subkey_revoked_status (gnutls_openpgp_privkey_t key, unsigned int idx)
@@ -412,22 +424,23 @@ gnutls_openpgp_privkey_get_subkey_revoked_status (gnutls_openpgp_privkey_t key, 
 }
 
 /**
-  * gnutls_openpgp_privkey_get_subkey_pk_algorithm - This function returns the subkey's PublicKey algorithm
-  * @key: is an OpenPGP key
-  * @idx: is the subkey index
-  * @bits: if bits is non null it will hold the size of the parameters' in bits
-  *
-  * This function will return the public key algorithm of a subkey of an OpenPGP
-  * certificate.
-  *
-  * If bits is non null, it should have enough size to hold the parameters
-  * size in bits. For RSA the bits returned is the modulus. 
-  * For DSA the bits returned are of the public exponent.
-  *
-  * Returns a member of the gnutls_pk_algorithm_t enumeration on success,
-  * or a negative value on error.
-  *
-  **/
+ * gnutls_openpgp_privkey_get_subkey_pk_algorithm - return the subkey's PublicKey algorithm
+ * @key: is an OpenPGP key
+ * @idx: is the subkey index
+ * @bits: if bits is non null it will hold the size of the parameters' in bits
+ *
+ * This function will return the public key algorithm of a subkey of an OpenPGP
+ * certificate.
+ *
+ * If bits is non null, it should have enough size to hold the parameters
+ * size in bits. For RSA the bits returned is the modulus.
+ * For DSA the bits returned are of the public exponent.
+ *
+ * Returns: a member of the #gnutls_pk_algorithm_t enumeration on
+ *   success, or a negative value on error.
+ *
+ * Since: 2.4.0
+ **/
 gnutls_pk_algorithm_t
 gnutls_openpgp_privkey_get_subkey_pk_algorithm (gnutls_openpgp_privkey_t key,
     unsigned int idx, unsigned int *bits)
@@ -468,6 +481,8 @@ gnutls_openpgp_privkey_get_subkey_pk_algorithm (gnutls_openpgp_privkey_t key,
  * Get index of subkey.
  *
  * Returns: the index of the subkey or a negative error value.
+ *
+ * Since: 2.4.0
  **/
 int
 gnutls_openpgp_privkey_get_subkey_idx (gnutls_openpgp_privkey_t key,
@@ -501,6 +516,8 @@ gnutls_openpgp_privkey_get_subkey_idx (gnutls_openpgp_privkey_t key,
  * Get subkey creation time.
  *
  * Returns: the timestamp when the OpenPGP key was created.
+ *
+ * Since: 2.4.0
  **/
 time_t
 gnutls_openpgp_privkey_get_subkey_creation_time (gnutls_openpgp_privkey_t key,
@@ -530,6 +547,8 @@ gnutls_openpgp_privkey_get_subkey_creation_time (gnutls_openpgp_privkey_t key,
  * doesn't expire at all.
  *
  * Returns: the time when the OpenPGP key expires.
+ *
+ * Since: 2.4.0
  **/
 time_t
 gnutls_openpgp_privkey_get_subkey_expiration_time (gnutls_openpgp_privkey_t key,
@@ -559,6 +578,8 @@ gnutls_openpgp_privkey_get_subkey_expiration_time (gnutls_openpgp_privkey_t key,
  * Get the key-id for the subkey.
  *
  * Returns: the 64-bit keyID of the OpenPGP key.
+ *
+ * Since: 2.4.0
  **/
 int
 gnutls_openpgp_privkey_get_subkey_id (gnutls_openpgp_privkey_t key,
@@ -581,6 +602,52 @@ gnutls_openpgp_privkey_get_subkey_id (gnutls_openpgp_privkey_t key,
   cdk_sk_get_keyid (pkt->pkt.secret_key, kid);
   _gnutls_write_uint32( kid[0], keyid);
   _gnutls_write_uint32( kid[1], keyid+4);
+
+  return 0;
+}
+
+/**
+ * gnutls_openpgp_privkey_get_subkey_fingerprint - Gets the fingerprint of a subkey
+ * @key: the raw data that contains the OpenPGP secret key.
+ * @idx: the subkey index
+ * @fpr: the buffer to save the fingerprint, must hold at least 20 bytes.
+ * @fprlen: the integer to save the length of the fingerprint.
+ *
+ * Get the fingerprint of an OpenPGP subkey.  Depends on the
+ * algorithm, the fingerprint can be 16 or 20 bytes.
+ *
+ * Returns: On success, 0 is returned, or an error code.
+ *
+ * Since: 2.4.0
+ **/
+int
+gnutls_openpgp_privkey_get_subkey_fingerprint (gnutls_openpgp_privkey_t key,
+					       unsigned int idx,
+					       void *fpr, size_t * fprlen)
+{
+  cdk_packet_t pkt;
+  cdk_pkt_pubkey_t pk = NULL;
+
+  if (!fpr || !fprlen)
+    {
+      gnutls_assert ();
+      return GNUTLS_E_INVALID_REQUEST;
+    }
+
+  *fprlen = 0;
+
+  pkt = _get_secret_subkey( key, idx);
+  if (!pkt)
+    return GNUTLS_E_OPENPGP_GETKEY_FAILED;
+
+
+  pk = pkt->pkt.secret_key->pk;
+  *fprlen = 20;
+
+  if (is_RSA (pk->pubkey_algo) && pk->version < 4)
+    *fprlen = 16;
+
+  cdk_pk_get_fingerprint (pk, fpr);
 
   return 0;
 }
@@ -868,21 +935,23 @@ cleanup:
 
 
 /**
-  * gnutls_openpgp_privkey_export_rsa_raw - This function will export the RSA private key
-  * @pkey: Holds the certificate
-  * @m: will hold the modulus
-  * @e: will hold the public exponent
-  * @d: will hold the private exponent
-  * @p: will hold the first prime (p)
-  * @q: will hold the second prime (q)
-  * @u: will hold the coefficient
-  *
-  * This function will export the RSA private key's parameters found in
-  * the given structure.  The new parameters will be allocated using
-  * gnutls_malloc() and will be stored in the appropriate datum.
-  *
-  * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
-  **/
+ * gnutls_openpgp_privkey_export_rsa_raw - This function will export the RSA private key
+ * @pkey: Holds the certificate
+ * @m: will hold the modulus
+ * @e: will hold the public exponent
+ * @d: will hold the private exponent
+ * @p: will hold the first prime (p)
+ * @q: will hold the second prime (q)
+ * @u: will hold the coefficient
+ *
+ * This function will export the RSA private key's parameters found in
+ * the given structure.  The new parameters will be allocated using
+ * gnutls_malloc() and will be stored in the appropriate datum.
+ *
+ * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
+ *
+ * Since: 2.4.0
+ **/
 int
 gnutls_openpgp_privkey_export_rsa_raw (gnutls_openpgp_privkey_t pkey, 
 				    gnutls_datum_t * m, gnutls_datum_t * e,
@@ -903,20 +972,22 @@ int ret;
 }
 
 /**
-  * gnutls_openpgp_privkey_export_dsa_raw - This function will export the DSA private key
-  * @pkey: Holds the certificate
-  * @p: will hold the p
-  * @q: will hold the q
-  * @g: will hold the g
-  * @y: will hold the y
-  * @x: will hold the x
-  *
-  * This function will export the DSA private key's parameters found in
-  * the given certificate.  The new parameters will be allocated using
-  * gnutls_malloc() and will be stored in the appropriate datum.
-  *
-  * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
-  **/
+ * gnutls_openpgp_privkey_export_dsa_raw - This function will export the DSA private key
+ * @pkey: Holds the certificate
+ * @p: will hold the p
+ * @q: will hold the q
+ * @g: will hold the g
+ * @y: will hold the y
+ * @x: will hold the x
+ *
+ * This function will export the DSA private key's parameters found in
+ * the given certificate.  The new parameters will be allocated using
+ * gnutls_malloc() and will be stored in the appropriate datum.
+ *
+ * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
+ *
+ * Since: 2.4.0
+ **/
 int
 gnutls_openpgp_privkey_export_dsa_raw (gnutls_openpgp_privkey_t pkey, 
 				    gnutls_datum_t * p, gnutls_datum_t * q,
@@ -937,22 +1008,24 @@ int ret;
 }
 
 /**
-  * gnutls_openpgp_privkey_export_subkey_rsa_raw - This function will export the RSA private key
-  * @pkey: Holds the certificate
-  * @idx: Is the subkey index
-  * @m: will hold the modulus
-  * @e: will hold the public exponent
-  * @d: will hold the private exponent
-  * @p: will hold the first prime (p)
-  * @q: will hold the second prime (q)
-  * @u: will hold the coefficient
-  *
-  * This function will export the RSA private key's parameters found in
-  * the given structure.  The new parameters will be allocated using
-  * gnutls_malloc() and will be stored in the appropriate datum.
-  *
-  * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
-  **/
+ * gnutls_openpgp_privkey_export_subkey_rsa_raw - export the RSA private key
+ * @pkey: Holds the certificate
+ * @idx: Is the subkey index
+ * @m: will hold the modulus
+ * @e: will hold the public exponent
+ * @d: will hold the private exponent
+ * @p: will hold the first prime (p)
+ * @q: will hold the second prime (q)
+ * @u: will hold the coefficient
+ *
+ * This function will export the RSA private key's parameters found in
+ * the given structure.  The new parameters will be allocated using
+ * gnutls_malloc() and will be stored in the appropriate datum.
+ *
+ * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
+ *
+ * Since: 2.4.0
+ **/
 int
 gnutls_openpgp_privkey_export_subkey_rsa_raw (gnutls_openpgp_privkey_t pkey, unsigned int idx,
 				    gnutls_datum_t * m, gnutls_datum_t * e,
@@ -973,21 +1046,23 @@ int ret;
 }
 
 /**
-  * gnutls_openpgp_privkey_export_subkey_dsa_raw - export the DSA private key
-  * @pkey: Holds the certificate
-  * @idx: Is the subkey index
-  * @p: will hold the p
-  * @q: will hold the q
-  * @g: will hold the g
-  * @y: will hold the y
-  * @x: will hold the x
-  *
-  * This function will export the DSA private key's parameters found
-  * in the given certificate.  The new parameters will be allocated
-  * using gnutls_malloc() and will be stored in the appropriate datum.
-  *
-  * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
-  **/
+ * gnutls_openpgp_privkey_export_subkey_dsa_raw - export the DSA private key
+ * @pkey: Holds the certificate
+ * @idx: Is the subkey index
+ * @p: will hold the p
+ * @q: will hold the q
+ * @g: will hold the g
+ * @y: will hold the y
+ * @x: will hold the x
+ *
+ * This function will export the DSA private key's parameters found
+ * in the given certificate.  The new parameters will be allocated
+ * using gnutls_malloc() and will be stored in the appropriate datum.
+ *
+ * Returns: %GNUTLS_E_SUCCESS on success, otherwise an error.
+ *
+ * Since: 2.4.0
+ **/
 int
 gnutls_openpgp_privkey_export_subkey_dsa_raw (gnutls_openpgp_privkey_t pkey,
 					      unsigned int idx,
@@ -1030,7 +1105,7 @@ gnutls_openpgp_privkey_get_preferred_key_id (gnutls_openpgp_privkey_t key,
       return GNUTLS_E_INVALID_REQUEST;
     }
 
-  memcpy( keyid, key->preferred_keyid, sizeof(keyid));
+  memcpy( keyid, key->preferred_keyid, sizeof(gnutls_openpgp_keyid_t));
 
   return 0;
 }
@@ -1067,7 +1142,7 @@ gnutls_openpgp_privkey_set_preferred_key_id (gnutls_openpgp_privkey_t key,
     }
 
   key->preferred_set = 1;
-  memcpy( key->preferred_keyid, keyid, sizeof(keyid));
+  memcpy( key->preferred_keyid, keyid, sizeof(gnutls_openpgp_keyid_t));
 
   return 0;
 }

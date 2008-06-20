@@ -64,7 +64,7 @@ _wrap_gcry_pk_encrypt(gnutls_pk_algorithm_t algo,
 
   /* make a sexp from pkey */
   switch (algo) {
-  case GCRY_PK_RSA:
+  case GNUTLS_PK_RSA:
     if (pk_params->params_nr >= 2)
       rc = gcry_sexp_build(&s_pkey, NULL,
 			   "(public-key(rsa(n%m)(e%m)))",
@@ -164,7 +164,7 @@ _wrap_gcry_pk_decrypt(gnutls_pk_algorithm_t algo,
 
   /* make a sexp from pkey */
   switch (algo) {
-  case GCRY_PK_RSA:
+  case GNUTLS_PK_RSA:
     if (pk_params->params_nr >= 6)
       rc = gcry_sexp_build(&s_pkey, NULL,
 			   "(private-key(rsa((n%m)(e%m)(d%m)(p%m)(q%m)(u%m))))",
@@ -258,7 +258,7 @@ _wrap_gcry_pk_sign(gnutls_pk_algorithm_t algo, gnutls_datum_t * signature,
 
   /* make a sexp from pkey */
   switch (algo) {
-  case GCRY_PK_DSA:
+  case GNUTLS_PK_DSA:
     if (pk_params->params_nr >= 5)
       rc = gcry_sexp_build(&s_key, NULL,
 			   "(private-key(dsa(p%m)(q%m)(g%m)(y%m)(x%m)))",
@@ -270,7 +270,7 @@ _wrap_gcry_pk_sign(gnutls_pk_algorithm_t algo, gnutls_datum_t * signature,
     }
 
     break;
-  case GCRY_PK_RSA:
+  case GNUTLS_PK_RSA:
     if (pk_params->params_nr >= 6)
       rc = gcry_sexp_build(&s_key, NULL,
 			   "(private-key(rsa((n%m)(e%m)(d%m)(p%m)(q%m)(u%m))))",
@@ -314,7 +314,7 @@ _wrap_gcry_pk_sign(gnutls_pk_algorithm_t algo, gnutls_datum_t * signature,
 
   ret = GNUTLS_E_INTERNAL_ERROR;
 
-  if (algo == GCRY_PK_DSA) {
+  if (algo == GNUTLS_PK_DSA) {
     list = gcry_sexp_find_token(s_sig, "r", 0);
     if (list == NULL) {
       gnutls_assert();
@@ -337,7 +337,7 @@ _wrap_gcry_pk_sign(gnutls_pk_algorithm_t algo, gnutls_datum_t * signature,
 
     ret = _gnutls_encode_ber_rs(signature, res[0], res[1]);
 
-  } else if (algo == GCRY_PK_RSA) {	/* GCRY_PK_RSA */
+  } else if (algo == GNUTLS_PK_RSA) {	/* GCRY_PK_RSA */
     list = gcry_sexp_find_token(s_sig, "s", 0);
     if (list == NULL) {
       gnutls_assert();
@@ -392,13 +392,13 @@ int _wrap_gcry_pk_verify( gnutls_pk_algorithm_t algo,
 
   /* make a sexp from pkey */
   switch (algo) {
-  case GCRY_PK_DSA:
+  case GNUTLS_PK_DSA:
     if (pk_params->params_nr >= 4)
       rc = gcry_sexp_build(&s_pkey, NULL,
 			   "(public-key(dsa(p%m)(q%m)(g%m)(y%m)))",
 			   pk_params->params[0], pk_params->params[1], pk_params->params[2], pk_params->params[3]);
     break;
-  case GCRY_PK_RSA:
+  case GNUTLS_PK_RSA:
     if (pk_params->params_nr >= 2)
       rc = gcry_sexp_build(&s_pkey, NULL,
 			   "(public-key(rsa(n%m)(e%m)))",
@@ -425,7 +425,7 @@ int _wrap_gcry_pk_verify( gnutls_pk_algorithm_t algo,
   }
 
   switch (algo) {
-  case GCRY_PK_DSA:
+  case GNUTLS_PK_DSA:
     ret = _gnutls_decode_ber_rs (signature, &tmp[0], &tmp[1]);
     if (ret < 0)
       {
@@ -436,7 +436,7 @@ int _wrap_gcry_pk_verify( gnutls_pk_algorithm_t algo,
 			 "(sig-val(dsa(r%m)(s%m)))", tmp[0], tmp[1]);
 
     break;
-  case GCRY_PK_RSA:
+  case GNUTLS_PK_RSA:
     ret = _gnutls_mpi_scan_nz( &tmp[0], signature->data, signature->size);
     if (ret < 0)
       {
