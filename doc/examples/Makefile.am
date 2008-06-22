@@ -28,8 +28,18 @@ LDADD = libexamples.la \
 	../../libextra/libgnutls-extra.la \
 	../../gl/libgnu.la
 
-noinst_PROGRAMS = ex-cert-select ex-client2 ex-client-resume	\
-	ex-crq ex-serv1 ex-serv-export
+CXX_LDADD = $(LDADD) \
+	../../lib/libgnutlsxx.la
+
+noinst_PROGRAMS = ex-client2 ex-client-resume
+noinst_PROGRAMS += ex-cert-select ex-crq
+noinst_PROGRAMS += ex-serv1 ex-serv-export
+
+if ENABLE_CXX
+ex_cxx_SOURCES = ex-cxx.cpp
+ex_cxx_LDADD = $(CXX_LDADD)
+noinst_PROGRAMS += ex-cxx
+endif
 
 if ENABLE_ANON
 noinst_PROGRAMS += ex-client1 ex-serv-anon
@@ -38,6 +48,10 @@ endif
 
 if ENABLE_OPENPGP
 noinst_PROGRAMS += ex-serv-pgp
+endif
+
+if ENABLE_PSK
+noinst_PROGRAMS += ex-client-psk ex-serv-psk
 endif
 
 if ENABLE_SRP

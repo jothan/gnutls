@@ -22,24 +22,19 @@ dnl Process this file with autoconf to produce a configure script.
 # USA
 
 AC_PREREQ(2.61)
-AC_INIT([GnuTLS], [2.3.8], [bug-gnutls@gnu.org])
+AC_INIT([GnuTLS], [2.5.0], [bug-gnutls@gnu.org])
 AC_CONFIG_AUX_DIR([build-aux])
-
-AC_CANONICAL_TARGET
 
 AM_INIT_AUTOMAKE([1.10 dist-bzip2])
 AM_CONFIG_HEADER(config.h)
-
-AB_INIT
 
 # Library code modified:                              REVISION++
 # Interfaces changed/added/removed:   CURRENT++       REVISION=0
 # Interfaces added:                             AGE++
 # Interfaces removed:                           AGE=0
-AC_SUBST(LT_CURRENT, 29)
-AC_SUBST(LT_REVISION, 2)
-AC_SUBST(LT_AGE, 3)
-ac_full=1
+AC_SUBST(LT_CURRENT, 31)
+AC_SUBST(LT_REVISION, 0)
+AC_SUBST(LT_AGE, 5)
 
 # Used when creating the Windows libgnutls-XX.def files.
 SOVERSION=`expr ${LT_CURRENT} - ${LT_AGE}`
@@ -76,13 +71,6 @@ AC_ARG_ENABLE(developer-mode,
 	AS_HELP_STRING([--enable-developer-mode], [enable developer mode]),
 opt_developer_mode=$enableval)
 AC_MSG_RESULT($opt_developer_mode)
-
-opt_profiler_mode=no
-AC_MSG_CHECKING([whether in profile mode])
-AC_ARG_ENABLE(profile-mode,
-	AS_HELP_STRING([--enable-profile-mode], [enable profiler]),
-opt_profiler_mode=$enableval)
-AC_MSG_RESULT($opt_profiler_mode)
 
 AC_MSG_RESULT([***
 *** Checking for compilation programs...
@@ -125,9 +113,6 @@ if test "$use_cxx" != "no"; then
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])], use_cxx=yes, use_cxx=no)
   AC_LANG_POP(C++)
 fi
-AM_CONDITIONAL(ENABLE_CXX, test "$use_cxx" != "no")
-AC_MSG_CHECKING([whether to build C++ library])
-AC_MSG_RESULT($use_cxx)
 
 AC_MSG_CHECKING([whether C99 macros are supported])
 AC_TRY_COMPILE(,[ 
@@ -164,8 +149,6 @@ if test $ac_cv_c_compiler_gnu != no; then
 	AC_COMPILE_IFELSE(AC_LANG_PROGRAM([]),
 	  _gcc_gnu89_inline=yes, _gcc_gnu89_inline=no)
 	AC_MSG_RESULT($_gcc_gnu89_inline)
-	AM_CONDITIONAL([HAVE_GCC_GNU89_INLINE_OPTION],
-	  [test "x$_gcc_gnu89_inline" = "xyes"])
 	CFLAGS=$_gcc_cflags_save;
 
 	AC_MSG_CHECKING([if gcc/ld supports -Wl,--output-def])
@@ -202,17 +185,22 @@ fi
 
 # Needs to be called outside of 'if' clause.
 AM_CONDITIONAL(HAVE_LD_OUTPUT_DEF, test "$output_def" = "yes")
+AM_CONDITIONAL([HAVE_GCC_GNU89_INLINE_OPTION],
+               [test "$_gcc_gnu89_inline" = "yes"])
 
 AC_MSG_RESULT([***
 *** Detecting C library capabilities...
 ])
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS(strings.h)
-AC_CHECK_HEADERS(errno.h)
-AC_CHECK_HEADERS(math.h limits.h float.h stdarg.h ctype.h)
 AC_CHECK_HEADERS(netdb.h)
-AC_CHECK_FUNCS(umask isascii fork,,)
+AC_CHECK_FUNCS(fork,,)
+AC_DEFINE([HAVE_STRINGS_H], 1, [Hard-code for src/cfg/.])
+AC_DEFINE([HAVE_FLOAT_H], 1, [Hard-code for src/cfg/.])
+AC_DEFINE([HAVE_LIMITS_H], 1, [Hard-code for src/cfg/.])
+AC_DEFINE([HAVE_MATH_H], 1, [Hard-code for src/cfg/.])
+AC_DEFINE([HAVE_CTYPE_H], 1, [Hard-code for src/cfg/.])
+AC_DEFINE([HAVE_ERRNO_H], 1, [Hard-code for src/cfg/.])
 
 # No fork on MinGW, disable some self-tests until we fix them.
 AM_CONDITIONAL(HAVE_FORK, test "$ac_cv_func_fork" != "no")
@@ -370,6 +358,10 @@ dnl Can't disable - gnutls depends on gcrypt
 ]]))
 libgcrypt=yes
 
+# If this ever changes to 0, the user disabled some officially enabled
+# stuff so we will print a warning.
+ac_full=1
+
 # Hard-wire the gl/m4/gc.m4 test.
 AC_ARG_WITH(builtin-crypto,
 	AS_HELP_STRING([--with-builtin-crypto],
@@ -427,6 +419,7 @@ else
  ac_full=0
  AC_MSG_RESULT(yes)
 fi
+AM_CONDITIONAL(ENABLE_PSK, test "$ac_enable_psk" != "no")
 
 AC_MSG_CHECKING([whether to disable anonymous authentication support])
 AC_ARG_ENABLE(anon-authentication,
@@ -479,9 +472,6 @@ else
 fi
 AM_CONDITIONAL(ENABLE_PKI, test "$disable_pki" = "no")
 
-dnl Check whether to disable OpenPGP authentication completely
-dnl from libgnutls-extra.
-
 ac_enable_openpgp=yes
 AC_MSG_CHECKING([whether to disable OpenPGP Certificate authentication support])
 AC_ARG_ENABLE(openpgp-authentication,
@@ -531,6 +521,17 @@ AC_MSG_CHECKING([whether to use the included minitasn1])
 AC_MSG_RESULT($minitasn1_enabled)
 
 AM_CONDITIONAL(ENABLE_MINITASN1, test "$minitasn1_enabled" = "yes")
+
+if test "$ac_full" != 1; then
+ AC_MSG_WARN([[
+*** 
+*** C++ library disabled because some parts of GnuTLS has been disabled.
+]])
+  use_cxx=no
+fi
+AM_CONDITIONAL(ENABLE_CXX, test "$use_cxx" != "no")
+AC_MSG_CHECKING([whether to build C++ library])
+AC_MSG_RESULT($use_cxx)
 
 dnl Check for libcfg+
 
@@ -660,20 +661,6 @@ export ac_full
 
 AM_CFLAGS="${AM_CFLAGS} ${LIBGCRYPT_CFLAGS}"
 
-if test $ac_cv_c_compiler_gnu != no; then
-	if test x$opt_profiler_mode = xyes; then
-	  AC_CHECK_PROG(FC_OK, fc-config, yes, no)
-	  if test x$FC_OK = xyes; then
-   	        AM_CFLAGS="${AM_CFLAGS} `fc-config --cflags`"
-		LIBS="$LIBS `fc-config --libs`"
-	  else
-AC_MSG_WARN(***
-*** You must install libfc in order to enable profiling. http://www710.univ-lyon1.fr/~yperret/fnccheck/profiler.html
-)
-	  fi
-	fi
-fi
-
 if test $ac_full -eq 0; then
   AC_SUBST(POSSIBLY_WARN_ABOUT_MISSING_FEATURES, [[
 #ifdef __GNUC__
@@ -687,6 +674,10 @@ AC_CONFIG_COMMANDS([chmod-config],[[
  chmod +x lib/libgnutls-config
  chmod +x libextra/libgnutls-extra-config
 ]],[[]])
+
+
+AC_DEFINE([INTERNAL_GNUTLS_CRYPTO_H_ENABLE_UNSUPPORTED_API], 1,
+          [Enable prototypes in includes/crypto.h.])
 
 AC_CONFIG_FILES([Makefile po/Makefile.in \
 	doc/Makefile doc/examples/Makefile doc/scripts/Makefile \
@@ -702,7 +693,7 @@ AC_CONFIG_FILES([Makefile po/Makefile.in \
 	includes/Makefile includes/gnutls/gnutls.h \
 	lib/Makefile lib/minitasn1/Makefile lib/x509/Makefile \
 	libextra/Makefile lib/openpgp/Makefile lib/opencdk/Makefile \
-	tests/openpgp/Makefile \
+	tests/openpgp/Makefile tests/openpgp-certs/Makefile \
 	src/Makefile \
 	src/cfg/Makefile src/cfg/platon/Makefile src/cfg/platon/str/Makefile \
 	lib/libgnutls-config libextra/libgnutls-extra-config \

@@ -39,10 +39,11 @@ Documentation License''.
 @direntry
 * GnuTLS: (gnutls).			Package for Transport Layer Security.
 * certtool: (gnutls)Invoking certtool.	Manipulate certificates and keys.
-* srptool: (gnutls)Invoking srptool.	Simple SRP password tool.
 * gnutls-serv: (gnutls)Invoking gnutls-serv.	GNU TLS test server.
 * gnutls-cli: (gnutls)Invoking gnutls-cli.	GNU TLS test client.
 * gnutls-cli-debug: (gnutls)Invoking gnutls-cli-debug.	GNU TLS debug client.
+* psktool: (gnutls)Invoking psktool.	Simple TLS-Pre-Shared-Keys manager.
+* srptool: (gnutls)Invoking srptool.	Simple SRP password tool.
 @end direntry
 
 @titlepage
@@ -1494,6 +1495,17 @@ file can be stored to the credentials structure by calling
 password file format is to be used, then the function
 @ref{gnutls_psk_set_server_credentials_function}, should be used instead.
 
+The server can help the client chose a suitable username and password,
+by sending a hint.  In the server, specify the hint by calling
+@ref{gnutls_psk_set_server_credentials_hint}.  The client can retrieve
+the hint, for example in the callback function, using
+@ref{gnutls_psk_client_get_hint}.
+
+There is no standard mechanism to derive a PSK key from a password
+specified by the TLS PSK document.  However, GnuTLS provides
+@ref{gnutls_psk_netconf_derive_key} which follows the algorithm
+specified in @file{draft-ietf-netconf-tls-02.txt}.
+
 Some helper functions such as:
 
 @itemize
@@ -2250,6 +2262,7 @@ implemented by another example.
 * Client with Resume capability example::
 * Simple client example with SRP authentication::
 * Simple client example with TLS/IA support::
+* Simple client example in @acronym{C++}::
 * Helper function for TCP connections::
 @end menu
 
@@ -2344,6 +2357,14 @@ The following client is a simple client which uses the
 @acronym{TLS/IA} extension to authenticate with the server.
 
 @verbatiminclude examples/ex-client-tlsia.c
+
+@node Simple client example in @acronym{C++}
+@subsection Simple Client Example using the @acronym{C++} API
+
+The following client is a simple example of a client
+client utilizing the GnuTLS @acronym{C++} API. 
+
+@verbatiminclude examples/ex-cxx.cpp
 
 @node Helper function for TCP connections
 @subsection Helper Function for TCP Connections
@@ -2505,389 +2526,13 @@ let you use the library for common tasks without writing an
 application.  The applications are discussed in this chapter.
 
 @menu
-* Invoking srptool::
+* Invoking certtool::
 * Invoking gnutls-cli::
 * Invoking gnutls-cli-debug::
 * Invoking gnutls-serv::
-* Invoking certtool::
+* Invoking psktool::
+* Invoking srptool::
 @end menu
-
-@node Invoking srptool
-@section Invoking srptool
-@anchor{srptool}
-@cindex srptool
-
-The @file{srptool} is a very simple program that emulates the programs
-in the @emph{Stanford SRP libraries}.  It is intended for use in
-places where you don't expect @acronym{SRP} authentication to be the
-used for system users.  Traditionally @emph{libsrp} used two
-files. One called 'tpasswd' which holds usernames and verifiers, and
-'tpasswd.conf' which holds generators and primes.
-
-How to use srptool:
-
-@itemize
-
-@item
-To create tpasswd.conf which holds the g and n values for
-@acronym{SRP} protocol (generator and a large prime), run:
-
-@example
-$ srptool --create-conf /etc/tpasswd.conf
-@end example
-
-@item
-This command will create /etc/tpasswd and will add user 'test' (you
-will also be prompted for a password). Verifiers are stored by default
-in the way libsrp expects.
-
-@example
-$ srptool --passwd /etc/tpasswd \
-    --passwd-conf /etc/tpasswd.conf -u test
-@end example
-
-@item
-This command will check against a password. If the password matches
-the one in /etc/tpasswd you will get an ok.
-
-@example
-$ srptool --passwd /etc/tpasswd \
-    --passwd-conf /etc/tpasswd.conf --verify -u test
-@end example
-
-@end itemize
-
-@node Invoking gnutls-cli
-@section Invoking gnutls-cli
-@cindex gnutls-cli
-
-Simple client program to set up a TLS connection to some other
-computer.  It sets up a TLS connection and forwards data from the
-standard input to the secured socket and vice versa.
-
-@verbatim
-GNU TLS test client
-Usage:  gnutls-cli [options] hostname
-
-     -d, --debug integer      Enable debugging
-     -r, --resume             Connect, establish a session. Connect
-                              again and resume this session.
-     -s, --starttls           Connect, establish a plain session and
-                              start TLS when EOF or a SIGALRM is
-                              received.
-     --crlf                   Send CR LF instead of LF.
-     --x509fmtder             Use DER format for certificates to read
-                              from.
-     -f, --fingerprint        Send the openpgp fingerprint, instead
-                              of the key.
-     --disable-extensions     Disable all the TLS extensions.
-     --print-cert             Print the certificate in PEM format.
-     -p, --port integer       The port to connect to.
-     --recordsize integer     The maximum record size to advertize.
-     -V, --verbose            More verbose output.
-     --ciphers cipher1 cipher2...
-                              Ciphers to enable.
-     --protocols protocol1 protocol2...
-                              Protocols to enable.
-     --comp comp1 comp2...    Compression methods to enable.
-     --macs mac1 mac2...      MACs to enable.
-     --kx kx1 kx2...          Key exchange methods to enable.
-     --ctypes certType1 certType2...
-                              Certificate types to enable.
-     --x509cafile FILE        Certificate file to use.
-     --x509crlfile FILE       CRL file to use.
-     --pgpkeyfile FILE        PGP Key file to use.
-     --pgpkeyring FILE        PGP Key ring file to use.
-     --pgptrustdb FILE        PGP trustdb file to use.
-     --pgpcertfile FILE       PGP Public Key (certificate) file to
-                              use.
-     --x509keyfile FILE       X.509 key file to use.
-     --x509certfile FILE      X.509 Certificate file to use.
-     --srpusername NAME       SRP username to use.
-     --srppasswd PASSWD       SRP password to use.
-     --insecure               Don't abort program if server
-                              certificate can't be validated.
-     -l, --list               Print a list of the supported
-                              algorithms  and modes.
-     -h, --help               prints this help
-     -v, --version            prints the program's version number
-     --copyright              prints the program's license
-@end verbatim
-
-@node Invoking gnutls-cli-debug
-@section Invoking gnutls-cli-debug
-@cindex gnutls-cli-debug
-
-This program was created to assist in debugging @acronym{GnuTLS}, but
-it might be useful to extract a @acronym{TLS} server's capabilities.
-It's purpose is to connect onto a @acronym{TLS} server, perform some
-tests and print the server's capabilities. If called with the `-v'
-parameter a more checks will be performed. An example output is:
-
-@smallexample
-crystal:/cvs/gnutls/src$ ./gnutls-cli-debug localhost -p 5556
-Resolving 'localhost'...
-Connecting to '127.0.0.1:5556'...
-Checking for TLS 1.1 support... yes
-Checking fallback from TLS 1.1 to... N/A
-Checking for TLS 1.0 support... yes
-Checking for SSL 3.0 support... yes
-Checking for version rollback bug in RSA PMS... no
-Checking for version rollback bug in Client Hello... no
-Checking whether we need to disable TLS 1.0... N/A
-Checking whether the server ignores the RSA PMS version... no
-Checking whether the server can accept Hello Extensions... yes
-Checking whether the server can accept cipher suites not in SSL 3.0 spec... yes
-Checking whether the server can accept a bogus TLS record version in the client hello... yes
-Checking for certificate information... N/A
-Checking for trusted CAs... N/A
-Checking whether the server understands TLS closure alerts... yes
-Checking whether the server supports session resumption... yes
-Checking for export-grade ciphersuite support... no
-Checking RSA-export ciphersuite info... N/A
-Checking for anonymous authentication support... no
-Checking anonymous Diffie Hellman group info... N/A
-Checking for ephemeral Diffie Hellman support... no
-Checking ephemeral Diffie Hellman group info... N/A
-Checking for AES cipher support (TLS extension)... yes
-Checking for 3DES cipher support... yes
-Checking for ARCFOUR 128 cipher support... yes
-Checking for ARCFOUR 40 cipher support... no
-Checking for MD5 MAC support... yes
-Checking for SHA1 MAC support... yes
-Checking for ZLIB compression support (TLS extension)... yes
-Checking for LZO compression support (GnuTLS extension)... yes
-Checking for max record size (TLS extension)... yes
-Checking for SRP authentication support (TLS extension)... yes
-Checking for OpenPGP authentication support (TLS extension)... no
-@end smallexample
-
-@node Invoking gnutls-serv
-@section Invoking gnutls-serv
-@cindex gnutls-serv
-
-Simple server program that listens to incoming TLS connections.
-
-@verbatim
-GNU TLS test server
-Usage: gnutls-serv [options]
-
-     -d, --debug integer      Enable debugging
-     -g, --generate           Generate Diffie Hellman Parameters.
-     -p, --port integer       The port to connect to.
-     -q, --quiet              Suppress some messages.
-     --nodb                   Does not use the resume database.
-     --http                   Act as an HTTP Server.
-     --echo                   Act as an Echo Server.
-     --dhparams FILE          DH params file to use.
-     --x509fmtder             Use DER format for certificates
-     --x509cafile FILE        Certificate file to use.
-     --x509crlfile FILE       CRL file to use.
-     --pgpkeyring FILE        PGP Key ring file to use.
-     --pgptrustdb FILE        PGP trustdb file to use.
-     --pgpkeyfile FILE        PGP Key file to use.
-     --pgpcertfile FILE       PGP Public Key (certificate) file to
-                              use.
-     --x509keyfile FILE       X.509 key file to use.
-     --x509certfile FILE      X.509 Certificate file to use.
-     --x509dsakeyfile FILE    Alternative X.509 key file to use.
-     --x509dsacertfile FILE   Alternative X.509 certificate file to
-                              use.
-     --srppasswd FILE         SRP password file to use.
-     --srppasswdconf FILE     SRP password conf file to use.
-     --ciphers cipher1 cipher2...
-                              Ciphers to enable.
-     --protocols protocol1 protocol2...
-                              Protocols to enable.
-     --comp comp1 comp2...    Compression methods to enable.
-     --macs mac1 mac2...      MACs to enable.
-     --kx kx1 kx2...          Key exchange methods to enable.
-     --ctypes certType1 certType2...
-                              Certificate types to enable.
-     -l, --list               Print a list of the supported
-                              algorithms  and modes.
-     -h, --help               prints this help
-     -v, --version            prints the program's version number
-     --copyright              prints the program's license
-@end verbatim
-
-@subsection Setting Up a Test HTTPS Server
-@cindex HTTPS server
-@cindex debug server
-
-Running your own TLS server based on GnuTLS can be useful when
-debugging clients and/or GnuTLS itself.  This section describes how to
-use @code{gnutls-serv} as a simple HTTPS server.
-
-The most basic server can be started as:
-
-@example
-gnutls-serv --http
-@end example
-
-It will only support anonymous ciphersuites, which many TLS clients
-refuse to use.
-
-The next step is to add support for X.509.  First we generate a CA:
-
-@example
-certtool --generate-privkey > x509-ca-key.pem
-echo 'cn = GnuTLS test CA' > ca.tmpl
-echo 'ca' >> ca.tmpl
-echo 'cert_signing_key' >> ca.tmpl
-certtool --generate-self-signed --load-privkey x509-ca-key.pem \
-  --template ca.tmpl --outfile x509-ca.pem
-...
-@end example
-
-Then generate a server certificate.  Remember to change the dns_name
-value to the name of your server host, or skip that command to avoid
-the field.
-
-@example
-certtool --generate-privkey > x509-server-key.pem
-echo 'organization = GnuTLS test server' > server.tmpl
-echo 'cn = test.gnutls.org' >> server.tmpl
-echo 'tls_www_server' >> server.tmpl
-echo 'encryption_key' >> server.tmpl
-echo 'signing_key' >> server.tmpl
-echo 'dns_name = test.gnutls.org' >> server.tmpl
-certtool --generate-certificate --load-privkey x509-server-key.pem \
-  --load-ca-certificate x509-ca.pem --load-ca-privkey x509-ca-key.pem \
-  --template server.tmpl --outfile x509-server.pem
-...
-@end example
-
-For use in the client, you may want to generate a client certificate
-as well.
-
-@example
-certtool --generate-privkey > x509-client-key.pem
-echo 'cn = GnuTLS test client' > client.tmpl
-echo 'tls_www_client' >> client.tmpl
-echo 'encryption_key' >> client.tmpl
-echo 'signing_key' >> client.tmpl
-certtool --generate-certificate --load-privkey x509-client-key.pem \
-  --load-ca-certificate x509-ca.pem --load-ca-privkey x509-ca-key.pem \
-  --template client.tmpl --outfile x509-client.pem
-...
-@end example
-
-To be able to import the client key/certificate into some
-applications, you will need to convert them into a PKCS#12 structure.
-This also encrypts the security sensitive key with a password.
-
-@example
-certtool --to-p12 --load-privkey x509-client-key.pem --load-certificate x509-client.pem --outder --outfile x509-client.p12
-@end example
-
-For icing, we'll create a proxy certificate for the client too.
-
-@example
-certtool --generate-privkey > x509-proxy-key.pem
-echo 'cn = GnuTLS test client proxy' > proxy.tmpl
-certtool --generate-proxy --load-privkey x509-proxy-key.pem \
-  --load-ca-certificate x509-client.pem --load-ca-privkey x509-client-key.pem \
-  --load-certificate x509-client.pem --template proxy.tmpl \
-  --outfile x509-proxy.pem
-...
-@end example
-
-Then start the server again:
-
-@example
-gnutls-serv --http \
-            --x509cafile x509-ca.pem \
-            --x509keyfile x509-server-key.pem \
-            --x509certfile x509-server.pem
-@end example
-
-Try connecting to the server using your web browser.  Note that the
-server listens to port 5556 by default.
-
-While you are at it, to allow connections using DSA, you can also
-create a DSA key and certificate for the server.  These credentials
-will be used in the final example below.
-
-@example
-certtool --generate-privkey --dsa > x509-server-key-dsa.pem
-certtool --generate-certificate --load-privkey x509-server-key-dsa.pem \
-  --load-ca-certificate x509-ca.pem --load-ca-privkey x509-ca-key.pem \
-  --template server.tmpl --outfile x509-server-dsa.pem
-...
-@end example
-
-The next step is to create OpenPGP credentials for the server.
-
-@example
-gpg --gen-key
-...enter whatever details you want, use 'test.gnutls.org' as name...
-@end example
-
-Make a note of the OpenPGP key identifier of the newly generated key,
-here it was @code{5D1D14D8}.  You will need to export the key for
-GnuTLS to be able to use it.
-
-@example
-gpg -a --export 5D1D14D8 > openpgp-server.txt
-gpg --export 5D1D14D8 > openpgp-server.bin
-gpg --export-secret-keys 5D1D14D8 > openpgp-server-key.bin
-gpg -a --export-secret-keys 5D1D14D8 > openpgp-server-key.txt
-@end example
-
-Let's start the server with support for OpenPGP credentials:
-
-@example
-gnutls-serv --http \
-            --pgpkeyfile openpgp-server-key.txt \
-            --pgpcertfile openpgp-server.txt
-@end example
-
-The next step is to add support for SRP authentication.
-
-@example
-srptool --create-conf srp-tpasswd.conf
-srptool --passwd-conf srp-tpasswd.conf --username jas --passwd srp-passwd.txt
-Enter password: [TYPE "foo"]
-@end example
-
-Start the server with SRP support:
-
-@example
-gnutls-serv --http \
-            --srppasswdconf srp-tpasswd.conf \
-            --srppasswd srp-passwd.txt
-@end example
-
-Let's also add support for PSK.
-
-@example
-$ psktool --passwd psk-passwd.txt
-@end example
-
-Start the server with PSK support:
-
-@example
-gnutls-serv --http \
-            --pskpasswd psk-passwd.txt
-@end example
-
-Finally, we start the server with all the earlier parameters and you
-get this command:
-
-@example
-gnutls-serv --http \
-            --x509cafile x509-ca.pem \
-            --x509keyfile x509-server-key.pem \
-            --x509certfile x509-server.pem \
-            --x509dsakeyfile x509-server-key-dsa.pem \
-            --x509dsacertfile x509-server-dsa.pem \
-            --pgpkeyfile openpgp-server-key.txt \
-            --pgpcertfile openpgp-server.txt \
-            --srppasswdconf srp-tpasswd.conf \
-            --srppasswd srp-passwd.txt \
-            --pskpasswd psk-passwd.txt
-@end example
 
 @node Invoking certtool
 @section Invoking certtool
@@ -3191,6 +2836,507 @@ signing_key
 # Whether this key will be used for time stamping.
 #time_stamping_key
 @end example
+
+@node Invoking gnutls-cli
+@section Invoking gnutls-cli
+@cindex gnutls-cli
+
+Simple client program to set up a TLS connection to some other
+computer.  It sets up a TLS connection and forwards data from the
+standard input to the secured socket and vice versa.
+
+@verbatim
+GNU TLS test client
+Usage:  gnutls-cli [options] hostname
+
+     -d, --debug integer      Enable debugging
+     -r, --resume             Connect, establish a session. Connect
+                              again and resume this session.
+     -s, --starttls           Connect, establish a plain session and
+                              start TLS when EOF or a SIGALRM is
+                              received.
+     --crlf                   Send CR LF instead of LF.
+     --x509fmtder             Use DER format for certificates to read
+                              from.
+     -f, --fingerprint        Send the openpgp fingerprint, instead
+                              of the key.
+     --disable-extensions     Disable all the TLS extensions.
+     --print-cert             Print the certificate in PEM format.
+     -p, --port integer       The port to connect to.
+     --recordsize integer     The maximum record size to advertize.
+     -V, --verbose            More verbose output.
+     --ciphers cipher1 cipher2...
+                              Ciphers to enable.
+     --protocols protocol1 protocol2...
+                              Protocols to enable.
+     --comp comp1 comp2...    Compression methods to enable.
+     --macs mac1 mac2...      MACs to enable.
+     --kx kx1 kx2...          Key exchange methods to enable.
+     --ctypes certType1 certType2...
+                              Certificate types to enable.
+     --x509cafile FILE        Certificate file to use.
+     --x509crlfile FILE       CRL file to use.
+     --pgpkeyfile FILE        PGP Key file to use.
+     --pgpkeyring FILE        PGP Key ring file to use.
+     --pgptrustdb FILE        PGP trustdb file to use.
+     --pgpcertfile FILE       PGP Public Key (certificate) file to
+                              use.
+     --x509keyfile FILE       X.509 key file to use.
+     --x509certfile FILE      X.509 Certificate file to use.
+     --srpusername NAME       SRP username to use.
+     --srppasswd PASSWD       SRP password to use.
+     --insecure               Don't abort program if server
+                              certificate can't be validated.
+     -l, --list               Print a list of the supported
+                              algorithms  and modes.
+     -h, --help               prints this help
+     -v, --version            prints the program's version number
+     --copyright              prints the program's license
+@end verbatim
+
+To connect to a server using PSK authentication, you may use something
+like:
+
+@smallexample
+$ gnutls-cli -p 5556 test.gnutls.org --pskusername jas --pskkey 9e32cf7786321a828ef7668f09fb35db --priority NORMAL:+PSK:-RSA:-DHE-RSA -d 4711
+@end smallexample
+
+@menu
+* Example client PSK connection::
+@end menu
+
+@node Example client PSK connection
+@subsection Example client PSK connection
+@cindex PSK client
+
+If your server only supports the PSK ciphersuite, connecting to it
+should be as simple as connecting to the server:
+
+@smallexample
+$ ./gnutls-cli -p 5556 localhost
+Resolving 'localhost'...
+Connecting to '127.0.0.1:5556'...
+- PSK client callback. PSK hint 'psk_identity_hint'
+Enter PSK identity: psk_identity
+Enter password: 
+- PSK authentication. PSK hint 'psk_identity_hint'
+- Version: TLS1.1
+- Key Exchange: PSK
+- Cipher: AES-128-CBC
+- MAC: SHA1
+- Compression: NULL
+- Handshake was completed
+
+- Simple Client Mode:
+@end smallexample
+
+If the server supports several cipher suites, you may need to force it
+to chose PSK by using a cipher priority parameter such as
+@code{--priority NORMAL:+PSK:-RSA:-DHE-RSA:-DHE-PSK}.
+
+@cindex Netconf
+Instead of using the Netconf-way to derive the PSK key from a
+password, you can also give the PSK username and key directly on the
+command line:
+
+@smallexample
+$ ./gnutls-cli -p 5556 localhost --pskusername psk_identity --pskkey 88f3824b3e5659f52d00e959bacab954b6540344 
+Resolving 'localhost'...
+Connecting to '127.0.0.1:5556'...
+- PSK authentication. PSK hint 'psk_identity_hint'
+- Version: TLS1.1
+- Key Exchange: PSK
+- Cipher: AES-128-CBC
+- MAC: SHA1
+- Compression: NULL
+- Handshake was completed
+
+- Simple Client Mode:
+@end smallexample
+
+By keeping the @code{--pskusername} parameter and removing the
+@code{--pskkey} parameter, it will query only for the password during
+the handshake.
+
+@node Invoking gnutls-cli-debug
+@section Invoking gnutls-cli-debug
+@cindex gnutls-cli-debug
+
+This program was created to assist in debugging @acronym{GnuTLS}, but
+it might be useful to extract a @acronym{TLS} server's capabilities.
+It's purpose is to connect onto a @acronym{TLS} server, perform some
+tests and print the server's capabilities. If called with the `-v'
+parameter a more checks will be performed. An example output is:
+
+@smallexample
+crystal:/cvs/gnutls/src$ ./gnutls-cli-debug localhost -p 5556
+Resolving 'localhost'...
+Connecting to '127.0.0.1:5556'...
+Checking for TLS 1.1 support... yes
+Checking fallback from TLS 1.1 to... N/A
+Checking for TLS 1.0 support... yes
+Checking for SSL 3.0 support... yes
+Checking for version rollback bug in RSA PMS... no
+Checking for version rollback bug in Client Hello... no
+Checking whether we need to disable TLS 1.0... N/A
+Checking whether the server ignores the RSA PMS version... no
+Checking whether the server can accept Hello Extensions... yes
+Checking whether the server can accept cipher suites not in SSL 3.0 spec... yes
+Checking whether the server can accept a bogus TLS record version in the client hello... yes
+Checking for certificate information... N/A
+Checking for trusted CAs... N/A
+Checking whether the server understands TLS closure alerts... yes
+Checking whether the server supports session resumption... yes
+Checking for export-grade ciphersuite support... no
+Checking RSA-export ciphersuite info... N/A
+Checking for anonymous authentication support... no
+Checking anonymous Diffie Hellman group info... N/A
+Checking for ephemeral Diffie Hellman support... no
+Checking ephemeral Diffie Hellman group info... N/A
+Checking for AES cipher support (TLS extension)... yes
+Checking for 3DES cipher support... yes
+Checking for ARCFOUR 128 cipher support... yes
+Checking for ARCFOUR 40 cipher support... no
+Checking for MD5 MAC support... yes
+Checking for SHA1 MAC support... yes
+Checking for ZLIB compression support (TLS extension)... yes
+Checking for LZO compression support (GnuTLS extension)... yes
+Checking for max record size (TLS extension)... yes
+Checking for SRP authentication support (TLS extension)... yes
+Checking for OpenPGP authentication support (TLS extension)... no
+@end smallexample
+
+@node Invoking gnutls-serv
+@section Invoking gnutls-serv
+@cindex gnutls-serv
+
+Simple server program that listens to incoming TLS connections.
+
+@verbatim
+GNU TLS test server
+Usage: gnutls-serv [options]
+
+     -d, --debug integer      Enable debugging
+     -g, --generate           Generate Diffie Hellman Parameters.
+     -p, --port integer       The port to connect to.
+     -q, --quiet              Suppress some messages.
+     --nodb                   Does not use the resume database.
+     --http                   Act as an HTTP Server.
+     --echo                   Act as an Echo Server.
+     --dhparams FILE          DH params file to use.
+     --x509fmtder             Use DER format for certificates
+     --x509cafile FILE        Certificate file to use.
+     --x509crlfile FILE       CRL file to use.
+     --pgpkeyring FILE        PGP Key ring file to use.
+     --pgptrustdb FILE        PGP trustdb file to use.
+     --pgpkeyfile FILE        PGP Key file to use.
+     --pgpcertfile FILE       PGP Public Key (certificate) file to
+                              use.
+     --x509keyfile FILE       X.509 key file to use.
+     --x509certfile FILE      X.509 Certificate file to use.
+     --x509dsakeyfile FILE    Alternative X.509 key file to use.
+     --x509dsacertfile FILE   Alternative X.509 certificate file to
+                              use.
+     --srppasswd FILE         SRP password file to use.
+     --srppasswdconf FILE     SRP password conf file to use.
+     --ciphers cipher1 cipher2...
+                              Ciphers to enable.
+     --protocols protocol1 protocol2...
+                              Protocols to enable.
+     --comp comp1 comp2...    Compression methods to enable.
+     --macs mac1 mac2...      MACs to enable.
+     --kx kx1 kx2...          Key exchange methods to enable.
+     --ctypes certType1 certType2...
+                              Certificate types to enable.
+     -l, --list               Print a list of the supported
+                              algorithms  and modes.
+     -h, --help               prints this help
+     -v, --version            prints the program's version number
+     --copyright              prints the program's license
+@end verbatim
+
+@subsection Setting Up a Test HTTPS Server
+@cindex HTTPS server
+@cindex debug server
+
+Running your own TLS server based on GnuTLS can be useful when
+debugging clients and/or GnuTLS itself.  This section describes how to
+use @code{gnutls-serv} as a simple HTTPS server.
+
+The most basic server can be started as:
+
+@example
+gnutls-serv --http
+@end example
+
+It will only support anonymous ciphersuites, which many TLS clients
+refuse to use.
+
+The next step is to add support for X.509.  First we generate a CA:
+
+@example
+certtool --generate-privkey > x509-ca-key.pem
+echo 'cn = GnuTLS test CA' > ca.tmpl
+echo 'ca' >> ca.tmpl
+echo 'cert_signing_key' >> ca.tmpl
+certtool --generate-self-signed --load-privkey x509-ca-key.pem \
+  --template ca.tmpl --outfile x509-ca.pem
+...
+@end example
+
+Then generate a server certificate.  Remember to change the dns_name
+value to the name of your server host, or skip that command to avoid
+the field.
+
+@example
+certtool --generate-privkey > x509-server-key.pem
+echo 'organization = GnuTLS test server' > server.tmpl
+echo 'cn = test.gnutls.org' >> server.tmpl
+echo 'tls_www_server' >> server.tmpl
+echo 'encryption_key' >> server.tmpl
+echo 'signing_key' >> server.tmpl
+echo 'dns_name = test.gnutls.org' >> server.tmpl
+certtool --generate-certificate --load-privkey x509-server-key.pem \
+  --load-ca-certificate x509-ca.pem --load-ca-privkey x509-ca-key.pem \
+  --template server.tmpl --outfile x509-server.pem
+...
+@end example
+
+For use in the client, you may want to generate a client certificate
+as well.
+
+@example
+certtool --generate-privkey > x509-client-key.pem
+echo 'cn = GnuTLS test client' > client.tmpl
+echo 'tls_www_client' >> client.tmpl
+echo 'encryption_key' >> client.tmpl
+echo 'signing_key' >> client.tmpl
+certtool --generate-certificate --load-privkey x509-client-key.pem \
+  --load-ca-certificate x509-ca.pem --load-ca-privkey x509-ca-key.pem \
+  --template client.tmpl --outfile x509-client.pem
+...
+@end example
+
+To be able to import the client key/certificate into some
+applications, you will need to convert them into a PKCS#12 structure.
+This also encrypts the security sensitive key with a password.
+
+@example
+certtool --to-p12 --load-privkey x509-client-key.pem --load-certificate x509-client.pem --outder --outfile x509-client.p12
+@end example
+
+For icing, we'll create a proxy certificate for the client too.
+
+@example
+certtool --generate-privkey > x509-proxy-key.pem
+echo 'cn = GnuTLS test client proxy' > proxy.tmpl
+certtool --generate-proxy --load-privkey x509-proxy-key.pem \
+  --load-ca-certificate x509-client.pem --load-ca-privkey x509-client-key.pem \
+  --load-certificate x509-client.pem --template proxy.tmpl \
+  --outfile x509-proxy.pem
+...
+@end example
+
+Then start the server again:
+
+@example
+gnutls-serv --http \
+            --x509cafile x509-ca.pem \
+            --x509keyfile x509-server-key.pem \
+            --x509certfile x509-server.pem
+@end example
+
+Try connecting to the server using your web browser.  Note that the
+server listens to port 5556 by default.
+
+While you are at it, to allow connections using DSA, you can also
+create a DSA key and certificate for the server.  These credentials
+will be used in the final example below.
+
+@example
+certtool --generate-privkey --dsa > x509-server-key-dsa.pem
+certtool --generate-certificate --load-privkey x509-server-key-dsa.pem \
+  --load-ca-certificate x509-ca.pem --load-ca-privkey x509-ca-key.pem \
+  --template server.tmpl --outfile x509-server-dsa.pem
+...
+@end example
+
+The next step is to create OpenPGP credentials for the server.
+
+@example
+gpg --gen-key
+...enter whatever details you want, use 'test.gnutls.org' as name...
+@end example
+
+Make a note of the OpenPGP key identifier of the newly generated key,
+here it was @code{5D1D14D8}.  You will need to export the key for
+GnuTLS to be able to use it.
+
+@example
+gpg -a --export 5D1D14D8 > openpgp-server.txt
+gpg --export 5D1D14D8 > openpgp-server.bin
+gpg --export-secret-keys 5D1D14D8 > openpgp-server-key.bin
+gpg -a --export-secret-keys 5D1D14D8 > openpgp-server-key.txt
+@end example
+
+Let's start the server with support for OpenPGP credentials:
+
+@example
+gnutls-serv --http \
+            --pgpkeyfile openpgp-server-key.txt \
+            --pgpcertfile openpgp-server.txt
+@end example
+
+The next step is to add support for SRP authentication.
+
+@example
+srptool --create-conf srp-tpasswd.conf
+srptool --passwd-conf srp-tpasswd.conf --username jas --passwd srp-passwd.txt
+Enter password: [TYPE "foo"]
+@end example
+
+Start the server with SRP support:
+
+@example
+gnutls-serv --http \
+            --srppasswdconf srp-tpasswd.conf \
+            --srppasswd srp-passwd.txt
+@end example
+
+Let's also add support for PSK.
+
+@example
+$ psktool --passwd psk-passwd.txt
+@end example
+
+Start the server with PSK support:
+
+@example
+gnutls-serv --http \
+            --pskpasswd psk-passwd.txt
+@end example
+
+Finally, we start the server with all the earlier parameters and you
+get this command:
+
+@example
+gnutls-serv --http \
+            --x509cafile x509-ca.pem \
+            --x509keyfile x509-server-key.pem \
+            --x509certfile x509-server.pem \
+            --x509dsakeyfile x509-server-key-dsa.pem \
+            --x509dsacertfile x509-server-dsa.pem \
+            --pgpkeyfile openpgp-server-key.txt \
+            --pgpcertfile openpgp-server.txt \
+            --srppasswdconf srp-tpasswd.conf \
+            --srppasswd srp-passwd.txt \
+            --pskpasswd psk-passwd.txt
+@end example
+
+@menu
+* Example server PSK connection::
+@end menu
+
+@node Example server PSK connection
+@subsection Example server PSK connection
+@cindex PSK server
+
+To set up a PSK server with @code{gnutls-serv} you need to create PSK
+password file (@pxref{Invoking psktool}).  In the example below, I
+type @code{password} at the prompt.
+
+@smallexample
+$ ./psktool -u psk_identity -p psks.txt -n psk_identity_hint
+Enter password:
+Key stored to psks.txt
+$ cat psks.txt
+psk_identity:88f3824b3e5659f52d00e959bacab954b6540344
+$
+@end smallexample
+
+After this, start the server pointing to the password file.  We
+disable DHE-PSK.
+
+@smallexample
+$ ./gnutls-serv --pskpasswd psks.txt  --pskhint psk_identity_hint --priority NORMAL:-DHE-PSK
+Set static Diffie Hellman parameters, consider --dhparams.
+Echo Server ready. Listening to port '5556'.
+@end smallexample
+
+You can now connect to the server using a PSK client (@pxref{Example
+client PSK connection}).
+
+@node Invoking psktool
+@section Invoking psktool
+@cindex psktool
+
+This is a program to manage @acronym{PSK} username and keys.
+
+@verbatim
+PSKtool help
+Usage : psktool [options]
+     -u, --username username
+                              specify username.
+     -p, --passwd FILE        specify a password file.
+     -n, --netconf-hint HINT
+                              derive key from Netconf password, using 
+                              HINT as the psk_identity_hint.
+     -s, --keysize SIZE       specify the key size in bytes.
+     -v, --version            prints the program's version number
+     -h, --help               shows this help text
+@end verbatim
+
+Normally the file will generate random keys for the indicate username.
+You may also derive PSK keys from passwords, using the algorithm
+specified in @file{draft-ietf-netconf-tls-02.txt}.  The algorithm
+needs a PSK identity hint, which you specify using
+@code{--netconf-hint}.  To derive a PSK key from a password with an
+empty PSK identity hint, using @code{--netconf-hint ""}.
+
+@node Invoking srptool
+@section Invoking srptool
+@anchor{srptool}
+@cindex srptool
+
+The @file{srptool} is a very simple program that emulates the programs
+in the @emph{Stanford SRP libraries}.  It is intended for use in
+places where you don't expect @acronym{SRP} authentication to be the
+used for system users.  Traditionally @emph{libsrp} used two
+files. One called 'tpasswd' which holds usernames and verifiers, and
+'tpasswd.conf' which holds generators and primes.
+
+How to use srptool:
+
+@itemize
+
+@item
+To create tpasswd.conf which holds the g and n values for
+@acronym{SRP} protocol (generator and a large prime), run:
+
+@example
+$ srptool --create-conf /etc/tpasswd.conf
+@end example
+
+@item
+This command will create /etc/tpasswd and will add user 'test' (you
+will also be prompted for a password). Verifiers are stored by default
+in the way libsrp expects.
+
+@example
+$ srptool --passwd /etc/tpasswd \
+    --passwd-conf /etc/tpasswd.conf -u test
+@end example
+
+@item
+This command will check against a password. If the password matches
+the one in /etc/tpasswd you will get an ok.
+
+@example
+$ srptool --passwd /etc/tpasswd \
+    --passwd-conf /etc/tpasswd.conf --verify -u test
+@end example
+
+@end itemize
 
 @node Function reference
 @chapter Function Reference

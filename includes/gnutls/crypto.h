@@ -92,6 +92,7 @@ typedef enum
 {
   GNUTLS_MPI_FORMAT_USG = 0, /* raw unsigned integer format */ 
   GNUTLS_MPI_FORMAT_STD = 1, /* raw signed integer format - always a leading zero when positive */
+  GNUTLS_MPI_FORMAT_PGP = 2, /* the pgp integer format */
 } gnutls_bigint_format_t;
 
 typedef struct

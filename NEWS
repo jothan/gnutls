@@ -5,8 +5,9 @@ See the end for copying conditions.
 
 * Version 2.5.0 (unreleased)
 
-** Added wide wildcard hostname matching. Patch by Jean-Philippe Garcia
-Ballester.
+** Fix compiler warnings.
+Reported by Massimo Gaspari <massimo.gaspari@alice.it> in
+<http://permalink.gmane.org/gmane.network.gnutls.general/1281>.
 
 ** Added API to replace and update the crypto backend.
 
@@ -20,6 +21,399 @@ gnutls_crypto_digest_register2: Added
 gnutls_crypto_rnd_register2: Added
 gnutls_crypto_pk_register2: Added
 gnutls_crypto_bigint_register2: Added
+
+* Version 2.4.0 (released 2008-06-19)
+
+** Major changes compared to the v2.2 branch:
+
+*** The OpenPGP sub-system has been improved and now supports subkeys.
+
+*** The PSK sub-system has been improved and now supports password
+*** derivation and PSK identity hints.
+The password derivation algorithms support is documented in
+draft-ietf-netconf-tls-02.txt.
+
+*** The certtool --inder and --outder has been replaced by --inraw and --outraw.
+This aligns terminology with OpenPGP, which doesn't use DER encoding.
+The old parameters will continue to work for some time.
+
+*** Certtool now confirm passwords and changes permissions of private key files.
+
+*** The default handshake size limit has been increased to 48kb.
+It appears as if some valid handshakes are large due to sending many
+CA certificates.  (The earlier limit was 16kb.)
+
+*** LZO compression is now disabled by default.
+The main reason is that LZO compression in TLS is not standardized,
+but license compatiblity issues with minilzo triggered us to make this
+decision now.
+
+*** Improvements for cross-compilation to Windows and OpenWRT.
+
+*** The look of the GTK-DOC manual has been improved.
+Major developer visible changes compared to the v2.2 branch:
+
+*** Full OpenPGP support is part of libgnutls, licensed under the LGPL.
+
+*** New APIs to access the raw X.509 Subject and Issuer DN's and
+*** elements from the certificate credentials structure.
+Thanks to Joe Orton.
+
+*** New APIs to improve working with username/passwords and PSK.
+
+*** Names of constants to affect certificate printing changed.
+The constants are used for OpenPGP too, which the names didn't
+reflect, so the following name change has been made:
+
+            Old name                         New name
+     GNUTLS_X509_CRT_FULL            GNUTLS_CRT_PRINT_FULL
+     GNUTLS_X509_CRT_ONELINE         GNUTLS_CRT_PRINT_ONELINE
+     GNUTLS_X509_CRT_UNSIGNED_FULL   GNUTLS_CRT_PRINT_UNSIGNED_FULL
+
+The old names will be mapped to the new names for some time.
+
+*** The function gnutls_openpgp_privkey_get_id has been renamed to
+*** gnutls_openpgp_privkey_get_key_id.
+A compatibility mapping exists to avoid breaking API backwards
+compatibility.
+
+*** Replaced all uses of alloca with malloc and free.
+
+*** We no longer build with -D_REENTRANT -D_THREAD_SAFE.
+We have been unable to find a documented rationale for this practice.
+
+*** Of course, many smaller fixes have been made, see the ChangeLog file.
+
+*** API/ABI changes in GnuTLS 2.4
+All OpenPGP related functions have been moved from libgnutls-extra to
+libgnutls, and several new functions have been added (see below).
+Before making the release, we discussed whether moving functions from
+libgnutls-extra to libgnutls would require us to increment the ABI
+version, but the general opinion was that this would not be required.
+All older functions continue to work the same.  We are open to the
+possibility that this decision will lead to problem on some platform,
+and if it turns out that the Right Thing should have been to increment
+the shared library version, we would need to release an update within
+the 2.4.x branch that increments the shared library version.
+
+This release adds the following functions:
+
+  gnutls_psk_client_get_hint
+  gnutls_psk_set_server_credentials_hint
+  gnutls_psk_netconf_derive_key
+
+    Used to get/set the PSK identity hint, and derive PSK keys from
+    passwords a'la netconf.
+
+  gnutls_x509_dn_deinit
+  gnutls_x509_dn_export
+  gnutls_x509_dn_import
+  gnutls_x509_dn_init
+
+    Used to handle X.509 Certificate DN's directly.
+
+  gnutls_hex2bin
+
+    Converts a data buffer to hex.  Useful for handling PSK/SRP shared
+    secrets.
+
+  gnutls_certificate_get_x509_cas
+  gnutls_certificate_get_x509_crls
+  gnutls_certificate_get_openpgp_keyring
+
+    Functions for direct access to credential elements.
+
+  gnutls_openpgp_crt_get_auth_subkey
+  gnutls_openpgp_crt_get_key_id
+  gnutls_openpgp_crt_get_pk_dsa_raw
+  gnutls_openpgp_crt_get_pk_rsa_raw
+  gnutls_openpgp_crt_get_preferred_key_id
+  gnutls_openpgp_crt_get_revoked_status
+  gnutls_openpgp_crt_get_subkey_count
+  gnutls_openpgp_crt_get_subkey_creation_time
+  gnutls_openpgp_crt_get_subkey_expiration_time
+  gnutls_openpgp_crt_get_subkey_fingerprint
+  gnutls_openpgp_crt_get_subkey_id
+  gnutls_openpgp_crt_get_subkey_idx
+  gnutls_openpgp_crt_get_subkey_pk_algorithm
+  gnutls_openpgp_crt_get_subkey_pk_dsa_raw
+  gnutls_openpgp_crt_get_subkey_pk_rsa_raw
+  gnutls_openpgp_crt_get_subkey_revoked_status
+  gnutls_openpgp_crt_get_subkey_usage
+  gnutls_openpgp_crt_print
+  gnutls_openpgp_crt_set_preferred_key_id
+  gnutls_openpgp_keyring_get_crt
+  gnutls_openpgp_keyring_get_crt_count
+  gnutls_openpgp_privkey_export
+  gnutls_openpgp_privkey_export_dsa_raw
+  gnutls_openpgp_privkey_export_rsa_raw
+  gnutls_openpgp_privkey_export_subkey_dsa_raw
+  gnutls_openpgp_privkey_export_subkey_rsa_raw
+  gnutls_openpgp_privkey_get_fingerprint
+  gnutls_openpgp_privkey_get_key_id
+  gnutls_openpgp_privkey_get_pk_algorithm
+  gnutls_openpgp_privkey_get_preferred_key_id
+  gnutls_openpgp_privkey_get_revoked_status
+  gnutls_openpgp_privkey_get_subkey_count
+  gnutls_openpgp_privkey_get_subkey_creation_time
+  gnutls_openpgp_privkey_get_subkey_expiration_time
+  gnutls_openpgp_privkey_get_subkey_fingerprint
+  gnutls_openpgp_privkey_get_subkey_id
+  gnutls_openpgp_privkey_get_subkey_idx
+  gnutls_openpgp_privkey_get_subkey_pk_algorithm
+  gnutls_openpgp_privkey_get_subkey_revoked_status
+  gnutls_openpgp_privkey_set_preferred_key_id
+
+    New OpenPGP related functions.
+
+    The function gnutls_openpgp_crt_get_key_id is the same as the old
+    from gnutls_openpgp_crt_get_id, see above.
+
+The release also adds a new header file 'gnutls/crypto.h', however it
+is currently not used.
+
+** libgnutls [OpenPGP]: New APIs to retrieve fingerprint from OpenPGP subkeys.
+Contributed by Daniel Kahn Gillmor <dkg-debian.org@fifthhorseman.net>.
+
+** API and ABI modifications:
+gnutls_openpgp_crt_get_subkey_fingerprint: ADDED.
+gnutls_openpgp_privkey_get_subkey_fingerprint: ADDED.
+
+* Version 2.3.15 (released 2008-06-15)
+
+** Disable the openpgp-certs self-tests.
+It results in failure under Wine and doesn't work on Debian buildds.
+
+** API and ABI modifications:
+No changes since last version.
+
+* Version 2.3.14 (released 2008-06-11)
+
+** libgnutls [OpenPGP]: Changed OpenPGP verification behaviour.
+An OpenPGP certificate is now only considered verified if all the user
+IDs are verified.
+
+** Examples: Make C++ example compile.
+Earlier it may have failed with an unresolved reference to strlen.
+
+** Documentation: Doc fix for gnutls_x509_crt_get_extension_oid.
+Reported by Sam Varshavchik <mrsam@courier-mta.com>.
+
+** API and ABI modifications:
+No changes since last version.
+
+* Version 2.3.13 (released 2008-06-07)
+
+** libgnutls [OpenPGP]: Make OpenPGP handshakes work again.
+
+** doc/: Add psktool to info index.  Some minor cleanups.
+
+** tests/: Added non-forking TLS handshake test, see tests/mini.c.
+
+** tests/: Added libgcrypt.supp which can be used with valgrind.
+The file suppresses the known libgcrypt memory leaks, so they aren't
+printed when you run valgrind on the gnutls self-tests.  Use it as
+follows: valgrind --suppressions=libgcrypt.supp ./x509self or add
+'--suppressions=/home/you/src/gnutls/tests/libgcrypt.supp' to your
+~/.valgrindrc file.
+
+** tests/: Reduce amount of debugging output by default.
+Use --verbose for each test to get the full output.
+
+** tests/: Fix memory leaks in several self-tests.
+None of the self tests should be leaking memory when running valgrind
+or similar tools.  (Known exceptions are dhepskself, pskself, and
+set_pkcs12_cred, which appear likely to be due to memory leaks in the
+library.)
+
+** API and ABI modifications:
+No changes since last version.
+
+* Version 2.3.12 (released 2008-06-04)
+
+** Merge gnutls_with_netconf branch.
+
+*** libgnutls [PSK]: New API to retrieve PSK identity hint in client.
+The function is gnutls_psk_client_get_hint.
+
+*** libgnutls [PSK]: New API to set PSK identity hint in server.
+The function is gnutls_psk_set_server_credentials_hint.
+
+*** libgnutls [PSK]: Support server key exchange with PSK identity hint.
+In the client, the message is parsed and the application can use
+gnutls_psk_client_get_hint to retrieve the hint.  In the server, the
+message is sent if the application has specified a PSK identity hint
+using gnutls_psk_set_server_credentials_hint.
+
+*** libgnutls [PSK]: Support Netconf PSK key derivation.
+The function gnutls_psk_netconf_derive_key supports the PSK key
+derivation as specified in draft-ietf-netconf-tls-02.txt.  New self
+test netconf-psk.c.
+
+*** psktool: Support new --netconf-hint to generate PSK key from password.
+Uses the Netconf algorithm to derive PSK key from password.
+
+*** gnutls-serv: Support new --pskhint parameter to set PSK identity hint.
+
+*** gnutls-cli: Always support PSK modes, through a callback.
+The callback will derive a PSK key using Netconf algorithm.  It will
+print the PSK identity hint to help the user.
+
+*** New PSK example client and server.
+See doc/examples/ex-client-psk.c and doc/examples/ex-serv-psk.c.
+
+** libgnutls: Fix gnutls_x509_crl_set_version on arm platforms.
+The code didn't work properly on platforms where 'char' is unsigned,
+when you set version 0.  Reported by Laurence Withers
+<l@lwithers.me.uk> in
+<http://permalink.gmane.org/gmane.comp.encryption.gpg.gnutls.devel/2825>.
+
+** libgnutls-openssl: added RAND_pseudo_bytes API.
+Patch from Robert Millan <rmh@aybabtu.com>.
+
+** API and ABI modifications:
+RAND_pseudo_bytes: ADDED to libgnutls-openssl.
+gnutls_psk_client_get_hint: ADDED.
+gnutls_psk_set_server_credentials_hint: ADDED.
+gnutls_psk_netconf_derive_key: ADDED
+
+* Version 2.3.11 (released 2008-05-20)
+
+** Fix flaw in fix for GNUTLS-SA-2008-1-3.
+The flaw would result in incorrectly terminated sessions with the
+error "Decryption has failed" when the server sends a small packet
+(typically when the session is closed).  Reported by Andreas Metzler
+<ametzler@downhill.at.eu.org> in
+<http://permalink.gmane.org/gmane.comp.encryption.gpg.gnutls.devel/2807>.
+
+** Don't use gnulib headers when building C++ library.
+Fixes builds under Windows.
+
+** Make umask a requirement.
+We don't know of any system that lacks it, even GNU CoreUtils use it
+unconditionally.
+
+** Update gnulib files.
+Fixes a problem where it pulled in a replacement for memcmp under
+MinGW, which caused the C++ example to fail to build.
+
+** API and ABI modifications:
+No changes since last version.
+
+* Version 2.3.10 (released 2008-05-19)
+
+** Added wide wildcard hostname matching.
+Tiny patch by Jean-Philippe Garcia Ballester.
+
+** Fix three security vulnerabilities.  [GNUTLS-SA-2008-1]
+Thanks to CERT-FI for finding the bugs and providing detailed reports,
+which allowed the bugs to be reproduced and fixed easily.  Patches
+developed by Simon Josefsson and Nikos Mavrogiannopoulos.  Any updates
+with more details about these vulnerabilities will be added to
+<http://www.gnu.org/software/gnutls/security.html>
+
+*** [GNUTLS-SA-2008-1-1]
+*** libgnutls: Fix crash when sending invalid server name.
+The crash can be triggered remotely before authentication, which can
+lead to a Daniel of Service attack to disable the server.  The bug
+cause gnutls to store more session resumption data than what was
+allocated for, thus overwriting unallocated memory.
+
+*** [GNUTLS-SA-2008-1-2]
+*** libgnutls: Fix crash when sending repeated client hellos.
+The crash can be triggered remotely before authentication, which can
+lead to a Daniel of Service attack to disable the server.  The bug
+triggers a null-pointer dereference.
+
+*** [GNUTLS-SA-2008-1-3]
+*** libgnutls: Fix crash in cipher padding decoding for invalid record lengths.
+The crash can be triggered remotely before authentication, which can
+lead to a Daniel of Service attack to disable the server.  The bug
+cause gnutls to read memory beyond the end of the received record.
+
+** libgnutlsxx: Updated API according to patches from Eduardo 
+Villanueva Che (discussion at
+<http://lists.gnu.org/archive/html/gnutls-devel/2007-02/msg00017.html>)
+
+** Use umask to restrict permissions to owner before creating a file.
+
+** API and ABI modifications:
+No changes since last version.
+
+* Version 2.3.9 (released 2008-05-16)
+
+** libgnutls: Fix build failures if SRP/OpenPGP is disabled.
+Based on report and tiny patches from
+<jared.jennings.ctr@eglin.af.mil>, see
+<https://savannah.gnu.org/support/index.php?106342>.
+
+** libgnutls: Translation fixes.
+
+** gnutls-cli: Fix so that PSK authentication works.
+Also improve manual to give example for gnutls-cli PSK authentication.
+
+** certtool: Encrypting a private key now require a confirmed password.
+Before './certtool -k -8' would merely ask for a password once.
+Reported by Daniel 'NebuchadnezzaR' Dehennin
+<nebuchadnezzar@asgardr.info> see
+<http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=364287>.
+
+** certtool: When writing private keys to files, change permissions of file.
+Now the file which the private key is saved to is chmod'ed 0600.
+Reported by martin f krafft <madduck@debian.org> see
+<http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=373169>.
+
+** guile: Fix -fgnu89-inline test.
+
+** Removed --enable-profile-mode.
+The code linked gnutls with the libfc project (Function Check) which
+appears to have been stalled since around 2002.
+
+** Clean up header file checks by ./configure.
+
+** Update of gnulib files.
+
+** API and ABI modifications:
+No changes since last version.
+
+* Version 2.3.8 (released 2008-04-29)
+
+** libgnutls: Increase default handshake packet size limit to 48kb.
+The old limit was 16kb and some servers send huge list of trusted CAs,
+thus running into the limit.  FYI, applications can further increase
+this limit using gnutls_handshake_set_max_packet_length.  Thanks to
+Marc Haber <mh+debian-bugs@zugschlus.de> and "Marc F. Clemente"
+<marc@mclemente.net> for reporting and providing test servers.
+
+** libgnutls: Add new error code: GNUTLS_E_HANDSHAKE_TOO_LARGE
+Returned when the handshake data size is too large.  Before
+GNUTLS_E_MEMORY_ERROR was used, which could be confused with other
+error situations.
+
+** libgnutls: Hide definitions in crypto.h.
+We have decided that the APIs defined in crypto.h are not stable
+enough for v2.4, so don't use any of those functions.
+
+** gnutls-cli: exit when hostname doesn't match certificate.
+Use --insecure to avoid hostname comparison.
+
+** certtool: --inder and --outder replaced by --inraw and --outraw.
+The reason is to align terminology with OpenPGP, which doesn't use
+DER.  The old parameters will continue to work for some time.
+
+** doc: Add section 'Index of new symbols in 2.4.0' to the GTK-DOC manual.
+
+** doc: Many cosmetic fixes, to silence (most) gtk-doc warnings.
+
+** Mingw32: Revert libgcrypt vasprintf work-around added in last release.
+Use libgcrypt 1.4.1 or later when building on MinGW32, it removes the
+vasprintf symbol from the libgcrypt library which caused problems.
+
+** Update of gnulib files.
+
+
+** API and ABI modifications:
+GNUTLS_E_HANDSHAKE_TOO_LARGE: ADDED.
 
 * Version 2.3.7 (released 2008-04-21)
 
@@ -304,6 +698,79 @@ in a callback friendly way.
 ** Updated translations.
 
 ** Update gnulib files.
+
+** API and ABI modifications:
+No changes since last version.
+
+* Version 2.2.5 (released 2008-05-19)
+
+** Fix flaw in fix for GNUTLS-SA-2008-1-3.
+The flaw would result in incorrectly terminated sessions with the
+error "Decryption has failed" when the server sends a small packet
+(typically when the session is closed).  Reported by Andreas Metzler
+<ametzler@downhill.at.eu.org> in
+<http://permalink.gmane.org/gmane.comp.encryption.gpg.gnutls.devel/2807>.
+
+** API and ABI modifications:
+No changes since last version.
+
+* Version 2.2.4 (released 2008-05-19)
+
+** Fix three security vulnerabilities.  [GNUTLS-SA-2008-1]
+Thanks to CERT-FI for finding the bugs and providing detailed reports,
+which allowed the bugs to be reproduced and fixed easily.  Patches
+developed by Simon Josefsson and Nikos Mavrogiannopoulos.  Any updates
+with more details about these vulnerabilities will be added to
+<http://www.gnu.org/software/gnutls/security.html>
+
+*** [GNUTLS-SA-2008-1-1]
+*** libgnutls: Fix crash when sending invalid server name.
+The crash can be triggered remotely before authentication, which can
+lead to a Daniel of Service attack to disable the server.  The bug
+cause gnutls to store more session resumption data than what was
+allocated for, thus overwriting unallocated memory.
+
+*** [GNUTLS-SA-2008-1-2]
+*** libgnutls: Fix crash when sending repeated client hellos.
+The crash can be triggered remotely before authentication, which can
+lead to a Daniel of Service attack to disable the server.  The bug
+triggers a null-pointer dereference.
+
+*** [GNUTLS-SA-2008-1-3]
+*** libgnutls: Fix crash in cipher padding decoding for invalid record lengths.
+The crash can be triggered remotely before authentication, which can
+lead to a Daniel of Service attack to disable the server.  The bug
+cause gnutls to read memory beyond the end of the received record.
+
+** API and ABI modifications:
+No changes since last version.
+
+* Version 2.2.3 (released 2008-05-06)
+
+** Increase default handshake packet size limit to 48kb.
+The old limit was 16kb and some servers send huge list of trusted CAs,
+thus running into the limit.  FYI, applications can further increase
+this limit using gnutls_handshake_set_max_packet_length.  Thanks to
+Marc Haber <mh+debian-bugs@zugschlus.de> and "Marc F. Clemente"
+<marc@mclemente.net> for reporting and providing test servers.
+
+** Fix compilation error related to __FUNCTION__ on some systems.
+Reported by Tim Mooney, see
+<https://savannah.gnu.org/support/?106267>.
+
+** Documented the --priority option to gnutls-cli and gnutls-serv.
+
+** Fix fopen file descriptor leak in PSK server code.
+Thanks to Laurence Withers <l@lwithers.me.uk>, see
+<http://lists.gnu.org/archive/html/gnutls-devel/2008-04/msg00002.html>.
+
+** Build Guile code with -fgnu89-inline only when supported.
+Reported by Kris Karas <ktk@enterprise.bidmc.harvard.edu> in
+<http://permalink.gmane.org/gmane.comp.encryption.gpg.gnutls.devel/2708>.
+
+** Make Camellia encryption work.
+Reported by Yoshisato YANAGISAWA <yanagisawa@csg.is.titech.ac.jp> in
+<http://thread.gmane.org/gmane.comp.encryption.gpg.gnutls.devel/2746>.
 
 ** API and ABI modifications:
 No changes since last version.
