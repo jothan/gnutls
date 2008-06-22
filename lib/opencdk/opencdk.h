@@ -27,7 +27,6 @@
 
 #include <stddef.h> /* for size_t */
 #include <stdarg.h>
-#include <gcrypt.h>
 #include <gnutls_int.h>
 #include <gnutls_mem.h>
 #include <gnutls/gnutls.h>
@@ -104,7 +103,7 @@ struct cdk_desig_revoker_s;
 typedef struct cdk_desig_revoker_s *cdk_desig_revoker_t;
 
 /* Alias for backward compatibility. */
-typedef gcry_mpi_t cdk_mpi_t;
+typedef bigint_t cdk_mpi_t;
 
 
 /* All valid error constants. */
@@ -172,9 +171,9 @@ enum cdk_compress_algo_t {
     CDK_COMPRESS_BZIP2 = 3 /* Not supported in this version */
 };
 
-
 /* All valid public key algorithms valid in OpenPGP */
 enum cdk_pubkey_algo_t {
+    CDK_PK_UNKNOWN = 0,
     CDK_PK_RSA   =  1,
     CDK_PK_RSA_E =  2, /* RSA-E and RSA-S are deprecated use RSA instead */
     CDK_PK_RSA_S =  3, /* and use the key flags in the self signatures. */
@@ -188,7 +187,6 @@ enum cdk_s2k_type_t {
     CDK_S2K_SALTED     = 1,
     CDK_S2K_ITERSALTED = 3
 };
-
 
 /* The different kind of user ID preferences. */
 enum cdk_pref_type_t {
@@ -383,7 +381,7 @@ struct cdk_pkt_signature_s {
     cdk_subpkt_t hashed;
     unsigned short unhashed_size;
     cdk_subpkt_t unhashed;
-    gcry_mpi_t mpi[MAX_CDK_DATA_PARTS];
+    bigint_t mpi[MAX_CDK_DATA_PARTS];
     cdk_desig_revoker_t revkeys;
     struct {
         unsigned exportable:1;
@@ -423,7 +421,7 @@ struct cdk_pkt_pubkey_s {
     unsigned int main_keyid[2];
     unsigned int timestamp;
     unsigned int expiredate;
-    gcry_mpi_t mpi[MAX_CDK_PK_PARTS];
+    bigint_t mpi[MAX_CDK_PK_PARTS];
     unsigned is_revoked:1;
     unsigned is_invalid:1;
     unsigned has_expired:1;
@@ -455,7 +453,7 @@ struct cdk_pkt_seckey_s {
         unsigned char ivlen;
     } protect;
     unsigned short csum;
-    gcry_mpi_t mpi[MAX_CDK_PK_PARTS];
+    bigint_t mpi[MAX_CDK_PK_PARTS];
     unsigned char * encdata;
     size_t enclen;
     unsigned char is_protected;
@@ -485,7 +483,7 @@ struct cdk_pkt_pubkey_enc_s {
     unsigned int keyid[2];
     int throw_keyid;
     unsigned char pubkey_algo;
-    gcry_mpi_t mpi[MAX_CDK_DATA_PARTS];
+    bigint_t mpi[MAX_CDK_DATA_PARTS];
 };
 typedef struct cdk_pkt_pubkey_enc_s * cdk_pkt_pubkey_enc_t;
 
@@ -659,12 +657,12 @@ const unsigned char* cdk_key_desig_revoker_walk (cdk_desig_revoker_t root,
 /* Encrypt the given session key @SK with the public key @PK
    and write the contents into the packet @PKE. */
 cdk_error_t cdk_pk_encrypt (cdk_pubkey_t pk, cdk_pkt_pubkey_enc_t pke,
-			    gcry_mpi_t sk);
+			    bigint_t sk);
 			    
 /* Decrypt the given encrypted session key in @PKE with the secret key
    @SK and store it in @R_SK. */
 cdk_error_t cdk_pk_decrypt (cdk_seckey_t sk, cdk_pkt_pubkey_enc_t pke,
-                            gcry_mpi_t *r_sk);
+                            bigint_t *r_sk);
 			    
 /* Sign the given message digest @MD with the secret key @SK and
    store the signature in the packet @SIG. */
@@ -1017,38 +1015,6 @@ const char * cdk_check_version (const char * req_version);
 /* UTF8 */
 char* cdk_utf8_encode (const char * string);
 char* cdk_utf8_decode (const char * string, size_t length, int delim);
-
-/* Try to receive the key, which has the key ID @KEYID, from the
-   keyserver host @HOST and the port @PORT. */
-cdk_error_t cdk_keyserver_recv_key (const char *host, int port,
-                                    const unsigned char *keyid, int kid_type,
-                                    cdk_kbnode_t *r_key);
-
-cdk_error_t cdk_keygen_new (cdk_keygen_ctx_t * r_hd);
-void cdk_keygen_free (cdk_keygen_ctx_t hd);
-
-/* Set the preferences of the given type for the new key.
-   @ARRAY is an array which list of algorithm IDs. */   
-cdk_error_t cdk_keygen_set_prefs (cdk_keygen_ctx_t hd,
-                                  enum cdk_pref_type_t type,
-                                  const unsigned char * array, size_t n);
-cdk_error_t cdk_keygen_set_algo_info (cdk_keygen_ctx_t hd, int type,
-	    			      int usage, enum cdk_pubkey_algo_t algo, 
-				      unsigned int bits);
-int cdk_keygen_set_keyserver_flags (cdk_keygen_ctx_t hd, int no_modify,
-                                    const char *pref_url);
-int cdk_keygen_set_expire_date (cdk_keygen_ctx_t hd, int type,
-                                long timestamp);
-				
-/* Set the user ID specifc parts for the new key.
-   It is suggested to use a name in the form of 
-   'First Name' 'Last Name' <email-address@host.domain> */
-void cdk_keygen_set_name (cdk_keygen_ctx_t hd, const char * name);
-void cdk_keygen_set_passphrase (cdk_keygen_ctx_t hd, const char * pass);
-cdk_error_t cdk_keygen_start (cdk_keygen_ctx_t hd);
-cdk_error_t cdk_keygen_save (cdk_keygen_ctx_t hd,
-                             const char * pubf,
-                             const char * secf);
 
 #ifdef __cplusplus
 }

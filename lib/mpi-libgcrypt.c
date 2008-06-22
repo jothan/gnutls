@@ -36,6 +36,13 @@
 /* Functions that refer to the libgcrypt library.
  */
 
+static inline int _format_conv( gnutls_bigint_format_t format)
+{
+    if (format == GNUTLS_MPI_FORMAT_USG) return GCRYMPI_FMT_USG;
+    else if (format == GNUTLS_MPI_FORMAT_STD) return GCRYMPI_FMT_STD;
+    else return GCRYMPI_FMT_PGP;
+}
+
 /* returns zero on success
  */
 bigint_t
@@ -44,7 +51,7 @@ wrap_gcry_mpi_scan (const void * buffer, size_t nbytes, gnutls_bigint_format_t f
   gcry_mpi_t ret_mpi = NULL;
   int ret;
 
-  ret = gcry_mpi_scan (&ret_mpi, (format==GNUTLS_MPI_FORMAT_USG)?GCRYMPI_FMT_USG:GCRYMPI_FMT_STD, buffer, nbytes, NULL);
+  ret = gcry_mpi_scan (&ret_mpi, _format_conv(format), buffer, nbytes, NULL);
   if (ret != 0)
     return NULL;
 
@@ -56,15 +63,12 @@ wrap_gcry_mpi_print (const bigint_t a, void *buffer, size_t * nbytes, gnutls_big
 {
   int ret;
 
-  if (format==GNUTLS_MPI_FORMAT_USG)
-    format = GCRYMPI_FMT_USG;
-  else 
-    format = GCRYMPI_FMT_STD;
+  format = _format_conv(format);
     
   if (nbytes == NULL || a == NULL)
     return GNUTLS_E_INVALID_REQUEST;
 
-  ret = gcry_mpi_print( format , buffer, *nbytes, nbytes, a);
+  ret = gcry_mpi_print( format, buffer, *nbytes, nbytes, a);
   if (!ret)
     return 0;
 

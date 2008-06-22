@@ -35,12 +35,11 @@
 
 /* Release an array of MPI values. */
 void
-_cdk_free_mpibuf (size_t n, gcry_mpi_t *array)
+_cdk_free_mpibuf (size_t n, bigint_t *array)
 {
   while (n--) 
     {
-      gcry_mpi_release (array[n]);
-      array[n] = NULL;
+      _gnutls_mpi_release (&array[n]);
     }
 }
 
@@ -396,7 +395,7 @@ _cdk_copy_pubkey (cdk_pkt_pubkey_t* dst, cdk_pkt_pubkey_t src)
   if (src->prefs)
     k->prefs = _cdk_copy_prefs (src->prefs);
   for (i = 0; i < cdk_pk_get_npkey (src->pubkey_algo); i++)
-    k->mpi[i] = gcry_mpi_copy (src->mpi[i]);
+    k->mpi[i] = _gnutls_mpi_copy (src->mpi[i]);
   *dst = k;
   
   return 0;
@@ -428,11 +427,9 @@ _cdk_copy_seckey (cdk_pkt_seckey_t* dst, cdk_pkt_seckey_t src)
     }
   
   _cdk_s2k_copy (&k->protect.s2k, src->protect.s2k);
-  
   for (i = 0; i < cdk_pk_get_nskey (src->pubkey_algo); i++) 
     {
-      k->mpi[i] = gcry_mpi_copy (src->mpi[i]);
-      gcry_mpi_set_flag (k->mpi[i], GCRYMPI_FLAG_SECURE);
+      k->mpi[i] = _gnutls_mpi_copy (src->mpi[i]);
     }
   
   *dst = k;  
@@ -448,7 +445,7 @@ _cdk_copy_pk_to_sk (cdk_pkt_pubkey_t pk, cdk_pkt_seckey_t sk)
   
   sk->version = pk->version;
   sk->expiredate = pk->expiredate;
-  sk->pubkey_algo = pk->pubkey_algo;
+  sk->pubkey_algo = _pgp_pub_algo_to_cdk(pk->pubkey_algo);
   sk->has_expired = pk->has_expired;
   sk->is_revoked = pk->is_revoked;
   sk->main_keyid[0] = pk->main_keyid[0];
@@ -498,7 +495,7 @@ _cdk_pubkey_compare (cdk_pkt_pubkey_t a, cdk_pkt_pubkey_t b)
   
   for (i = 0; i < na; i++) 
     {
-      if (gcry_mpi_cmp (a->mpi[i], b->mpi[i]))
+      if (_gnutls_mpi_cmp (a->mpi[i], b->mpi[i]))
 	return -1;
     }
   

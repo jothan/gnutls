@@ -24,7 +24,6 @@
 #ifndef CDK_MAIN_H
 #define CDK_MAIN_H
 
-#include <gcrypt.h>
 #include "types.h"
 
 #define _cdk_log_debug _gnutls_debug_log
@@ -99,8 +98,6 @@ int _cdk_check_args( int overwrite, const char * in, const char * out );
 u32 _cdk_buftou32 (const byte * buf);
 void _cdk_u32tobuf (u32 u, byte * buf);
 const char *_cdk_memistr (const char * buf, size_t buflen, const char * sub);
-cdk_error_t _cdk_map_gcry_error (gcry_error_t err);
-#define map_gcry_error(err) _cdk_map_gcry_error (err)
 
 /* Helper to provide case insentensive strstr version. */
 #define stristr(haystack, needle) \
@@ -192,5 +189,12 @@ cdk_error_t _cdk_pkt_write_fp( FILE * out, cdk_packet_t pkt );
 
 /*-- seskey.c --*/
 cdk_error_t _cdk_s2k_copy (cdk_s2k_t *r_dst, cdk_s2k_t src);
+
+#define _cdk_pub_algo_to_pgp(algo) (algo)
+#define _pgp_pub_algo_to_cdk(algo) (algo)
+int _gnutls_hash_algo_to_pgp(int algo);
+int _pgp_hash_algo_to_gnutls(int algo);
+int _gnutls_cipher_to_pgp(int cipher);
+int _pgp_cipher_to_gnutls(int cipher);
     
 #endif /* CDK_MAIN_H */

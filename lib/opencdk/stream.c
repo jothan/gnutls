@@ -49,7 +49,7 @@ static int stream_cache_flush (cdk_stream_t s, FILE *fp);
 struct stream_filter_s* filter_add (cdk_stream_t s, filter_fnct_t fnc, int type);
 
 /* Customized tmpfile() version from misc.c */
-FILE *my_tmpfile (void);
+FILE *_cdk_tmpfile (void);
     
 
 /* FIXME: The read/write/putc/getc function cannot directly
@@ -177,7 +177,7 @@ cdk_stream_new (const char *file, cdk_stream_t *ret_s)
 	  return CDK_Out_Of_Core;
 	}
     }
-  s->fp = my_tmpfile ();
+  s->fp = _cdk_tmpfile ();
   if (!s->fp) 
     {
       cdk_free (s->fname);
@@ -708,7 +708,7 @@ stream_filter_write (cdk_stream_t s)
       if (!f->next && s->fname)
 	f->tmp = fopen (s->fname, "w+b");
       else
-	f->tmp = my_tmpfile ();
+	f->tmp = _cdk_tmpfile ();
       if (!f->tmp)
 	{
 	  rc = CDK_File_Error;
@@ -767,7 +767,7 @@ stream_filter_read (cdk_stream_t s)
 	  continue;
 	}
      
-      f->tmp = my_tmpfile ();
+      f->tmp = _cdk_tmpfile ();
       if (!f->tmp)
 	{
 	  rc = CDK_File_Error;

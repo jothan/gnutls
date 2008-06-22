@@ -1104,7 +1104,7 @@ unsigned int max_pub_params = 0;
             }
         }
     }
-    
+
   if (err != CDK_Success) 
     {
       gnutls_assert();

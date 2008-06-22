@@ -31,7 +31,7 @@ enum {
 };
 
 typedef struct {
-  gcry_cipher_hd_t hd;
+  cipher_hd_st hd;
   digest_hd_st mdc;
   int mdc_method;
   u32 datalen;

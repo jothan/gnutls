@@ -419,6 +419,8 @@ cdk_kbnode_read_from_mem (cdk_kbnode_t *ret_node,
   if (rc)
     return rc;
   rc = cdk_keydb_get_keyblock (inp, ret_node);
+  if (rc)
+    gnutls_assert();
   cdk_stream_close (inp);
   return rc;
 }

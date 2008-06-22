@@ -189,30 +189,6 @@ _cdk_digest_encode_pkcs1(byte ** r_md, size_t * r_mdlen, int pk_algo,
 }
 
 
-/* FIXME: The prompt should be provided in a more generic way.
-   Like: (keyid, algorithm, [user-id]) */
-static char *passphrase_prompt(cdk_pkt_seckey_t sk)
-{
-  u32 keyid = cdk_pk_get_keyid(sk->pk, NULL);
-  int bits = cdk_pk_get_nbits(sk->pk), pk_algo = sk->pubkey_algo;
-  const char *algo = "???", *fmt;
-  char *p;
-
-  if (is_RSA(pk_algo))
-    algo = "RSA";
-  else if (is_ELG(pk_algo))
-    algo = "ELG";
-  else if (is_DSA(pk_algo))
-    algo = "DSA";
-
-  fmt = "%d-bit %s key, ID %08lX\nEnter Passphrase: ";
-  p = cdk_calloc(1, 64 + strlen(fmt) + strlen(algo) + 1);
-  if (!p)
-    return NULL;
-  sprintf(p, fmt, bits, algo, keyid);
-  return p;
-}
-
 /**
  * cdk_s2k_new:
  * @ret_s2k: output for the new S2K object

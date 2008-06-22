@@ -86,10 +86,10 @@ read_s2k (cdk_stream_t inp, cdk_s2k_t s2k)
 
 
 static cdk_error_t
-read_mpi (cdk_stream_t inp, gcry_mpi_t *ret_m, int secure)
+read_mpi (cdk_stream_t inp, bigint_t *ret_m, int secure)
 {
-  gcry_mpi_t m;
-  gcry_error_t err;
+  bigint_t m;
+  int err;
   byte buf[MAX_MPI_BYTES+2];
   size_t nread, nbits;
   cdk_error_t rc;
@@ -116,11 +116,11 @@ read_mpi (cdk_stream_t inp, gcry_mpi_t *ret_m, int secure)
   
   buf[0] = nbits >> 8;
   buf[1] = nbits >> 0;
-  err = gcry_mpi_scan (&m, GCRYMPI_FMT_PGP, buf, nread+2, &nread);
-  if (err)
-    return map_gcry_error (err);
-  if (secure)
-    gcry_mpi_set_flag (m, GCRYMPI_FLAG_SECURE);    
+  nread+=2;
+  err = _gnutls_mpi_scan_pgp( &m, buf, nread);
+  if (err < 0)
+    return map_gnutls_error (err);
+
   *ret_m = m;
   return rc;
 }
@@ -182,7 +182,7 @@ read_pubkey_enc (cdk_stream_t inp, size_t pktlen, cdk_pkt_pubkey_enc_t pke)
   pke->keyid[1] = read_32 (inp);
   if (!pke->keyid[0] && !pke->keyid[1])
     pke->throw_keyid = 1; /* RFC2440 "speculative" keyID */
-  pke->pubkey_algo = cdk_stream_getc (inp);
+  pke->pubkey_algo = _pgp_pub_algo_to_cdk(cdk_stream_getc (inp));
   nenc = cdk_pk_get_nenc (pke->pubkey_algo);
   if (!nenc)
     return CDK_Inv_Algo;
@@ -269,10 +269,11 @@ read_public_key (cdk_stream_t inp, size_t pktlen, cdk_pkt_pubkey_t pk)
 	pk->expiredate = pk->timestamp + ndays * 86400L;
     }
   
-  pk->pubkey_algo = cdk_stream_getc (inp);
+  pk->pubkey_algo = _pgp_pub_algo_to_cdk(cdk_stream_getc (inp));
   npkey = cdk_pk_get_npkey (pk->pubkey_algo);
   if (!npkey)
     {
+      gnutls_assert();
       _cdk_log_debug ("invalid public key algorithm %d\n", pk->pubkey_algo);
       return CDK_Inv_Algo;
     }  
@@ -298,33 +299,6 @@ read_public_subkey (cdk_stream_t inp, size_t pktlen, cdk_pkt_pubkey_t pk)
   return read_public_key (inp, pktlen, pk);
 }
 
-static int _pgp_to_gnutls_cipher(int cipher)
-{
-  switch (cipher) {
-    case 1:
-      return GNUTLS_CIPHER_IDEA_PGP_CFB;
-    case 2:
-      return GNUTLS_CIPHER_3DES_PGP_CFB;
-    case 3:
-      return GNUTLS_CIPHER_CAST5_PGP_CFB;
-    case 4:
-      return GNUTLS_CIPHER_BLOWFISH_PGP_CFB;
-    case 5:
-      return GNUTLS_CIPHER_SAFER_SK128_PGP_CFB;
-    case 7:
-      return GNUTLS_CIPHER_AES128_PGP_CFB;
-    case 8:
-      return GNUTLS_CIPHER_AES192_PGP_CFB;
-    case 9:
-      return GNUTLS_CIPHER_AES256_PGP_CFB;
-    case 10:
-      return GNUTLS_CIPHER_TWOFISH_PGP_CFB;
-    
-    default:
-      return GNUTLS_CIPHER_NULL;
-  }
-}
-
 static cdk_error_t
 read_secret_key (cdk_stream_t inp, size_t pktlen, cdk_pkt_seckey_t sk)
 {
@@ -348,7 +322,7 @@ read_secret_key (cdk_stream_t inp, size_t pktlen, cdk_pkt_seckey_t sk)
   if (sk->s2k_usage == 254 || sk->s2k_usage == 255)
     {
       sk->protect.sha1chk = (sk->s2k_usage == 254);
-      sk->protect.algo = _pgp_to_gnutls_cipher(cdk_stream_getc (inp));
+      sk->protect.algo = _pgp_cipher_to_gnutls(cdk_stream_getc (inp));
       sk->protect.s2k = cdk_calloc (1, sizeof *sk->protect.s2k);
       if (!sk->protect.s2k)
 	return CDK_Out_Of_Core;
@@ -365,13 +339,15 @@ read_secret_key (cdk_stream_t inp, size_t pktlen, cdk_pkt_seckey_t sk)
 	return CDK_Inv_Packet;
     }
   else
-    sk->protect.algo = sk->s2k_usage;
-  if (sk->protect.algo == GCRY_CIPHER_NONE)
+    sk->protect.algo = _pgp_cipher_to_gnutls(sk->s2k_usage);
+  if (sk->protect.algo == GNUTLS_CIPHER_NULL)
     {
       sk->csum = 0;
       nskey = cdk_pk_get_nskey (sk->pk->pubkey_algo);
-      if (!nskey)
+      if (!nskey) {
+        gnutls_assert();
 	return CDK_Inv_Algo;
+      }
       for (i = 0; i < nskey; i++)
 	{
 	  rc = read_mpi (inp, &sk->mpi[i], 1);
@@ -381,12 +357,14 @@ read_secret_key (cdk_stream_t inp, size_t pktlen, cdk_pkt_seckey_t sk)
       sk->csum = read_16 (inp);
       sk->is_protected = 0;
     }
-  else if (sk->pk->version < 4) 
+  else if (sk->pk->version < 4)
     {    
       /* The length of each multiprecision integer is stored in plaintext. */
       nskey = cdk_pk_get_nskey (sk->pk->pubkey_algo);
-      if (!nskey)
+      if (!nskey) {
+        gnutls_assert();
 	return CDK_Inv_Algo;
+      }
       for (i = 0; i < nskey; i++) 
 	{
 	  rc = read_mpi (inp, &sk->mpi[i], 1);
@@ -396,7 +374,7 @@ read_secret_key (cdk_stream_t inp, size_t pktlen, cdk_pkt_seckey_t sk)
       sk->csum = read_16 (inp);
       sk->is_protected = 1;
     }  
-  else 
+  else
     {
       /* We need to read the rest of the packet because we do not
        have any information how long the encrypted mpi's are */
@@ -411,8 +389,10 @@ read_secret_key (cdk_stream_t inp, size_t pktlen, cdk_pkt_seckey_t sk)
       if (stream_read (inp, sk->encdata, sk->enclen, &nread))
 	return CDK_Inv_Packet;
       nskey = cdk_pk_get_nskey (sk->pk->pubkey_algo);
-      if (!nskey)
+      if (!nskey) {
+        gnutls_assert();
 	return CDK_Inv_Algo;
+      }
       /* We mark each MPI entry with NULL to indicate a protected key. */
       for (i = 0; i < nskey; i++)
 	sk->mpi[i] = NULL;
@@ -602,8 +582,8 @@ read_onepass_sig (cdk_stream_t inp, size_t pktlen, cdk_pkt_onepass_sig_t sig)
   if (sig->version != 3)
     return CDK_Inv_Packet_Ver;
   sig->sig_class = cdk_stream_getc (inp);
-  sig->digest_algo = cdk_stream_getc (inp);
-  sig->pubkey_algo = cdk_stream_getc (inp);
+  sig->digest_algo = _pgp_hash_algo_to_gnutls(cdk_stream_getc (inp));
+  sig->pubkey_algo = _pgp_pub_algo_to_cdk(cdk_stream_getc (inp));
   sig->keyid[0] = read_32 (inp);
     sig->keyid[1] = read_32 (inp);
   sig->last = cdk_stream_getc (inp);
@@ -714,8 +694,8 @@ read_signature (cdk_stream_t inp, size_t pktlen, cdk_pkt_signature_t sig)
       sig->timestamp = read_32 (inp);
       sig->keyid[0] = read_32 (inp);
       sig->keyid[1] = read_32 (inp);
-      sig->pubkey_algo = cdk_stream_getc (inp);
-      sig->digest_algo = cdk_stream_getc (inp);
+      sig->pubkey_algo = _pgp_pub_algo_to_cdk(cdk_stream_getc (inp));
+      sig->digest_algo = _pgp_hash_algo_to_gnutls(cdk_stream_getc (inp));
       sig->digest_start[0] = cdk_stream_getc (inp);
       sig->digest_start[1] = cdk_stream_getc (inp);
       nsig = cdk_pk_get_nsig (sig->pubkey_algo);
@@ -731,8 +711,8 @@ read_signature (cdk_stream_t inp, size_t pktlen, cdk_pkt_signature_t sig)
   else 
     {
       sig->sig_class = cdk_stream_getc (inp);
-      sig->pubkey_algo = cdk_stream_getc (inp);
-      sig->digest_algo = cdk_stream_getc (inp);
+      sig->pubkey_algo = _pgp_pub_algo_to_cdk(cdk_stream_getc (inp));
+      sig->digest_algo = _pgp_hash_algo_to_gnutls(cdk_stream_getc (inp));
       sig->hashed_size = read_16 (inp);
       size = sig->hashed_size;
       sig->hashed = NULL;

@@ -230,7 +230,7 @@ file_verify_clearsign (cdk_ctx_t hd, const char *file, const char *output)
     }
   
   if (!digest_algo)
-    digest_algo = GCRY_MD_MD5;
+    digest_algo = GNUTLS_DIG_MD5;
   
   err = _gnutls_hash_init (&md, digest_algo);
   if (err < 0)

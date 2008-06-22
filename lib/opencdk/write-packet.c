@@ -94,38 +94,40 @@ write_16 (cdk_stream_t out, u16 u)
 
 
 static size_t
-calc_mpisize (gcry_mpi_t mpi[MAX_CDK_PK_PARTS], size_t ncount)
+calc_mpisize (bigint_t mpi[MAX_CDK_PK_PARTS], size_t ncount)
 {
   size_t size, i;
   
   size = 0;
   for (i = 0; i < ncount; i++)
-    size += (gcry_mpi_get_nbits (mpi[i]) + 7) / 8 + 2;
+    size += (_gnutls_mpi_get_nbits (mpi[i]) + 7) / 8 + 2;
   return size;
 }
 
 
 static int
-write_mpi (cdk_stream_t out, gcry_mpi_t m)
+write_mpi (cdk_stream_t out, bigint_t m)
 {
   byte buf[MAX_MPI_BYTES+2];
   size_t nbits, nread;
-  gcry_error_t err;
+  int err;
   
   if (!out || !m)
     return CDK_Inv_Value;
-  nbits = gcry_mpi_get_nbits (m);
+  nbits = _gnutls_mpi_get_nbits (m);
   if (nbits > MAX_MPI_BITS || nbits < 1)
     return CDK_MPI_Error;
-  err = gcry_mpi_print (GCRYMPI_FMT_PGP, buf, MAX_MPI_BYTES+2, &nread, m);
-  if (err)
-    return map_gcry_error (err);
+
+  nread = MAX_MPI_BYTES+2;
+  err = _gnutls_mpi_print_pgp( m, buf, &nread);
+  if (err < 0)
+    return map_gnutls_error (err);
   return stream_write (out, buf, nread);
 }
 
 
 static cdk_error_t
-write_mpibuf (cdk_stream_t out, gcry_mpi_t mpi[MAX_CDK_PK_PARTS], size_t count)
+write_mpibuf (cdk_stream_t out, bigint_t mpi[MAX_CDK_PK_PARTS], size_t count)
 {
   size_t i;
   cdk_error_t rc;
@@ -279,7 +281,7 @@ write_pubkey_enc (cdk_stream_t out, cdk_pkt_pubkey_enc_t pke, int old_ctb)
   if (!rc)
     rc = write_32 (out, pke->keyid[1]);
   if (!rc)
-    rc = stream_putc (out, pke->pubkey_algo);
+    rc = stream_putc (out, _cdk_pub_algo_to_pgp(pke->pubkey_algo));
   if (!rc)
     rc = write_mpibuf (out, pke->mpi, nenc);
   return rc;
@@ -342,9 +344,9 @@ write_v3_sig (cdk_stream_t out, cdk_pkt_signature_t sig, int nsig)
   if (!rc)
     rc = write_32 (out, sig->keyid[1]);
   if (!rc)
-    rc = stream_putc (out, sig->pubkey_algo);
+    rc = stream_putc (out, _cdk_pub_algo_to_pgp(sig->pubkey_algo));
   if (!rc)
-    rc = stream_putc (out, sig->digest_algo);
+    rc = stream_putc (out, _gnutls_hash_algo_to_pgp(sig->digest_algo));
   if (!rc)
     rc = stream_putc (out, sig->digest_start[0]);
   if (!rc)
@@ -388,9 +390,9 @@ write_signature (cdk_stream_t out, cdk_pkt_signature_t sig, int old_ctb)
   if (!rc)
     rc = stream_putc (out, sig->sig_class);
   if (!rc)
-    rc = stream_putc (out, sig->pubkey_algo);
+    rc = stream_putc (out, _cdk_pub_algo_to_pgp(sig->pubkey_algo));
   if (!rc)
-    rc = stream_putc (out, sig->digest_algo);
+    rc = stream_putc (out, _gnutls_hash_algo_to_pgp(sig->digest_algo));
   if (!rc)
     rc = write_16 (out, sig->hashed_size);
   if (!rc) 
@@ -462,7 +464,7 @@ write_public_key (cdk_stream_t out, cdk_pkt_pubkey_t pk,
       rc = write_16 (out, ndays);
     }
   if (!rc)
-    rc = stream_putc (out, pk->pubkey_algo);
+    rc = stream_putc (out, _cdk_pub_algo_to_pgp(pk->pubkey_algo));
   if (!rc)
     rc = write_mpibuf (out, pk->mpi, npkey);
   return rc;
@@ -511,8 +513,10 @@ write_secret_key( cdk_stream_t out, cdk_pkt_seckey_t sk,
   
   npkey = cdk_pk_get_npkey (pk->pubkey_algo);
   nskey = cdk_pk_get_nskey (pk->pubkey_algo);
-  if (!npkey || !nskey)
+  if (!npkey || !nskey) {
+    gnutls_assert();
     return CDK_Inv_Algo;
+  }
   if (pk->version < 4)
     size += 2;
   /* If the key is unprotected, the 1 extra byte:
@@ -551,7 +555,7 @@ write_secret_key( cdk_stream_t out, cdk_pkt_seckey_t sk,
       rc = write_16 (out, ndays);
     }
   if (!rc)
-    rc = stream_putc (out, pk->pubkey_algo);
+    rc = stream_putc (out, _cdk_pub_algo_to_pgp(pk->pubkey_algo));
   if( !rc )
     rc = write_mpibuf (out, pk->mpi, npkey);
   if (sk->is_protected == 0)
@@ -559,13 +563,13 @@ write_secret_key( cdk_stream_t out, cdk_pkt_seckey_t sk,
   else 
     {
       if (is_RSA (pk->pubkey_algo) && pk->version < 4)
-	stream_putc (out, sk->protect.algo);
+	stream_putc (out, _gnutls_cipher_to_pgp(sk->protect.algo));
       else if (sk->protect.s2k)
 	{
 	  s2k_mode = sk->protect.s2k->mode;
 	  rc = stream_putc (out, sk->protect.sha1chk? 0xFE : 0xFF);
 	  if (!rc)
-	    rc = stream_putc (out, sk->protect.algo);
+	    rc = stream_putc (out, _gnutls_cipher_to_pgp(sk->protect.algo));
 	  if (!rc)
 	    rc = stream_putc (out, sk->protect.s2k->mode);
 	  if (!rc)
@@ -690,9 +694,9 @@ write_onepass_sig (cdk_stream_t out, cdk_pkt_onepass_sig_t sig)
   if (!rc)
     rc = stream_putc (out, sig->sig_class);
   if (!rc)
-    rc = stream_putc (out, sig->digest_algo);
+    rc = stream_putc (out, _gnutls_hash_algo_to_pgp(sig->digest_algo));
   if (!rc)
-    rc = stream_putc (out, sig->pubkey_algo);
+    rc = stream_putc (out, _cdk_pub_algo_to_pgp(sig->pubkey_algo));
   if (!rc)
     rc = write_32 (out, sig->keyid[0]);
   if (!rc)

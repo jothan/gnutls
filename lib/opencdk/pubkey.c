@@ -24,431 +24,42 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-#include <stdio.h>
-#include <gcrypt.h>
+#include <gnutls_int.h>
+#include <gnutls_datum.h>
 
 #include "opencdk.h"
 #include "main.h"
 #include "packet.h"
 
-
-/* Convert the given secret key into a gcrypt SEXP object. */
-static int
-seckey_to_sexp (gcry_sexp_t *r_skey, cdk_seckey_t sk)
-{
-  gcry_sexp_t sexp = NULL;
-  gcry_mpi_t *mpk = NULL, *msk = NULL;
-  gcry_error_t err;
-  cdk_pubkey_t pk;
-  const char *fmt;
-
-  if (!r_skey || !sk || !sk->pk)
-    return CDK_Inv_Value;
-
-  pk = sk->pk;
-  mpk = pk->mpi;
-  msk = sk->mpi;
-  
-  *r_skey = NULL;
-  if (is_RSA (sk->pubkey_algo))
-    {      
-      fmt = "(private-key(openpgp-rsa(n%m)(e%m)(d%m)(p%m)(q%m)(u%m)))";
-      err = gcry_sexp_build (&sexp, NULL, fmt, mpk[0], mpk[1],
-			     msk[0], msk[1], msk[2], msk[3]);      
-    }
-  else if (is_ELG (sk->pubkey_algo))
-    {
-      fmt = "(private-key(openpgp-elg(p%m)(g%m)(y%m)(x%m)))";
-      err = gcry_sexp_build (&sexp, NULL, fmt, mpk[0], mpk[1],
-			     mpk[2], msk[0]);
-    }
-  else if (is_DSA (sk->pubkey_algo))
-    {
-      fmt = "(private-key(openpgp-dsa(p%m)(q%m)(g%m)(y%m)(x%m)))";
-      err = gcry_sexp_build (&sexp, NULL, fmt, mpk[0], mpk[1], mpk[2],
-			     mpk[3], msk[0]);
-    }
-  else
-    return CDK_Inv_Algo;
-  if (err)
-    return map_gcry_error (err);
-  *r_skey = sexp;
-  return 0;
-}
-
-
-/* Convert the given public key to a gcrypt SEXP object. */
+/* This function gets the signature parameters and encodes
+ * them into a way for _gnutls_pk_verify to use.
+ */
 static cdk_error_t
-pubkey_to_sexp (gcry_sexp_t *r_key_sexp, cdk_pubkey_t pk)
+sig_to_datum (gnutls_datum_t *r_sig, cdk_pkt_signature_t sig)
 {
-  gcry_mpi_t *m;
-  gcry_error_t err;
-  const char *fmt = NULL;
-  cdk_error_t rc = 0;
-  
-  if (!r_key_sexp || !pk)
-    return CDK_Inv_Value;
-
-  m = pk->mpi;
-  if (is_RSA (pk->pubkey_algo))
-    {
-      fmt = "(public-key(openpgp-rsa(n%m)(e%m)))";
-      err = gcry_sexp_build (r_key_sexp, NULL, fmt, m[0], m[1]);
-      if (err)
-	rc = map_gcry_error (err);
-    }
-  else if (is_ELG (pk->pubkey_algo)) 
-    {
-      fmt = "(public-key(openpgp-elg(p%m)(g%m)(y%m)))";
-      err = gcry_sexp_build (r_key_sexp, NULL, fmt, m[0], m[1], m[2]);
-      if (err)
-	rc = map_gcry_error (err);
-    }
-  else if (is_DSA (pk->pubkey_algo)) 
-    {
-      fmt = "(public-key(openpgp-dsa(p%m)(q%m)(g%m)(y%m)))";
-      err = gcry_sexp_build (r_key_sexp, NULL, fmt, m[0], m[1], m[2], m[3]);
-      if (err)
-	rc = map_gcry_error (err);
-    }
-  else
-    rc = CDK_Inv_Algo;
-  return rc;
-}
-
-
-static cdk_error_t
-enckey_to_sexp (gcry_sexp_t *r_sexp, gcry_mpi_t esk)
-{
-  gcry_error_t err;
-  
-  if (!r_sexp || !esk)
-    return CDK_Inv_Value;
-  err = gcry_sexp_build (r_sexp, NULL, "%m", esk);
-  if (err)
-    return map_gcry_error (err);
-  return 0;
-}
-
-
-static cdk_error_t
-digest_to_sexp (gcry_sexp_t *r_md_sexp, int digest_algo, 
-		const byte *md, size_t mdlen)
-{
-  gcry_mpi_t m;
-  gcry_error_t err;
-  
-  if (!r_md_sexp || !md)
-    return CDK_Inv_Value;
-
-  if (!mdlen)
-    mdlen = _gnutls_hash_get_algo_len (digest_algo);
-  if (!mdlen)
-    return CDK_Inv_Algo;
-  
-  err = gcry_mpi_scan (&m, GCRYMPI_FMT_USG, md, mdlen, &mdlen);
-  if (err)
-    return map_gcry_error (err);
-  
-  err = gcry_sexp_build (r_md_sexp, NULL, "%m", m);
-  gcry_mpi_release (m);
-  if (err)
-    return map_gcry_error (err);
-  return 0;
-}
-
-
-static cdk_error_t
-sexp_to_mpi (gcry_sexp_t sexp, const char *val, gcry_mpi_t *ret_buf)
-{
-  gcry_sexp_t list;
-  
-  if (!sexp || !val || !ret_buf)
-    return CDK_Inv_Value;
-  
-  list = gcry_sexp_find_token (sexp, val, 0);
-  if (!list)
-    return CDK_Inv_Value;
-  
-  *ret_buf = gcry_sexp_nth_mpi (list, 1, 0);
-  gcry_sexp_release (list);
-  if (! *ret_buf)
-    return CDK_Inv_Value;
-  return 0;
-}
-
-
-static cdk_error_t
-sexp_to_sig (cdk_pkt_signature_t sig, gcry_sexp_t sexp)
-{
-  if (!sig || !sexp)
-    return CDK_Inv_Value;
-
-  /* ElGamal signatures are not supported any longer. */
-  if (is_ELG (sig->pubkey_algo))
-    {
-      _cdk_log_debug ("sexp_to_sig: unsupported signature type (ElGamal)\n");
-      return CDK_Not_Implemented;
-    }  
-  
-  if (is_RSA (sig->pubkey_algo))
-    return sexp_to_mpi (sexp, "s", &sig->mpi[0]);
-  else if (is_DSA (sig->pubkey_algo))
-    {
-      cdk_error_t rc;
-      
-      rc = sexp_to_mpi (sexp, "r", &sig->mpi[0]);
-      if (!rc)
-	rc = sexp_to_mpi (sexp, "s", &sig->mpi[1]);
-      return rc;
-    }
-  return CDK_Inv_Algo;
-}
-
-
-static cdk_error_t
-sig_to_sexp (gcry_sexp_t *r_sig_sexp, cdk_pkt_signature_t sig)
-{
-  gcry_error_t err;
+  int err;
   cdk_error_t rc;
-  const char *fmt;
   
-  if (!r_sig_sexp || !sig)
+  if (!r_sig || !sig)
     return CDK_Inv_Value;  
-  if (is_ELG (sig->pubkey_algo))
-    return CDK_Not_Implemented;
   
   rc = 0;
   if (is_RSA (sig->pubkey_algo)) 
     {
-      fmt = "(sig-val(openpgp-rsa(s%m)))";
-      err = gcry_sexp_build (r_sig_sexp, NULL, fmt, sig->mpi[0]);
-      if (err)
-	rc = map_gcry_error (err);
+      err = _gnutls_mpi_dprint( sig->mpi[0], r_sig);
+      if (err < 0)
+	rc = map_gnutls_error (err);
     }
   else if (is_DSA (sig->pubkey_algo))
     {
-      fmt = "(sig-val(openpgp-dsa(r%m)(s%m)))";
-      err = gcry_sexp_build (r_sig_sexp, NULL, fmt, sig->mpi[0], sig->mpi[1]);
-      if (err)
-	rc = map_gcry_error (err);
+      err = _gnutls_encode_ber_rs( r_sig, sig->mpi[0], sig->mpi[1]);
+      if (err < 0)
+	rc = map_gnutls_error (err);
     }
   else
     rc = CDK_Inv_Algo;
   return rc;
 }
-
-
-static cdk_error_t
-sexp_to_pubenc (cdk_pkt_pubkey_enc_t enc, gcry_sexp_t sexp)
-{
-  if (!sexp || !enc)
-    return CDK_Inv_Value;
-  
-  if (is_RSA (enc->pubkey_algo))
-    return sexp_to_mpi (sexp, "a", &enc->mpi[0]);
-  else if (is_ELG (enc->pubkey_algo))
-    {
-      cdk_error_t rc = sexp_to_mpi (sexp, "a", &enc->mpi[0]);
-      if (!rc)
-	rc = sexp_to_mpi (sexp, "b", &enc->mpi[1]);
-      return rc;
-    }
-  return CDK_Inv_Algo;
-}
-
-
-static cdk_error_t
-pubenc_to_sexp (gcry_sexp_t * r_sexp, cdk_pkt_pubkey_enc_t enc)
-{
-  gcry_sexp_t sexp = NULL;
-  gcry_error_t err;
-  const char *fmt;
-  
-  if (!r_sexp || !enc)
-    return CDK_Inv_Value;
-  
-  *r_sexp = NULL;
-  if (is_RSA (enc->pubkey_algo))
-    {
-      fmt = "(enc-val(openpgp-rsa((a%m))))";
-      err = gcry_sexp_build (&sexp, NULL, fmt, enc->mpi[0]);
-    }
-  else if (is_ELG (enc->pubkey_algo))
-    {
-      fmt = "(enc-val(openpgp-elg((a%m)(b%m))))";
-      err = gcry_sexp_build (&sexp, NULL, fmt, enc->mpi[0], enc->mpi[1]);      
-    }
-  else
-    return CDK_Inv_Algo;
-  if (err)
-    return map_gcry_error (err);
-  *r_sexp = sexp;
-  return 0;
-}
-
-
-static int
-is_unprotected (cdk_seckey_t sk)
-{
-  if (sk->is_protected && !sk->mpi[0])
-    return 0;
-  return 1;
-}
-
-
-/**
- * cdk_pk_encrypt:
- * @pk: the public key
- * @pke: the public key encrypted packet
- * @esk: the actual session key
- *
- * Encrypt the session key in @esk and write its encrypted content
- * into the @pke struct.
- **/
-cdk_error_t
-cdk_pk_encrypt (cdk_pubkey_t pk, cdk_pkt_pubkey_enc_t pke,
-                gcry_mpi_t esk)
-{
-  gcry_sexp_t s_data = NULL, s_pkey = NULL, s_ciph = NULL;
-  gcry_error_t err;
-  cdk_error_t rc;
-  
-  if (!pk || !esk || !pke)
-    return CDK_Inv_Value;
-  
-  if (!KEY_CAN_ENCRYPT (pk->pubkey_algo))
-    return CDK_Inv_Algo;
-
-  rc = enckey_to_sexp (&s_data, esk);
-  if (!rc)
-    rc = pubkey_to_sexp (&s_pkey, pk);
-  if (!rc)
-    {     
-      err = gcry_pk_encrypt (&s_ciph, s_data, s_pkey);
-      if (err)
-	return map_gcry_error (err);
-    }
-  if (!rc)
-    rc = sexp_to_pubenc (pke, s_ciph);
-  
-  gcry_sexp_release (s_data);
-  gcry_sexp_release (s_pkey);
-  gcry_sexp_release (s_ciph);
-  return rc;
-}
-
-
-/**
- * cdk_pk_decrypt:
- * @sk: the secret key
- * @pke: public key encrypted packet
- * @r_sk: the object to store the plain session key
- *
- * Decrypt the encrypted session key from @pke into @r_sk.
- **/
-cdk_error_t
-cdk_pk_decrypt (cdk_seckey_t sk, cdk_pkt_pubkey_enc_t pke,
-                gcry_mpi_t *r_sk)
-{
-  gcry_sexp_t s_data = NULL, s_skey = NULL, s_plain = NULL;
-  cdk_error_t rc;
-  gcry_error_t err;
-  
-  if (!sk || !r_sk || !pke)
-    return CDK_Inv_Value;
-  
-  if (!is_unprotected (sk))
-    return CDK_Inv_Mode;
-  
-  *r_sk = NULL;
-  rc = seckey_to_sexp (&s_skey, sk);
-  if (rc)
-    return rc;
-
-  rc = pubenc_to_sexp (&s_data, pke);
-  if (rc)
-    {
-      gcry_sexp_release (s_skey);
-      return rc;
-    }
-  
-  err = gcry_pk_decrypt (&s_plain, s_data, s_skey);
-  if (err)
-    rc = map_gcry_error (err);
-  else
-    *r_sk  = gcry_sexp_nth_mpi (s_plain, 0, 0);
-
-  gcry_sexp_release (s_data);
-  gcry_sexp_release (s_skey);
-  gcry_sexp_release (s_plain);
-  return rc;
-}
-
-
-/**
- * cdk_pk_sign:
- * @sk: secret key
- * @sig: signature
- * @md: the message digest
- *
- * Sign the message digest from @md and write the result into @sig.
- **/
-cdk_error_t
-cdk_pk_sign (cdk_seckey_t sk, cdk_pkt_signature_t sig, const byte *md)
-{
-  gcry_sexp_t s_skey = NULL, s_sig = NULL, s_hash = NULL;
-  byte *encmd = NULL;
-  size_t enclen = 0;
-  int nbits;
-  cdk_error_t rc;
-  gcry_error_t err;
-  
-  if (!sk || !sk->pk || !sig || !md)
-    return CDK_Inv_Value;
-  
-  if (!is_unprotected (sk))
-    return CDK_Inv_Mode;
-  
-  if (!KEY_CAN_SIGN (sig->pubkey_algo))
-    return CDK_Inv_Algo;
-  
-  nbits = cdk_pk_get_nbits (sk->pk);
-  rc = _cdk_digest_encode_pkcs1 (&encmd, &enclen, sk->pk->pubkey_algo, md,
-				 sig->digest_algo, nbits);
-  if (rc)
-    return rc;
-
-  rc = seckey_to_sexp (&s_skey, sk);
-  if (!rc)
-    rc = digest_to_sexp (&s_hash, sig->digest_algo, encmd, enclen);
-  if (rc)
-    {
-      cdk_free (encmd);
-      gcry_sexp_release (s_skey);
-      return rc;
-    }  
-  
-  err = gcry_pk_sign (&s_sig, s_hash, s_skey);
-  if (err)
-    rc = map_gcry_error (err);
-  else
-    {      
-      rc = sexp_to_sig (sig, s_sig);
-      if (!rc)
-	{
-	  sig->digest_start[0] = md[0];
-	  sig->digest_start[1] = md[1];
-	}
-    }
-  
-  gcry_sexp_release (s_skey);
-  gcry_sexp_release (s_hash);
-  gcry_sexp_release (s_sig);
-  cdk_free (encmd);
-  return rc;
-}
-
 
 /**
  * cdk_pk_verify:
@@ -461,38 +72,59 @@ cdk_pk_sign (cdk_seckey_t sk, cdk_pkt_signature_t sig, const byte *md)
 cdk_error_t
 cdk_pk_verify (cdk_pubkey_t pk, cdk_pkt_signature_t sig, const byte *md)
 {
-  gcry_sexp_t s_pkey = NULL, s_sig = NULL, s_hash = NULL;
+  gnutls_datum s_sig;
   byte *encmd = NULL;
   size_t enclen;
   cdk_error_t rc;
-  
-  if (!pk || !sig || !md)
+  int ret, algo;
+  gnutls_datum data;
+  gnutls_pk_params_st params;
+
+  if (!pk || !sig || !md) {
+    gnutls_assert();
     return CDK_Inv_Value;
+  }
+    
+  if (is_DSA (pk->pubkey_algo)) algo = GNUTLS_PK_DSA;
+  else if (is_RSA( pk->pubkey_algo)) algo = GNUTLS_PK_RSA;
+  else 
+    {
+      gnutls_assert();
+      return CDK_Inv_Value;
+    }
   
-  rc = pubkey_to_sexp (&s_pkey, pk);
-  if (rc)
-    return rc;
-  
-  rc = sig_to_sexp (&s_sig, sig);
-  if (rc)
+  rc = sig_to_datum (&s_sig, sig);
+  if (rc) {
+    gnutls_assert();
     goto leave;
+  }
   
   rc = _cdk_digest_encode_pkcs1 (&encmd, &enclen, pk->pubkey_algo, md,
 				 sig->digest_algo, cdk_pk_get_nbits (pk));
-  if (rc)
+  if (rc) {
+    gnutls_assert();
     goto leave;
+  }
   
-  rc = digest_to_sexp (&s_hash, sig->digest_algo, encmd, enclen);
-  if (rc)
-    goto leave;
-  
-  if (gcry_pk_verify (s_sig, s_hash, s_pkey))
-    rc = CDK_Bad_Sig;
+  data.data = encmd;
+  data.size = enclen;
 
+  params.params = pk->mpi;
+  params.params_nr = cdk_pk_get_npkey( pk->pubkey_algo);
+  params.flags = 0;
+  ret = _gnutls_pk_verify( algo, &data, &s_sig, &params);
+  
+  if (ret < 0) 
+    {
+      gnutls_assert();
+      rc = map_gnutls_error( ret);
+      goto leave;
+    }
+  
+  rc = 0;
+    
   leave:
-  gcry_sexp_release (s_sig);
-  gcry_sexp_release (s_hash);
-  gcry_sexp_release (s_pkey);
+  _gnutls_free_datum( &s_sig);
   cdk_free (encmd);
   return rc;
 }
@@ -512,7 +144,7 @@ cdk_pk_get_nbits (cdk_pubkey_t pk)
 {
   if (!pk || !pk->mpi[0])
     return 0;
-  return gcry_mpi_get_nbits (pk->mpi[0]);
+  return _gnutls_mpi_get_nbits (pk->mpi[0]);
 }
 
 
@@ -526,13 +158,13 @@ cdk_pk_get_nbits (cdk_pubkey_t pk)
 int
 cdk_pk_get_npkey (int algo)
 {
-  size_t bytes;
-  
-  if (algo == 16)
-    algo = 20; /* FIXME: libgcrypt returns 0 for 16 */
-  if (gcry_pk_algo_info( algo, GCRYCTL_GET_ALGO_NPKEY, NULL, &bytes))
-    return 0;  
-  return bytes;
+  if (is_RSA(algo)) return RSA_PUBLIC_PARAMS;
+  else if (is_DSA(algo)) return DSA_PUBLIC_PARAMS;
+  else if (is_ELG(algo)) return 3;
+  else {
+      gnutls_assert();
+      return 0;
+  }
 }
 
 
@@ -545,13 +177,19 @@ cdk_pk_get_npkey (int algo)
  **/
 int
 cdk_pk_get_nskey (int algo)
-{  
-  size_t bytes;
+{
+int ret;
+
+  if (is_RSA(algo)) ret = RSA_PRIVATE_PARAMS;
+  else if (is_DSA(algo)) ret = DSA_PRIVATE_PARAMS;
+  else if (is_ELG(algo)) ret = 4;
+  else {
+      gnutls_assert();
+      return 0;
+  }
   
-  if (gcry_pk_algo_info (algo, GCRYCTL_GET_ALGO_NSKEY, NULL, &bytes))
-    return 0;  
-  bytes -= cdk_pk_get_npkey (algo);
-  return bytes;  
+  ret -= cdk_pk_get_npkey(algo);
+  return ret;
 }
 
 
@@ -564,11 +202,9 @@ cdk_pk_get_nskey (int algo)
 int
 cdk_pk_get_nsig (int algo)
 {
-  size_t bytes;
-  
-  if (gcry_pk_algo_info (algo, GCRYCTL_GET_ALGO_NSIGN, NULL, &bytes))
-    return 0;
-  return bytes;  
+  if (is_RSA(algo)) return 1;
+  else if (is_DSA(algo)) return 2;
+  else return 0;
 }
 
 
@@ -581,11 +217,9 @@ cdk_pk_get_nsig (int algo)
 int
 cdk_pk_get_nenc (int algo)
 {
-  size_t bytes;
-  
-  if (gcry_pk_algo_info (algo, GCRYCTL_GET_ALGO_NENCR, NULL, &bytes))
-    return 0;
-  return bytes;  
+  if (is_RSA(algo)) return 1;
+  else if (is_ELG(algo)) return 2;
+  else return 0;
 }
 
 
@@ -610,15 +244,18 @@ _cdk_pk_algo_usage (int algo)
 /* You can use a NULL buf to get the output size only
  */
 static cdk_error_t
-mpi_to_buffer (gcry_mpi_t a, byte *buf, size_t buflen,
+mpi_to_buffer (bigint_t a, byte *buf, size_t buflen,
 	       size_t *r_nwritten, size_t *r_nbits)
 {
   size_t nbits;
+  int err;
   
-  if (!a || !r_nwritten)
+  if (!a || !r_nwritten) {
+    gnutls_assert();
     return CDK_Inv_Value;
+  }
   
-  nbits = gcry_mpi_get_nbits (a);
+  nbits = _gnutls_mpi_get_nbits (a);
   if (r_nbits)
     *r_nbits = nbits;
 
@@ -628,8 +265,13 @@ mpi_to_buffer (gcry_mpi_t a, byte *buf, size_t buflen,
   if ((nbits+7)/8+2 > buflen)
     return CDK_Too_Short;
 
-  if (gcry_mpi_print (GCRYMPI_FMT_USG, buf, buflen, r_nwritten, a))
-    return CDK_Wrong_Format;
+  *r_nwritten = buflen;
+  err = _gnutls_mpi_print (a, buf, r_nwritten);
+  if (err < 0) {
+    gnutls_assert();
+    return map_gnutls_error(err);
+  }
+
   return 0;
 }
 
@@ -650,6 +292,7 @@ cdk_pk_get_mpi (cdk_pubkey_t pk, size_t idx,
 {
   if (!pk || !r_nwritten)
     return CDK_Inv_Value;
+
   if ((ssize_t)idx > cdk_pk_get_npkey (pk->pubkey_algo))
     return CDK_Inv_Value;
   return mpi_to_buffer (pk->mpi[idx], buf, buflen, r_nwritten, r_nbits);
@@ -674,6 +317,7 @@ cdk_sk_get_mpi (cdk_pkt_seckey_t sk, size_t idx,
 {
   if (!sk || !r_nwritten)
     return CDK_Inv_Value;
+
   if ((ssize_t)idx > cdk_pk_get_nskey (sk->pubkey_algo))
     return CDK_Inv_Value;
   return mpi_to_buffer (sk->mpi[idx], buf, buflen, r_nwritten, r_nbits);
@@ -681,7 +325,7 @@ cdk_sk_get_mpi (cdk_pkt_seckey_t sk, size_t idx,
 
 
 static u16
-checksum_mpi (gcry_mpi_t m)
+checksum_mpi (bigint_t m)
 {
   byte buf[MAX_MPI_BYTES+2];
   size_t nread;
@@ -690,7 +334,8 @@ checksum_mpi (gcry_mpi_t m)
 
   if (!m)
     return 0;
-  if (gcry_mpi_print (GCRYMPI_FMT_PGP, buf, DIM (buf), &nread, m))
+  nread = DIM(buf);
+  if (_gnutls_mpi_print_pgp (m, buf, &nread) < 0)
     return 0;
   for (i=0; i < nread; i++)
     chksum += buf[i];
@@ -860,7 +505,8 @@ cdk_pk_get_keyid (cdk_pubkey_t pk, u32 *keyid)
 	  byte p[MAX_MPI_BYTES];
 	  size_t n;
 	  
-	  gcry_mpi_print (GCRYMPI_FMT_USG, p, MAX_MPI_BYTES, &n, pk->mpi[0]);
+	  n = MAX_MPI_BYTES;
+	  _gnutls_mpi_print (pk->mpi[0], p, &n);
 	  pk->keyid[0] = p[n-8] << 24 | p[n-7] << 16 | p[n-6] << 8 | p[n-5];
 	  pk->keyid[1] = p[n-4] << 24 | p[n-3] << 16 | p[n-2] << 8 | p[n-1];
 	}
@@ -982,109 +628,4 @@ _cdk_pkt_get_fingerprint (cdk_packet_t pkt, byte *fpr)
       return CDK_Inv_Mode;
     }
   return 0;
-}
-
-
-/**
- * cdk_pubkey_to_sexp:
- * @pk: the public key
- * @sexp: where to store the S-expression
- * @len: the length of sexp
- *
- * Convert a public key to an S-expression. sexp is allocated by this
- * function, but you have to cdk_free() it yourself.  The S-expression
- * is stored in canonical format as used by libgcrypt
- * (GCRYSEXP_FMT_CANON).
- **/
-cdk_error_t
-cdk_pubkey_to_sexp (cdk_pubkey_t pk, char **sexp, size_t * len)
-{
-  char *buf;
-  size_t sexp_len;
-  gcry_sexp_t pk_sexp;
-  cdk_error_t rc;
-
-  if (!pk || !sexp)
-    return CDK_Inv_Value;
-
-  rc = pubkey_to_sexp (&pk_sexp, pk);
-  if (rc)
-    return rc;
-
-  sexp_len = gcry_sexp_sprint (pk_sexp, GCRYSEXP_FMT_CANON, NULL, 0);
-  if (!sexp_len)
-    return CDK_Wrong_Format;
-
-  buf = (char *)cdk_malloc (sexp_len);
-  if (!buf)
-    {
-      gcry_sexp_release (pk_sexp);
-      return CDK_Out_Of_Core;
-    }
-  
-  sexp_len = gcry_sexp_sprint (pk_sexp, GCRYSEXP_FMT_CANON, buf, sexp_len);  
-  gcry_sexp_release (pk_sexp);
-  if (!sexp_len)
-    {
-      cdk_free (buf);
-      return CDK_Wrong_Format;
-    }
-
-  if (len)
-    *len = sexp_len;
-  *sexp = buf;
-  return CDK_Success;
-}
-
-
-/**
- * cdk_seckey_to_sexp:
- * @sk: the secret key
- * @sexp: where to store the S-expression
- * @len: the length of sexp
- *
- * Convert a public key to an S-expression. sexp is allocated by this
- * function, but you have to cdk_free() it yourself.  The S-expression
- * is stored in canonical format as used by libgcrypt
- * (GCRYSEXP_FMT_CANON).
- **/
-cdk_error_t
-cdk_seckey_to_sexp (cdk_pkt_seckey_t sk, char **sexp, size_t * len)
-{
-  char *buf;
-  size_t sexp_len;
-  gcry_sexp_t sk_sexp;
-  cdk_error_t rc;
-
-  if (!sk || !sexp)
-    return CDK_Inv_Value;
-  
-  rc = seckey_to_sexp (&sk_sexp, sk);
-  if (rc)
-    return rc;
-
-  sexp_len = gcry_sexp_sprint (sk_sexp, GCRYSEXP_FMT_CANON, NULL, 0);
-  if (!sexp_len)
-    return CDK_Wrong_Format;
-
-  buf = (char *) cdk_malloc (sexp_len);
-  if (!buf)
-    {
-      gcry_sexp_release (sk_sexp);
-      return CDK_Out_Of_Core;
-    }
-
-  sexp_len = gcry_sexp_sprint (sk_sexp, GCRYSEXP_FMT_CANON, buf, sexp_len);    
-  gcry_sexp_release (sk_sexp);
-  if (!sexp_len)
-    {
-      cdk_free (buf);
-      return CDK_Wrong_Format;
-    }
-
-  if (len)
-    *len = sexp_len;
-  *sexp = buf;
-
-  return CDK_Success;
 }

@@ -42,7 +42,7 @@ hash_mpibuf (cdk_pubkey_t pk, digest_hd_st* md, int usefpr)
   byte buf[MAX_MPI_BYTES]; /* FIXME: do not use hardcoded length. */
   size_t nbytes;
   size_t i, npkey;
-  gcry_error_t err;
+  int err;
   
   /* We have to differ between two modes for v3 keys. To form the
      fingerprint, we hash the MPI values without the length prefix.
@@ -50,10 +50,10 @@ hash_mpibuf (cdk_pubkey_t pk, digest_hd_st* md, int usefpr)
   npkey = cdk_pk_get_npkey (pk->pubkey_algo);
   for (i = 0; i < npkey; i++) 
     {
-      err = gcry_mpi_print (GCRYMPI_FMT_PGP, buf, MAX_MPI_BYTES, 
-			    &nbytes, pk->mpi[i]);
-      if (err)
-	return map_gcry_error (err);
+      nbytes = MAX_MPI_BYTES;
+      err = _gnutls_mpi_print_pgp( pk->mpi[i], buf, &nbytes);
+      if (err < 0)
+	return map_gnutls_error (err);
       if (!usefpr || pk->version == 4)
         _gnutls_hash( md, buf, nbytes);
       else /* without the prefix. */
@@ -83,7 +83,7 @@ _cdk_hash_pubkey (cdk_pubkey_t pk, digest_hd_st* md, int usefpr)
   n = pk->version < 4? 8 : 6;
   npkey = cdk_pk_get_npkey (pk->pubkey_algo);
   for (i = 0; i < npkey; i++) 
-    n = n + (gcry_mpi_get_nbits (pk->mpi[i])+7)/8 + 2;
+    n = n + (_gnutls_mpi_get_nbits (pk->mpi[i])+7)/8 + 2;
   
   i = 0;
   buf[i++] = 0x99;
@@ -169,8 +169,10 @@ _cdk_hash_sig_data (cdk_pkt_signature_t sig, digest_hd_st* md)
     {
       size_t n;
 
-      _gnutls_hash( md, &sig->pubkey_algo, 1);
-      _gnutls_hash( md, &sig->digest_algo, 1);
+      tmp = _cdk_pub_algo_to_pgp(sig->pubkey_algo);
+      _gnutls_hash( md, &tmp, 1);
+      tmp = _gnutls_hash_algo_to_pgp(sig->digest_algo);
+      _gnutls_hash( md, &tmp, 1);
       if (sig->hashed != NULL)
 	{
 	  byte *p = _cdk_subpkt_get_array (sig->hashed, 0, &n);
@@ -233,7 +235,10 @@ _cdk_sig_check (cdk_pubkey_t pk, cdk_pkt_signature_t sig,
   time_t cur_time = (u32)time (NULL);
 
   if (!pk || !sig || !digest)
-    return CDK_Inv_Value;
+    {
+      gnutls_assert();
+      return CDK_Inv_Value;
+    }
   
   if (sig->flags.checked)
     return sig->flags.valid ?0 : CDK_Bad_Sig;  
@@ -251,7 +256,10 @@ _cdk_sig_check (cdk_pubkey_t pk, cdk_pkt_signature_t sig,
   
   if (md[0] != sig->digest_start[0] || 
       md[1] != sig->digest_start[1])
-    return CDK_Chksum_Error;
+    {
+      gnutls_assert();
+      return CDK_Chksum_Error;
+    }
 
   rc = cdk_pk_verify (pk, sig, md);
   cache_sig_result (sig, rc);
@@ -274,19 +282,28 @@ _cdk_pk_check_sig (cdk_keydb_hd_t keydb,
   int is_expired;
 
   if (!knode || !snode)
-    return CDK_Inv_Value;
+    {
+      gnutls_assert();
+      return CDK_Inv_Value;
+    }
   
   if (is_selfsig)
     *is_selfsig = 0;
   if (knode->pkt->pkttype != CDK_PKT_PUBLIC_KEY ||
       snode->pkt->pkttype != CDK_PKT_SIGNATURE)
-    return CDK_Inv_Value;
+      {
+        gnutls_assert();
+        return CDK_Inv_Value;
+      }
   pk = knode->pkt->pkt.public_key;
   sig = snode->pkt->pkt.signature;
   
   err = _gnutls_hash_init(&md, sig->digest_algo);
   if (err < 0)
-    return map_gnutls_error (err);
+    {
+      gnutls_assert();
+      return map_gnutls_error (err);
+    }
 
   is_expired = 0;
   if (sig->sig_class == 0x20)
@@ -299,6 +316,7 @@ _cdk_pk_check_sig (cdk_keydb_hd_t keydb,
       node = cdk_kbnode_find_prev (knode, snode, CDK_PKT_PUBLIC_SUBKEY);
       if (!node) 
 	{ /* no subkey for subkey revocation packet */
+	  gnutls_assert();
 	  rc = CDK_Error_No_Key;
 	  goto fail;
 	}
@@ -311,6 +329,7 @@ _cdk_pk_check_sig (cdk_keydb_hd_t keydb,
       node = cdk_kbnode_find_prev (knode, snode, CDK_PKT_PUBLIC_SUBKEY);
       if (!node) 
 	{ /* no subkey for subkey binding packet */
+	  gnutls_assert();
 	  rc = CDK_Error_No_Key;
 	  goto fail;
 	}
@@ -329,6 +348,7 @@ _cdk_pk_check_sig (cdk_keydb_hd_t keydb,
       node = cdk_kbnode_find_prev (knode, snode, CDK_PKT_USER_ID);
       if (!node)
 	{ /* no user ID for key signature packet */
+	  gnutls_assert();
 	  rc = CDK_Error_No_Key;
 	  goto fail;
 	}
@@ -460,14 +480,20 @@ cdk_pk_check_sigs (cdk_kbnode_t key, cdk_keydb_hd_t keydb, int *r_status)
   int key_status, is_selfsig = 0;
   struct verify_uid* uid_list = NULL;
   char* uid_name;
-  
-  if (!key || !r_status)
-    return CDK_Inv_Value;
+
+  if (!key || !r_status) 
+    {
+      gnutls_assert();
+      return CDK_Inv_Value;
+    }
   
   *r_status = 0;
   node = cdk_kbnode_find (key, CDK_PKT_PUBLIC_KEY);
-  if (!node)
-    return CDK_Error_No_Key;
+  if (!node) 
+    {
+      gnutls_assert();
+      return CDK_Error_No_Key;
+    }
 
   key_status = 0;
   /* Continue with the signature check but adjust the
@@ -511,7 +537,10 @@ cdk_pk_check_sigs (cdk_kbnode_t key, cdk_keydb_hd_t keydb, int *r_status)
 	   */
           rc = uid_list_add_sig( &uid_list, uid_name, (rc == CDK_Success && is_selfsig==0)?1:0);
           if (rc != CDK_Success)
-            goto exit;
+            {
+              gnutls_assert();
+              goto exit;
+            }
 	}
 
     }
