@@ -606,6 +606,26 @@ fi
 
 AM_CONDITIONAL(USE_LZO, test "$use_lzo" = "yes")
 
+dnl CHECK FOR SHISHI SUPPORT
+dnl
+
+AC_ARG_ENABLE(krb5,
+  AC_HELP_STRING([--disable-krb5],
+    [disable Kerberos V5 extension unconditionally]),
+  krb5=$enableval)
+if test "$krb5" != "no" ; then
+  AC_LIB_HAVE_LINKFLAGS(shishi,, [#include <shishi.h>], [shishi ();])
+  if test "$ac_cv_libshishi" = yes; then
+    AC_DEFINE(USE_KERBEROS5, 1, [Define to 1 if you want Kerberos 5 mech.])
+    krb5=yes
+  else
+    krb5=no
+  fi
+fi
+AC_MSG_CHECKING([if the Kerberos V5 extension should be supported])
+AC_MSG_RESULT($krb5)
+AM_CONDITIONAL(KRB5, test "$krb5" = "yes")
+
 # Windows hacks.
 
 AC_DEFINE([WINVER], [0x0501], [Windows 2000 or before not supported.])
