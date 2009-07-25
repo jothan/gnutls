@@ -116,6 +116,9 @@ typedef struct
 
 #define HANDSHAKE_HEADER_SIZE 4
 
+/* the maximum size of the DTLS cookie */
+#define DTLS_MAX_COOKIE_SIZE 32
+
 /* defaults for verification functions
  */
 #define DEFAULT_VERIFY_DEPTH 32
@@ -191,6 +194,12 @@ typedef enum content_type_t
   GNUTLS_HANDSHAKE, GNUTLS_APPLICATION_DATA,
   GNUTLS_INNER_APPLICATION = 24
 } content_type_t;
+
+typedef enum transport_t
+{
+  GNUTLS_STREAM,
+  GNUTLS_DGRAM
+} transport_t;
 
 #define GNUTLS_PK_ANY (gnutls_pk_algorithm_t)-1
 #define GNUTLS_PK_NONE (gnutls_pk_algorithm_t)-2
@@ -434,6 +443,14 @@ typedef struct
   int free_rsa_params;
 } internal_params_st;
 
+/* DTLS session state
+ */
+typedef struct
+{
+  /* HelloVerifyRequest DOS prevention cookie */
+  opaque  cookie[DTLS_MAX_COOKIE_SIZE];
+  uint8_t cookie_len;
+} dtls_st;
 
 
 typedef struct
@@ -672,6 +689,12 @@ typedef struct
    * use gnutls_srp_set_prime_bits() to adjust it.
    */
   uint16_t srp_prime_bits;
+
+  /* The type of transport protocol; stream or datagram */
+  transport_t transport;
+
+  /* DTLS session state */
+  dtls_st dtls;
 
   /* If you add anything here, check _gnutls_handshake_internal_state_clear().
    */
