@@ -457,8 +457,8 @@ _gnutls_send_int (gnutls_session_t session, content_type_t type,
 
       /* increase sequence number
        */
-      if (_gnutls_uint64pp
-	  (&session->connection_state.write_sequence_number) != 0)
+      if (sequence_increment(session,
+			     &session->connection_state.write_sequence_number) != 0)
 	{
 	  session_invalidate (session);
 	  gnutls_assert ();
@@ -1064,7 +1064,7 @@ begin:
 
 /* increase sequence number 
  */
-  if (_gnutls_uint64pp (&session->connection_state.read_sequence_number) != 0)
+  if (sequence_increment (session, &session->connection_state.read_sequence_number) != 0)
     {
       session_invalidate (session);
       gnutls_assert ();
