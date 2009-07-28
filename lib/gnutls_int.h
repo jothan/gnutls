@@ -127,6 +127,8 @@ typedef struct
 #define DTLS_MAX_RECV_SIZE MAX_RECORD_OVERHEAD+MAX_RECORD_RECV_SIZE+DTLS_RECORD_HEADER_SIZE
 
 #define HANDSHAKE_HEADER_SIZE 4
+#define DTLS_HANDSHAKE_HEADER_SIZE HANDSHAKE_HEADER_SIZE+8
+#define MAX_HANDSHAKE_HEADER_SIZE DTLS_HANDSHAKE_HEADER_SIZE
 
 /* the maximum size of the DTLS cookie */
 #define DTLS_MAX_COOKIE_SIZE 32
@@ -486,7 +488,7 @@ typedef struct
 
 typedef struct
 {
-  opaque header[HANDSHAKE_HEADER_SIZE];
+  opaque header[MAX_HANDSHAKE_HEADER_SIZE];
   /* this holds the number of bytes in the handshake_header[] */
   size_t header_size;
   /* this holds the length of the handshake packet */
