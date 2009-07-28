@@ -945,7 +945,10 @@ _gnutls_send_handshake (gnutls_session_t session, void *i_data,
     }
 
   /* first run */
-  datasize = i_datasize + HANDSHAKE_HEADER_SIZE;
+  datasize = i_datasize + (_gnutls_session_is_dtls(session)
+			   ? DTLS_HANDSHAKE_HEADER_SIZE
+			   : HANDSHAKE_HEADER_SIZE);
+
   data = gnutls_malloc (datasize);
   if (data == NULL)
     {
@@ -956,6 +959,25 @@ _gnutls_send_handshake (gnutls_session_t session, void *i_data,
   data[pos++] = (uint8_t) type;
   _gnutls_write_uint24 (i_datasize, &data[pos]);
   pos += 3;
+
+  /* Add DTLS handshake fragment headers.  The message will be
+   * fragmented later by the fragmentation sub-layer. All fields must
+   * be set properly for HMAC. The HMAC requires we pretend that the
+   * message was sent in a single fragment. */
+  if (_gnutls_session_is_dtls(session))
+    {
+      /* FIXME: dummy sequence number */
+      _gnutls_write_uint16 (0, &data[pos]);
+      pos += 2;
+
+      /* Fragment offset */
+      _gnutls_write_uint24 (0, &data[pos]);
+      pos += 3;
+
+      /* Fragment length */
+      _gnutls_write_uint24 (i_datasize, &data[pos]);
+      pos += 3;
+    }
 
   if (i_datasize > 0)
     memcpy (&data[pos], i_data, i_datasize);
@@ -1711,6 +1733,7 @@ _gnutls_send_client_hello (gnutls_session_t session, int again)
     session->internals.resumed_security_parameters.session_id;
   uint8_t session_id_len =
     session->internals.resumed_security_parameters.session_id_size;
+  uint8_t cookie_len;
 
   if (session->security_parameters.session_id_size)
     rehandshake = 1;
@@ -1722,8 +1745,16 @@ _gnutls_send_client_hello (gnutls_session_t session, int again)
 
   if (again == 0)
     {
+      if(_gnutls_session_is_dtls(session))
+	{
+	  cookie_len = session->internals.dtls.cookie_len + 1;
+	}
+      else
+	{
+	  cookie_len = 0;
+	}
 
-      datalen = 2 + (session_id_len + 1) + GNUTLS_RANDOM_SIZE;
+      datalen = 2 + (session_id_len + 1) + GNUTLS_RANDOM_SIZE + cookie_len;
       /* 2 for version, (4 for unix time + 28 for random bytes==GNUTLS_RANDOM_SIZE) 
        */
 
@@ -1805,6 +1836,14 @@ _gnutls_send_client_hello (gnutls_session_t session, int again)
 	  pos += session_id_len;
 	}
 
+      /* Copy the DTLS cookie
+       */
+      if (_gnutls_session_is_dtls(session))
+	{
+	  data[pos++] = session->internals.dtls.cookie_len;
+	  memcpy(&data[pos], &session->internals.dtls.cookie, session->internals.dtls.cookie_len);
+	  pos += session->internals.dtls.cookie_len;
+	}
 
       /* Copy the ciphersuites.
        */
