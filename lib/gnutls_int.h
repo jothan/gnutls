@@ -56,6 +56,11 @@ typedef struct
   unsigned char i[8];
 } uint64;
 
+typedef struct
+{
+  unsigned char i[6];
+} uint48;
+
 #include <gnutls/gnutls.h>
 
 /*
