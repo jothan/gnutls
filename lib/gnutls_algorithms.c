@@ -136,15 +136,16 @@ typedef struct
   gnutls_protocol_t id;		/* gnutls internal version number */
   int major;			/* defined by the protocol */
   int minor;			/* defined by the protocol */
+  transport_t transport;	/* Type of transport, stream or datagram */
   int supported;		/* 0 not supported, > 0 is supported */
 } gnutls_version_entry;
 
 static const gnutls_version_entry sup_versions[] = {
-  {"SSL3.0", GNUTLS_SSL3, 3, 0, 1},
-  {"TLS1.0", GNUTLS_TLS1, 3, 1, 1},
-  {"TLS1.1", GNUTLS_TLS1_1, 3, 2, 1},
-  {"TLS1.2", GNUTLS_TLS1_2, 3, 3, 1},
-  {"DTLS1.0", GNUTLS_DTLS1_0, 254, 255, 1}, /* 1.1 over datagram */
+  {"SSL3.0", GNUTLS_SSL3, 3, 0, GNUTLS_STREAM, 1},
+  {"TLS1.0", GNUTLS_TLS1, 3, 1, GNUTLS_STREAM, 1},
+  {"TLS1.1", GNUTLS_TLS1_1, 3, 2, GNUTLS_STREAM, 1},
+  {"TLS1.2", GNUTLS_TLS1_2, 3, 3, GNUTLS_STREAM, 1},
+  {"DTLS1.0", GNUTLS_DTLS1_0, 254, 255, GNUTLS_DGRAM, 1}, /* 1.1 over datagram */
   {0, 0, 0, 0, 0}
 };
 
@@ -1177,12 +1178,21 @@ gnutls_protocol_t
 _gnutls_version_lowest (gnutls_session_t session)
 {				/* returns the lowest version supported */
   unsigned int i, min = 0xff;
+  gnutls_protocol_t cur_prot;
 
   for (i = 0; i < session->internals.priorities.protocol.algorithms; i++)
     {
       if (session->internals.priorities.protocol.priority[i] < min)
 	min = session->internals.priorities.protocol.priority[i];
     }
+  else
+    for (i = 0; i < session->internals.priorities.protocol.algorithms; i++)
+      {
+	cur_prot = session->internals.priorities.protocol.priority[i];
+
+	if (cur_prot < min && _gnutls_version_is_supported(session, cur_prot))
+	  min = cur_prot;
+      }
 
   if (min == 0xff)
     return GNUTLS_VERSION_UNKNOWN;	/* unknown version */
@@ -1194,12 +1204,21 @@ gnutls_protocol_t
 _gnutls_version_max (gnutls_session_t session)
 {				/* returns the maximum version supported */
   unsigned int i, max = 0x00;
+  gnutls_protocol_t cur_prot;
 
   for (i = 0; i < session->internals.priorities.protocol.algorithms; i++)
     {
       if (session->internals.priorities.protocol.priority[i] > max)
 	max = session->internals.priorities.protocol.priority[i];
     }
+  else
+    for (i = 0; i < session->internals.priorities.protocol.algorithms; i++)
+      {
+	cur_prot = session->internals.priorities.protocol.priority[i];
+
+	if (cur_prot > max && _gnutls_version_is_supported(session, cur_prot))
+	  max = cur_prot;
+      }
 
   if (max == 0x00)
     return GNUTLS_VERSION_UNKNOWN;	/* unknown version */
@@ -1297,7 +1316,8 @@ _gnutls_version_is_supported (gnutls_session_t session,
 {
   int ret = 0;
 
-  GNUTLS_VERSION_ALG_LOOP (ret = p->supported);
+  GNUTLS_VERSION_ALG_LOOP (ret = p->supported && p->transport == session->internals.transport);
+
   if (ret == 0)
     return 0;
 
@@ -1370,6 +1390,34 @@ _gnutls_version_has_variable_padding (gnutls_protocol_t version)
     default:
       return 0;
     }
+}
+
+/* This function determines if the version specified has explicit IVs
+   (for CBC attack prevention). */
+int
+_gnutls_version_has_explicit_iv (gnutls_protocol_t version)
+{
+  switch(version) {
+  case GNUTLS_TLS1_1:
+  case GNUTLS_TLS1_2:
+    return 1;
+  default:
+    return 0;
+  }
+}
+
+/* This function determines if the version specified can have
+   non-minimal padding. */
+int _gnutls_version_has_variable_padding (gnutls_protocol_t version)
+{
+  switch(version) {
+  case GNUTLS_TLS1_0:
+  case GNUTLS_TLS1_1:
+  case GNUTLS_TLS1_2:
+    return 1;
+  default:
+    return 0;
+  }
 }
 
 /* Type to KX mappings */
