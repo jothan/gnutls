@@ -41,6 +41,7 @@ gnutls_protocol_t _gnutls_version_get (int major, int minor);
 /* Functions for feature checks */
 int _gnutls_version_has_selectable_prf (gnutls_protocol_t version);
 int _gnutls_version_has_extensions (gnutls_protocol_t version);
+int _gnutls_version_has_explicit_iv (gnutls_protocol_t version);
 
 /* Functions for MACs. */
 int _gnutls_mac_is_ok (gnutls_mac_algorithm_t algorithm);
