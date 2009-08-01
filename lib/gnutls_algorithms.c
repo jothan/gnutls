@@ -1188,6 +1188,14 @@ _gnutls_version_has_selectable_prf (gnutls_protocol_t version)
   return version >= GNUTLS_TLS1_2;
 }
 
+/* This function determines if the version specified has selectable
+   signature/hash functions for certificate authentification. */
+int
+_gnutls_version_has_selectable_sighash (gnutls_protocol_t version)
+{
+  return version >= GNUTLS_TLS1_2;
+}
+
 /* This function determines if the version specified has support for
    TLS extensions. */
 int
