@@ -1270,6 +1270,20 @@ _gnutls_session_is_psk (gnutls_session_t session)
   return 0;
 }
 
+/*-
+ * _gnutls_session_is_dtls - Used to check whether this session uses DTLS.
+ * @session: is a #gnutls_session_t structure.
+ *
+ * This function will return non zero if this session uses DTLS.
+ *
+ -*/
+int
+_gnutls_session_is_dtls (gnutls_session_t session)
+{
+  return session->internals.transport == GNUTLS_DGRAM;
+}
+
+
 /**
  * gnutls_session_get_ptr:
  * @session: is a #gnutls_session_t structure.

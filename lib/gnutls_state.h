@@ -61,6 +61,7 @@ int _gnutls_session_is_resumable (gnutls_session_t session);
 int _gnutls_session_is_export (gnutls_session_t session);
 
 int _gnutls_session_is_psk (gnutls_session_t session);
+int _gnutls_session_is_dtls (gnutls_session_t session);
 
 int _gnutls_openpgp_send_fingerprint (gnutls_session_t session);
 
