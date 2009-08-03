@@ -78,9 +78,10 @@ COBJECTS = gnutls_record.c gnutls_compress.c debug.c gnutls_cipher.c	\
 	gnutls_str.c gnutls_state.c gnutls_x509.c ext_cert_type.c	\
 	gnutls_rsa_export.c auth_rsa_export.c ext_server_name.c		\
 	auth_dh_common.c gnutls_helper.c gnutls_supplemental.c		\
-	crypto.c random.c  ext_signature.c cryptodev.c system.c \
-	crypto-api.c ext_safe_renegotiation.c gnutls_privkey.c \
-	pkcs11.c pkcs11_privkey.c gnutls_pubkey.c pkcs11_write.c locks.c
+	crypto.c random.c ext_signature.c cryptodev.c system.c		\
+	crypto-api.c ext_safe_renegotiation.c gnutls_privkey.c		\
+	pkcs11.c pkcs11_privkey.c gnutls_pubkey.c pkcs11_write.c	\
+	locks.c gnutls_dtls.c
 
 
 if ENABLE_NETTLE
