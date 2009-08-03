@@ -64,7 +64,7 @@ PSK_COBJECTS = auth_psk.c auth_psk_passwd.c gnutls_psk.c	\
 OPRFI_COBJECTS = ext_oprfi.c
 
 COBJECTS = gnutls_record.c gnutls_compress.c debug.c gnutls_cipher.c	\
-	gnutls_buffers.c gnutls_handshake.c gnutls_num.c		\
+	gnutls_buffers.c gnutls_handshake.c gnutls_num.c gnutls_dtls.c	\
 	gnutls_errors.c gnutls_algorithms.c gnutls_dh.c gnutls_kx.c	\
 	gnutls_priority.c gnutls_hash_int.c gnutls_cipher_int.c		\
 	gnutls_session.c gnutls_db.c x509_b64.c auth_anon.c		\
