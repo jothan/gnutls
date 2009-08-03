@@ -77,6 +77,40 @@ _gnutls_handshake_hash_add_recvd (gnutls_session_t session,
 
 
 
+/* This function initialized the handshake hash session.
+ * required for finished messages.
+ */
+inline static int
+_gnutls_handshake_hash_init (gnutls_session_t session)
+{
+
+  if (session->internals.handshake_mac_handle_init == 0)
+    {
+      int ret =
+	_gnutls_hash_init (&session->internals.handshake_mac_handle_md5,
+			   GNUTLS_MAC_MD5);
+
+      if (ret < 0)
+	{
+	  gnutls_assert ();
+	  return ret;
+	}
+
+      ret =
+	_gnutls_hash_init (&session->internals.handshake_mac_handle_sha,
+			   GNUTLS_MAC_SHA1);
+      if (ret < 0)
+	{
+	  gnutls_assert ();
+	  return GNUTLS_E_MEMORY_ERROR;
+	}
+
+      session->internals.handshake_mac_handle_init = 1;
+    }
+
+  return 0;
+}
+
 /* Clears the handshake hash buffers and handles.
  */
 void
@@ -1154,9 +1188,7 @@ _gnutls_send_handshake (gnutls_session_t session, mbuffer_st *bufel,
   _gnutls_write_uint24 ( _mbuffer_get_udata_size(bufel), &data[pos]);
   pos += 3;
 
-<<<<<<< HEAD
   _gnutls_handshake_log ("HSK[%p]: %s was sent [%ld bytes]\n",
-=======
   /* Add DTLS handshake fragment headers.  The message will be
    * fragmented later by the fragmentation sub-layer. All fields must
    * be set properly for HMAC. The HMAC requires we pretend that the
@@ -1180,7 +1212,6 @@ _gnutls_send_handshake (gnutls_session_t session, mbuffer_st *bufel,
     memcpy (&data[pos], i_data, i_datasize);
 
   _gnutls_handshake_log ("HSK[%p]: %s was send [%ld bytes]\n",
->>>>>>> Add hanshake fragment headers when sending handshake.
 			 session, _gnutls_handshake2str (type),
 			 (long) datasize);
 
@@ -2468,6 +2499,7 @@ _gnutls_abort_handshake (gnutls_session_t session, int ret)
 }
 
 
+<<<<<<< HEAD
 /* This function initialized the handshake hash session.
  * required for finished messages.
  */
@@ -2546,6 +2578,8 @@ _gnutls_handshake_hash_init (gnutls_session_t session)
   return 0;
 }
 
+=======
+>>>>>>> Move _gnutls_handshake_hash_init next to _gnutls_handshake_hash_buffers_clear.
 static int
 _gnutls_send_supplemental (gnutls_session_t session, int again)
 {
