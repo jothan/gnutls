@@ -1020,6 +1020,21 @@ _gnutls_send_handshake (gnutls_session_t session, void *i_data,
 			 (long) datasize);
 
 
+  /* If we send a second or more ClientHello due to a
+     HelloVerifyRequest, we only remember the last ClientHello
+     sent for hashing purposes. */
+  if (_gnutls_session_is_dtls(session)
+      && type == GNUTLS_HANDSHAKE_CLIENT_HELLO
+      && session->internals.last_handshake_out == GNUTLS_HANDSHAKE_CLIENT_HELLO)
+    {
+      _gnutls_handshake_hash_buffers_clear (session);
+      if ((ret = _gnutls_handshake_hash_init (session)) < 0)
+	{
+	  gnutls_assert ();
+	  return ret;
+	}
+    }
+
   /* Here we keep the handshake messages in order to hash them...
    */
   if (type != GNUTLS_HANDSHAKE_HELLO_REQUEST)
