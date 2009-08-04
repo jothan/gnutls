@@ -32,6 +32,7 @@
 #include "gnutls_algorithms.h"
 #include "gnutls_compress.h"
 #include "gnutls_cipher.h"
+#include "gnutls_dtls.h"
 #include "gnutls_buffers.h"
 #include "gnutls_kx.h"
 #include "gnutls_handshake.h"
@@ -1048,9 +1049,12 @@ _gnutls_send_handshake (gnutls_session_t session, void *i_data,
 
   session->internals.last_handshake_out = type;
 
-  ret =
-    _gnutls_handshake_io_send_int (session, GNUTLS_HANDSHAKE, type,
-				   data, datasize);
+  if (_gnutls_session_is_dtls(session))
+    ret = _gnutls_dtls_handshake_enqueue (session, data, datasize, type,
+					  session->internals.dtls.hsk_write_seq-1);
+  else
+    ret = _gnutls_handshake_io_send_int (session, GNUTLS_HANDSHAKE, type,
+					 data, datasize);
 
   gnutls_free (data);
 
@@ -2406,6 +2410,8 @@ _gnutls_handshake_client (gnutls_session_t session)
       ret = _gnutls_send_hello (session, AGAIN (STATE1));
       STATE = STATE1;
       IMED_RET ("send hello", ret);
+
+      _gnutls_dtls_transmit(session);
 
     case STATE2:
       /* receive the server hello */
