@@ -33,6 +33,7 @@
 #include "gnutls_algorithms.h"
 #include "gnutls_compress.h"
 #include "gnutls_cipher.h"
+#include "gnutls_dtls.h"
 #include "gnutls_buffers.h"
 #include "gnutls_mbuffers.h"
 #include "gnutls_kx.h"
@@ -1254,6 +1255,12 @@ _gnutls_send_handshake (gnutls_session_t session, mbuffer_st *bufel,
       case GNUTLS_HANDSHAKE_SERVER_HELLO: /* as above */
       case GNUTLS_HANDSHAKE_CERTIFICATE_REQUEST: /* as above */
       case GNUTLS_HANDSHAKE_NEW_SESSION_TICKET: /* followed by ChangeCipherSpec */
+  if (_gnutls_session_is_dtls(session))
+    ret = _gnutls_dtls_handshake_enqueue (session, data, datasize, type,
+					  session->internals.dtls.hsk_write_seq-1);
+  else
+    ret = _gnutls_handshake_io_send_int (session, GNUTLS_HANDSHAKE, type,
+					 data, datasize);
 
       /* now for client Certificate, ClientKeyExchange and
        * CertificateVerify are always followed by ChangeCipherSpec
@@ -2772,6 +2779,8 @@ _gnutls_handshake_client (gnutls_session_t session)
       ret = _gnutls_send_hello (session, AGAIN (STATE1));
       STATE = STATE1;
       IMED_RET ("send hello", ret, 0);
+
+      _gnutls_dtls_transmit(session);
 
     case STATE2:
       /* receive the server hello */
