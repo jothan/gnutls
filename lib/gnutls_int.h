@@ -130,6 +130,11 @@ typedef struct
 #define DTLS_HANDSHAKE_HEADER_SIZE HANDSHAKE_HEADER_SIZE+8
 #define MAX_HANDSHAKE_HEADER_SIZE DTLS_HANDSHAKE_HEADER_SIZE
 
+/* This is the maximum handshake message size we send without
+   fragmentation. This currently ignores record layer overhead. Set
+   ridiculously low to exercise the DTLS retransmission layer. */
+#define DTLS_DEFAULT_MTU 20
+
 /* the maximum size of the DTLS cookie */
 #define DTLS_MAX_COOKIE_SIZE 32
 
@@ -488,6 +493,7 @@ typedef struct
   /* For DTLS handshake fragmentation and reassembly. */
   uint16_t hsk_write_seq;
   uint16_t hsk_read_seq;
+  uint16_t hsk_mtu;
 } dtls_st;
 
 
