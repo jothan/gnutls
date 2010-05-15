@@ -41,6 +41,7 @@
 #include <gnutls_datum.h>
 #include <x509_int.h>
 #include <common.h>
+#include <sign.h>
 
 /* Writes the digest information and the digest in a DER encoded
  * structure. The digest info is allocated and stored into the info structure.
@@ -128,14 +129,13 @@ encode_ber_digest_info (gnutls_digest_algorithm_t hash,
  * params[0] is modulus
  * params[1] is public key
  */
-static int
-pkcs1_rsa_sign (gnutls_digest_algorithm_t hash, const gnutls_datum_t * text,
-		bigint_t * params, int params_len, gnutls_datum_t * signature)
+int
+pk_pkcs1_rsa_hash (gnutls_digest_algorithm_t hash, const gnutls_datum_t * text, gnutls_datum_t * output)
 {
   int ret;
   opaque _digest[MAX_HASH_SIZE];
   digest_hd_st hd;
-  gnutls_datum_t digest, info;
+  gnutls_datum_t digest;
 
   ret = _gnutls_hash_init (&hd, HASH2MAC (hash));
   if (ret < 0)
@@ -152,34 +152,21 @@ pkcs1_rsa_sign (gnutls_digest_algorithm_t hash, const gnutls_datum_t * text,
 
   /* Encode the digest as a DigestInfo
    */
-  if ((ret = encode_ber_digest_info (hash, &digest, &info)) != 0)
+  if ((ret = encode_ber_digest_info (hash, &digest, output)) != 0)
     {
       gnutls_assert ();
       return ret;
     }
-
-  if ((ret =
-       _gnutls_sign (GNUTLS_PK_RSA, params, params_len, &info,
-		     signature)) < 0)
-    {
-      gnutls_assert ();
-      _gnutls_free_datum (&info);
-      return ret;
-    }
-
-  _gnutls_free_datum (&info);
 
   return 0;
 }
 
-static int
-dsa_sign (const gnutls_datum_t * text,
-	  bigint_t * params, int params_len, gnutls_datum_t * signature)
+int
+pk_dsa_hash (const gnutls_datum_t * text, gnutls_datum_t * hash)
 {
   int ret;
   opaque _digest[MAX_HASH_SIZE];
   digest_hd_st hd;
-  gnutls_datum_t digest;
 
   ret = _gnutls_hash_init (&hd, GNUTLS_MAC_SHA1);
   if (ret < 0)
@@ -191,64 +178,10 @@ dsa_sign (const gnutls_datum_t * text,
   _gnutls_hash (&hd, text->data, text->size);
   _gnutls_hash_deinit (&hd, _digest);
 
-  digest.data = _digest;
-  digest.size = 20;
-
-  if ((ret =
-       _gnutls_sign (GNUTLS_PK_DSA, params, params_len, &digest,
-		     signature)) < 0)
-    {
-      gnutls_assert ();
-      return ret;
-    }
+  hash->data = _digest;
+  hash->size = 20;
 
   return 0;
-}
-
-/* Signs the given data using the parameters from the signer's
- * private key.
- *
- * returns 0 on success.
- * 
- * 'tbs' is the data to be signed
- * 'signature' will hold the signature!
- * 'hash' is only used in PKCS1 RSA signing.
- */
-int
-_gnutls_x509_sign (const gnutls_datum_t * tbs,
-		   gnutls_digest_algorithm_t hash,
-		   gnutls_x509_privkey_t signer, gnutls_datum_t * signature)
-{
-  int ret;
-
-  switch (signer->pk_algorithm)
-    {
-    case GNUTLS_PK_RSA:
-      ret =
-	pkcs1_rsa_sign (hash, tbs, signer->params, signer->params_size,
-			signature);
-      if (ret < 0)
-	{
-	  gnutls_assert ();
-	  return ret;
-	}
-      return 0;
-      break;
-    case GNUTLS_PK_DSA:
-      ret = dsa_sign (tbs, signer->params, signer->params_size, signature);
-      if (ret < 0)
-	{
-	  gnutls_assert ();
-	  return ret;
-	}
-
-      return 0;
-      break;
-    default:
-      gnutls_assert ();
-      return GNUTLS_E_INTERNAL_ERROR;
-    }
-
 }
 
 /* This is the same as the _gnutls_x509_sign, but this one will decode
@@ -288,7 +221,7 @@ _gnutls_x509_sign_tbs (ASN1_TYPE cert, const char *tbs_name,
   tbs.data = buf;
   tbs.size = buf_size;
 
-  result = _gnutls_x509_sign (&tbs, hash, signer, signature);
+  result = gnutls_x509_privkey_sign_data2 (signer, hash, 0, &tbs, signature);
   gnutls_free (buf);
 
   return result;
