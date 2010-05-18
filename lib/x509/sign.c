@@ -49,7 +49,7 @@
  */
 static int
 encode_ber_digest_info (gnutls_digest_algorithm_t hash,
-			const gnutls_datum_t * digest, gnutls_datum_t * info)
+			const gnutls_datum_t * digest, gnutls_datum_t * output)
 {
   ASN1_TYPE dinfo = ASN1_TYPE_EMPTY;
   int result;
@@ -101,18 +101,18 @@ encode_ber_digest_info (gnutls_digest_algorithm_t hash,
       return _gnutls_asn2err (result);
     }
 
-  info->size = 0;
-  asn1_der_coding (dinfo, "", NULL, &info->size, NULL);
+  output->size = 0;
+  asn1_der_coding (dinfo, "", NULL, &output->size, NULL);
 
-  info->data = gnutls_malloc (info->size);
-  if (info->data == NULL)
+  output->data = gnutls_malloc (output->size);
+  if (output->data == NULL)
     {
       gnutls_assert ();
       asn1_delete_structure (&dinfo);
       return GNUTLS_E_MEMORY_ERROR;
     }
 
-  result = asn1_der_coding (dinfo, "", info->data, &info->size, NULL);
+  result = asn1_der_coding (dinfo, "", output->data, &output->size, NULL);
   if (result != ASN1_SUCCESS)
     {
       gnutls_assert ();
@@ -166,23 +166,32 @@ int
 pk_dsa_hash (const gnutls_datum_t * text, gnutls_datum_t * hash)
 {
   int ret;
-  opaque _digest[MAX_HASH_SIZE];
   digest_hd_st hd;
+
+  hash->size = 20;
+  hash->data = gnutls_malloc(20);
+  if (hash->data == NULL)
+    {
+      gnutls_assert();
+      return GNUTLS_E_MEMORY_ERROR;
+    }
 
   ret = _gnutls_hash_init (&hd, GNUTLS_MAC_SHA1);
   if (ret < 0)
     {
       gnutls_assert ();
-      return ret;
+      goto fail;
     }
 
   _gnutls_hash (&hd, text->data, text->size);
-  _gnutls_hash_deinit (&hd, _digest);
-
-  hash->data = _digest;
-  hash->size = 20;
+  _gnutls_hash_deinit (&hd, hash->data);
 
   return 0;
+
+fail:
+  gnutls_free(hash->data);
+  
+  return ret;
 }
 
 /* This is the same as the _gnutls_x509_sign, but this one will decode
