@@ -2193,11 +2193,11 @@ int
 _gnutls_get_key_id (gnutls_pk_algorithm_t pk, bigint_t* params, int params_size,
 		   unsigned char *output_data, size_t * output_data_size)
 {
-  int i, result = 0;
+  int result = 0;
   gnutls_datum_t der = { NULL, 0 };
   digest_hd_st hd;
 
-  if (output_data==NULL || *output_data_size < 0)
+  if (output_data==NULL || *output_data_size < 20)
     {
       gnutls_assert();
       *output_data_size = 20;
@@ -2253,8 +2253,6 @@ rsadsa_get_key_id (gnutls_x509_crt_t crt, int pk,
   bigint_t params[MAX_PUBLIC_PARAMS_SIZE];
   int params_size = MAX_PUBLIC_PARAMS_SIZE;
   int i, result = 0;
-  gnutls_datum_t der = { NULL, 0 };
-  digest_hd_st hd;
 
   result = _gnutls_x509_crt_get_mpis (crt, params, &params_size);
   if (result < 0)
