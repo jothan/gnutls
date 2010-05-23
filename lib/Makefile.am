@@ -82,7 +82,7 @@ COBJECTS = gnutls_record.c gnutls_compress.c debug.c gnutls_cipher.c	\
 	auth_dh_common.c gnutls_helper.c gnutls_supplemental.c		\
 	crypto.c random.c  ext_signature.c cryptodev.c \
 	crypto-api.c ext_safe_renegotiation.c gnutls_privkey.c \
-	pkcs11.c pkcs11_privkey.c gnutls_pubkey.c
+	pkcs11.c pkcs11_privkey.c gnutls_pubkey.c pkcs11_write.c
 
 if ENABLE_NETTLE
 SUBDIRS += nettle
