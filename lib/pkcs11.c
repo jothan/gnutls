@@ -703,6 +703,66 @@ static void terminate_string(unsigned char *str, size_t len)
         ptr[1] = '\0';
 }
 
+int pkcs11_find_object (pakchois_session_t** _pks, ck_object_handle_t* _obj, 
+    struct pkcs11_url_info *info, unsigned int flags)
+{
+int ret;
+pakchois_session_t *pks;
+ck_object_handle_t obj;
+ck_object_class_t class;
+struct ck_attribute a[4];
+int a_vals = 0;
+unsigned long count;
+ck_rv_t rv;
+
+    class = pkcs11_strtype_to_class(info->type);
+    if (class == -1) {
+        gnutls_assert();
+        return GNUTLS_E_INVALID_REQUEST;
+    }
+
+    ret = pkcs11_open_session (&pks, info, flags);
+    if (ret < 0) {
+        gnutls_assert();
+        return ret;
+    }
+
+	a[a_vals].type = CKA_CLASS;
+	a[a_vals].value = &class;
+	a[a_vals].value_len = sizeof class;
+    a_vals++;
+
+    if (info->certid_raw_size > 0) {
+        a[a_vals].type = CKA_ID;
+        a[a_vals].value = info->certid_raw;
+        a[a_vals].value_len = info->certid_raw_size;
+        a_vals++;
+    }
+    
+	rv = pakchois_find_objects_init(pks, a, a_vals);
+	if (rv != CKR_OK) {
+		gnutls_assert();
+		_gnutls_debug_log("pk11: FindObjectsInit failed.\n");
+		ret = GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE;
+		goto fail;
+	}
+    
+    if (pakchois_find_objects(pks, &obj, 1, &count) == CKR_OK
+	       && count == 1) {
+            *_obj = obj;
+            *_pks = pks;
+            pakchois_find_objects_final(pks);
+            return 0;
+            
+    }
+
+    pakchois_find_objects_final(pks);
+fail:
+    pakchois_close_session(pks);
+    
+    return ret;
+}
+
 int pkcs11_open_session (pakchois_session_t** _pks, struct pkcs11_url_info *info, unsigned int flags)
 {
     ck_rv_t rv;
@@ -762,7 +822,7 @@ next:
 
 
 int _pkcs11_traverse_tokens (find_func_t find_func, void* input, 
-    int leave_session, unsigned int flags)
+    unsigned int flags)
 {
     ck_rv_t rv;
     int found = 0, x, z, ret;
@@ -820,9 +880,7 @@ finish:
     }
 
     if (pks != NULL) {
-        if (leave_session==0 || ret != 0)  {
-            pakchois_close_session(pks);
-        }
+        pakchois_close_session(pks);
     }
    
     return ret;
@@ -1245,7 +1303,7 @@ int gnutls_pkcs11_obj_import_url (gnutls_pkcs11_obj_t cert, const char * url)
         return ret;
     }
 
-    ret = _pkcs11_traverse_tokens(find_obj_url, &find_data, 0, 0);
+    ret = _pkcs11_traverse_tokens(find_obj_url, &find_data, 0);
     if (ret < 0) {
         gnutls_assert();
         return ret;
@@ -1305,7 +1363,7 @@ int gnutls_pkcs11_token_get_url (unsigned int seq, char** url)
     memset(&tn, 0, sizeof(tn));
     tn.seq = seq;
     
-    ret = _pkcs11_traverse_tokens(find_token_num, &tn, 0, 0);
+    ret = _pkcs11_traverse_tokens(find_token_num, &tn, 0);
     if (ret < 0) {
         gnutls_assert();
         return ret;
@@ -1877,7 +1935,7 @@ int gnutls_pkcs11_obj_list_import_url (gnutls_pkcs11_obj_t * p_list, unsigned in
         return ret;
     }
 
-    ret = _pkcs11_traverse_tokens(find_objs, &find_data, 0, 0);
+    ret = _pkcs11_traverse_tokens(find_objs, &find_data, 0);
     if (ret < 0) {
         gnutls_assert();
         return ret;
@@ -2032,7 +2090,7 @@ int gnutls_pkcs11_token_get_flags(const char* url, unsigned int *flags)
         return ret;
     }
 
-    ret = _pkcs11_traverse_tokens(find_flags, &find_data, 0, 0);
+    ret = _pkcs11_traverse_tokens(find_flags, &find_data, 0);
     if (ret < 0) {
         gnutls_assert();
         return ret;
