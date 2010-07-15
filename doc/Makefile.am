@@ -30,9 +30,13 @@ SUBDIRS += reference
 endif
 
 info_TEXINFOS = gnutls.texi
+
+#### LDF 2010.07.15.
+#### Added 'cha-datatypes.texi' to 'gnutls_TEXINFOS'.
+
 gnutls_TEXINFOS = gnutls.texi fdl-1.3.texi lgpl-2.1.texi gpl-3.0.texi \
 	cha-auth.texi cha-bib.texi cha-cert-auth.texi cha-ciphersuites.texi \
-	cha-copying.texi cha-functions.texi cha-gtls-app.texi \
+	cha-copying.texi cha-datatypes.texi cha-functions.texi cha-gtls-app.texi \
 	cha-internals.texi cha-intro-tls.texi cha-library.texi \
 	cha-preface.texi cha-programs.texi cha-tls-app.texi
 
