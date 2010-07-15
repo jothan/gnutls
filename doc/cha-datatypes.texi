@@ -1,0 +1,10 @@
+@c cha-datatypes.texi
+@c Created by Laurence D. Finston (LDF) Thu Jul 15 14:51:42 CEST 2010
+
+@node Data type reference
+@chapter Data type reference
+@cindex Data type reference
+
+@menu
+@end menu
+
