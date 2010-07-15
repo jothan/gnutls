@@ -178,13 +178,30 @@ int certificate_credentials_append_pkey( gnutls_certificate_credentials_t res, g
 
 /* * (1) Local variables for Emacs */
 
+/* ** (2) */
+
+/* ** (2) */
+
+/* *** (3) */
+
+/* * (1) Local variables for Emacs */
+
+/* LDF 2010.07.15.  
+
+   I'd rather use C mode and outline-minor-mode, but if I do, the functions for 
+   navigating among the headings don't work properly.
+
+   This would seem to be a bug in Emacs and might have been fixed in a more recent 
+   version.
+
+*/
 
 /* Local Variables: */
 /* eval:(display-time) */
+/* mode:Outline */
 /* abbrev-mode:t */
 /* eval:(read-abbrev-file) */
 /* indent-tabs-mode:nil */
-/* eval:(outline-minor-mode) */
-/* outline-regexp:"/\\* *%+" */
+/* outline-regexp:"/\\* *\\*+" */
 /* fill-column:80 */
 /* End: */
