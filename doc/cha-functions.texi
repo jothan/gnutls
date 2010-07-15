@@ -1,3 +1,5 @@
+@c cha-functions.texi
+
 @node Function reference
 @chapter Function Reference
 @cindex Function reference
