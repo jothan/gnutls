@@ -15,6 +15,13 @@
 @syncodeindex tp fn
 @syncodeindex pg cp
 
+@c Add a datatype index.  This is necessary (if we want a separate
+@c data type index), because the predefined
+@c `tp' index has been combined with the function index.
+@c LDF 2010.07.15.
+
+@defindex dt
+
 @comment %**end of header
 @finalout
 @copying
@@ -136,6 +143,11 @@ Documentation License''.
 @unnumbered Function and Data Index
 
 @printindex fn
+
+@node Data Type Index
+@unnumbered Data Type Index
+
+@printindex dt
 
 @node Concept Index
 @unnumbered Concept Index
