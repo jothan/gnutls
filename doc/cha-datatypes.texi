@@ -6,5 +6,41 @@
 @cindex Data type reference
 
 @menu
+* X.509 Certificate Data Types::
 @end menu
+
+@node X.509 Certificate Data Types
+@section X.509 Certificate Data Types
+
+!! START HERE:  This list may not be complete.  LDF 2010.07.15.
+
+Data types for X.509 certificates are declared in the following files
+in the directory @file{[...]/gnutls/lib/}:
+
+@itemize @w{}
+@item 
+@file{gnutls_cert.h}
+
+@item 
+@file{gnutls_cert.h}
+
+@item
+@file{gnutls_auth.h}
+
+@item
+@file{auth_dh_common.h}
+
+@item
+@file{x509/x509_int.h}
+
+@item
+@file{openpgp/openpgp_int.h}
+@end itemize
+
+
+
+
+
+
+
 
