@@ -25,6 +25,8 @@
  *
  */
 
+/* * (1) Top  */
+
 #ifndef AUTH_CERT_H
 # define AUTH_CERT_H
 # include "gnutls_cert.h"
@@ -173,3 +175,16 @@ int certificate_credential_append_crt_list( gnutls_certificate_credentials_t res
 int certificate_credentials_append_pkey( gnutls_certificate_credentials_t res, gnutls_privkey_t pkey);
 
 #endif
+
+/* * (1) Local variables for Emacs */
+
+
+/* Local Variables: */
+/* eval:(display-time) */
+/* abbrev-mode:t */
+/* eval:(read-abbrev-file) */
+/* indent-tabs-mode:nil */
+/* eval:(outline-minor-mode) */
+/* outline-regexp:"/\\* *%+" */
+/* fill-column:80 */
+/* End: */
