@@ -1,3 +1,7 @@
+%% gnutls.texi
+
+%% Modified by Laurence D. Finston (LDF) starting Thu Jul 15 14:42:46 CEST 2010
+
 \input texinfo   @c -*-texinfo-*-
 @comment %**start of header
 @setfilename gnutls.info
@@ -80,6 +84,7 @@ Documentation License''.
 * How to use GnuTLS in applications::
 * Included programs::
 * Function reference::
+* Data type reference::
 * All the supported ciphersuites in GnuTLS::
 * Guile Bindings::
 * Internal architecture of GnuTLS::
@@ -107,6 +112,14 @@ Documentation License''.
 @include cha-programs.texi
 
 @include cha-functions.texi
+
+@c ******
+
+@c Added.  LDF 2010.07.15.
+
+@include cha-datatypes.texi
+
+@c ******
 
 @include cha-ciphersuites.texi
 
