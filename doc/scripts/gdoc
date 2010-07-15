@@ -1,5 +1,10 @@
 #!/usr/bin/perl
 
+#### gdoc
+
+#### Modified by Laurence D. Finston (LDF) starting Thu Jul 15 12:37:26 CEST 2010
+
+
 ## Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Simon Josefsson
 ##                    added -texinfo, -listfunc, -pkg-name
 ##                    man page revamp
