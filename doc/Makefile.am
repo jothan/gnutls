@@ -100,16 +100,23 @@ MAINTAINERCLEANFILES =
 
 # Generated texinfos.
 
+
 gnutls_TEXINFOS += gnutls-api.texi extra-api.texi ia-api.texi	\
 	x509-api.texi pgp-api.texi
 MAINTAINERCLEANFILES += gnutls-api.texi extra-api.texi ia-api.texi	\
 	x509-api.texi pgp-api.texi
 
 #### LDF 2010.07.15.
-#### Testing writing a header to 'gnutls-api.texi'.
-#### This works.
+#### Added variable 'generated_TEXINFOS_1' and a rule with multiple
+#### targets to generate the files to which it refers.
+#### In addition, a header is now written to these files.
 
-gnutls-api.texi: $(srcdir)/../lib/*.c
+generated_TEXINFOS_1 = gnutls-api.texi extra-api.texi ia-api.texi	\
+	x509-api.texi pgp-api.texi
+
+
+$(generated_TEXINFOS_1): $(srcdir)/../lib/*.c
+	echo "Current target == $@"
 	echo "" > $@-tmp
 	for i in $^; do \
 		echo -n "Creating documentation for file $$i... " && \
@@ -123,51 +130,8 @@ gnutls-api.texi: $(srcdir)/../lib/*.c
 	rm -f $@-tmp
 	mv -f $@-tmp2 $@
 
-x509-api.texi: $(srcdir)/../lib/x509/*.c
-	echo "" > $@-tmp
-	for i in $^; do \
-		echo -n "Creating documentation for file $$i... " && \
-		$(srcdir)/scripts/gdoc -texinfo $$i >> $@-tmp && \
-		echo "ok"; \
-	done
-	$(srcdir)/scripts/sort2.pl < $@-tmp > $@-tmp2
-	rm -f $@-tmp
-	mv -f $@-tmp2 $@
 
-pgp-api.texi: $(srcdir)/../lib/openpgp/*.c
-	echo "" > $@-tmp
-	for i in $^; do \
-		echo -n "Creating documentation for file $$i... " && \
-		$(srcdir)/scripts/gdoc -texinfo $$i >> $@-tmp && \
-		echo "ok"; \
-	done
-	$(srcdir)/scripts/sort2.pl < $@-tmp > $@-tmp2
-	rm -f $@-tmp
-	mv -f $@-tmp2 $@
-
-extra-api.texi: $(srcdir)/../libextra/gnutls_extra.c
-	echo "" > $@-tmp
-	for i in $^; do \
-		echo -n "Creating documentation for file $$i... " && \
-		$(srcdir)/scripts/gdoc -texinfo $$i >> $@-tmp && \
-		echo "ok"; \
-	done
-	$(srcdir)/scripts/sort2.pl < $@-tmp > $@-tmp2
-	rm -f $@-tmp
-	mv -f $@-tmp2 $@
-
-ia-api.texi: $(srcdir)/../libextra/gnutls_ia.c
-	echo "" > $@-tmp
-	for i in $^; do \
-		echo -n "Creating documentation for file $$i... " && \
-		$(srcdir)/scripts/gdoc -texinfo $$i >> $@-tmp && \
-		echo "ok"; \
-	done
-	$(srcdir)/scripts/sort2.pl < $@-tmp > $@-tmp2
-	rm -f $@-tmp
-	mv -f $@-tmp2 $@
-
-# Generated texinfos.
+# More generated texinfos.
 
 gnutls_TEXINFOS += error_codes.texi algorithms.texi
 MAINTAINERCLEANFILES += error_codes.texi algorithms.texi
