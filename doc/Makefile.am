@@ -179,6 +179,11 @@ algorithms.texi: $(srcdir)/printlist.c
 
 # Guile texinfos.
 
+#### This would seem to be for the files of C code that implement
+#### the Guile binding for GNUTLS.
+#### I don't plan on doing anything with this at present.
+#### LDF 2010.07.15.
+
 guile_texi           = core.c.texi extra.c.texi
 gnutls_TEXINFOS      += guile.texi $(guile_texi)
 BUILT_SOURCES        = $(guile_texi)
@@ -223,8 +228,12 @@ extra.c.texi:
 endif !HAVE_GUILE
 
 
+#### LDF 2010.07.15.
+#### Added phony target 'query'.
+
 .PHONY: query
 
 query:
 	echo "srcdir == $(srcdir)"
+	echo "HAVE_GUILE == $(HAVE_GUILE)"
 
