@@ -229,3 +229,10 @@ extra.c.texi:
 
 
 endif !HAVE_GUILE
+
+
+.PHONY: query
+
+query:
+	echo "srcdir == $(srcdir)"
+
