@@ -1,8 +1,12 @@
+#### Makefile.am
+
 ## Process this file with automake to produce Makefile.in
 # Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
 # 2009, 2010  Free Software Foundation, Inc.
 #
 # Author: Nikos Mavrogiannopoulos
+#
+# Modified by Laurence D. Finston (LDF) starting Thu Jul 15 11:59:59 CEST 2010
 #
 # This file is part of GnuTLS.
 #
@@ -30,4 +34,7 @@ endif
 
 ACLOCAL_AMFLAGS = -I m4 -I gl/m4 -I lib/gl/m4 -I libextra/gl/m4 -I lib/m4 -I libextra/m4
 
-EXTRA_DIST = cfg.mk maint.mk .clcopying
+#### LDF 2010.07.15.  
+#### Added '00INFO' to 'EXTRA_DIST'.
+
+EXTRA_DIST = cfg.mk maint.mk .clcopying 00INFO
