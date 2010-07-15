@@ -27,6 +27,8 @@
 
 /* * (1) Top  */
 
+/* ** (2) Include files  */
+
 #ifndef AUTH_CERT_H
 # define AUTH_CERT_H
 # include "gnutls_cert.h"
@@ -37,9 +39,15 @@
 # include <gnutls/abstract.h>
 # include <gnutls/compat.h>
 
+
+/* ** (2) |struct| and |typedef| declarations  */
+
+/* *** (3) struct gnutls_certificate_credentials_st / typedef certificate_credentials_st */
+
 /* This structure may be complex, but it's the only way to
  * support a server that has multiple certificates
  */
+
 typedef struct gnutls_certificate_credentials_st
 {
   gnutls_dh_params_t dh_params;
@@ -104,11 +112,15 @@ typedef struct gnutls_certificate_credentials_st
   gnutls_certificate_retrieve_function *get_cert_callback;
 } certificate_credentials_st;
 
+/* *** (3) |struct rsa_info_st| / |rsa_info_st|  */
+
 typedef struct rsa_info_st
 {
   gnutls_datum_t modulus;
   gnutls_datum_t exponent;
 } rsa_info_st;
+
+/* *** (3) */
 
 /* This is the information we keep for the peer
  * certificate.
@@ -134,18 +146,30 @@ typedef struct cert_auth_info_st
 #endif
 } *cert_auth_info_t;
 
+/* *** (3) */
+
 typedef struct cert_auth_info_st cert_auth_info_st;
+
+/* ** (2) Function declarations */
 
 void _gnutls_free_rsa_info (rsa_info_st * rsa);
 
 /* AUTH X509 functions */
+
 int _gnutls_gen_cert_server_certificate (gnutls_session_t, opaque **);
+
 int _gnutls_gen_cert_client_certificate (gnutls_session_t, opaque **);
+
 int _gnutls_gen_cert_client_cert_vrfy (gnutls_session_t, opaque **);
+
 int _gnutls_gen_cert_server_cert_req (gnutls_session_t, opaque **);
+
 int _gnutls_proc_cert_cert_req (gnutls_session_t, opaque *, size_t);
+
 int _gnutls_proc_cert_client_cert_vrfy (gnutls_session_t, opaque *, size_t);
+
 int _gnutls_proc_cert_server_certificate (gnutls_session_t, opaque *, size_t);
+
 int _gnutls_get_selected_cert (gnutls_session_t session,
 			       gnutls_cert ** apr_cert_list,
 			       int *apr_cert_list_length,
@@ -153,7 +177,9 @@ int _gnutls_get_selected_cert (gnutls_session_t session,
 
 int _gnutls_server_select_cert (struct gnutls_session_int *,
 				gnutls_pk_algorithm_t);
+
 void _gnutls_selected_certs_deinit (gnutls_session_t session);
+
 void _gnutls_selected_certs_set (gnutls_session_t session,
 				 gnutls_cert * certs, int ncerts,
 				 gnutls_privkey_t key, int need_free);
@@ -171,18 +197,14 @@ int _gnutls_get_auth_info_gcert (gnutls_cert * gcert,
 				 cert_auth_info_t info,
 				 int flags /* OR of ConvFlags */ );
 
-int certificate_credential_append_crt_list( gnutls_certificate_credentials_t res, gnutls_cert *crt, int nr);
-int certificate_credentials_append_pkey( gnutls_certificate_credentials_t res, gnutls_privkey_t pkey);
+int certificate_credential_append_crt_list( gnutls_certificate_credentials_t res, 
+                                            gnutls_cert *crt, 
+                                            int nr);
 
-#endif
+int certificate_credentials_append_pkey( gnutls_certificate_credentials_t res, 
+                                         gnutls_privkey_t pkey);
 
-/* * (1) Local variables for Emacs */
-
-/* ** (2) */
-
-/* ** (2) */
-
-/* *** (3) */
+#endif  /* |#ifndef AUTH_CERT_H|  */
 
 /* * (1) Local variables for Emacs */
 
@@ -193,6 +215,9 @@ int certificate_credentials_append_pkey( gnutls_certificate_credentials_t res, g
 
    This would seem to be a bug in Emacs and might have been fixed in a more recent 
    version.
+
+   People who use this file and don't like outline-mode should just not 
+   allow the local variables to be evaluated when Emacs queries them.
 
 */
 
