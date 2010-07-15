@@ -100,12 +100,6 @@ MAINTAINERCLEANFILES =
 
 # Generated texinfos.
 
-
-gnutls_TEXINFOS += gnutls-api.texi extra-api.texi ia-api.texi	\
-	x509-api.texi pgp-api.texi
-MAINTAINERCLEANFILES += gnutls-api.texi extra-api.texi ia-api.texi	\
-	x509-api.texi pgp-api.texi
-
 #### LDF 2010.07.15.
 #### Added variable 'generated_TEXINFOS_1' and a rule with multiple
 #### targets to generate the files to which it refers.
@@ -122,6 +116,8 @@ generated_texinfo_files: $(generated_TEXINFOS_1) error_codes.texi algorithms.tex
 generated_TEXINFOS_1 = gnutls-api.texi extra-api.texi ia-api.texi	\
 	x509-api.texi pgp-api.texi
 
+gnutls_TEXINFOS += $(generated_TEXINFOS_1)
+MAINTAINERCLEANFILES += $(generated_TEXINFOS_1)
 
 $(generated_TEXINFOS_1): $(srcdir)/../lib/*.c
 	echo "" > $@-tmp
@@ -234,6 +230,6 @@ endif !HAVE_GUILE
 .PHONY: query
 
 query:
-	echo "srcdir == $(srcdir)"
-	echo "HAVE_GUILE == $(HAVE_GUILE)"
-
+	@echo "srcdir == $(srcdir)"
+	@echo "HAVE_GUILE == $(HAVE_GUILE)"
+	@echo "gnutls_TEXINFOS == $(gnutls_TEXINFOS)"
