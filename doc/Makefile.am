@@ -110,6 +110,14 @@ MAINTAINERCLEANFILES += gnutls-api.texi extra-api.texi ia-api.texi	\
 #### Added variable 'generated_TEXINFOS_1' and a rule with multiple
 #### targets to generate the files to which it refers.
 #### In addition, a header is now written to these files.
+####
+#### Added a "phony" rule 'generated_texinfo_files' to generate
+#### these files (and 'error_codes.texi' and 'algorithms.texi' as well)
+#### for testing purposes.
+
+.PHONY: generated_texinfo_files
+
+generated_texinfo_files: $(generated_TEXINFOS_1) error_codes.texi algorithms.texi
 
 generated_TEXINFOS_1 = gnutls-api.texi extra-api.texi ia-api.texi	\
 	x509-api.texi pgp-api.texi
