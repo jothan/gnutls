@@ -117,8 +117,10 @@ MAINTAINERCLEANFILES =
 
 generated_texinfo_files: $(generated_TEXINFOS_1) error_codes.texi algorithms.texi
 
-generated_TEXINFOS_1 = gnutls-api.texi extra-api.texi ia-api.texi	\
+generated_TEXINFOS_1 = gnutls-api.texi extra-api.texi ia-api.texi \
 	x509-api.texi pgp-api.texi
+
+
 
 gnutls_TEXINFOS += $(generated_TEXINFOS_1)
 MAINTAINERCLEANFILES += $(generated_TEXINFOS_1)
