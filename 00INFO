@@ -1,6 +1,27 @@
-00INFO
+%% 00INFO
 
-Created by Laurence D. Finston (LDF) Thu Jul 15 11:11:20 CEST 2010
+%% Created by Laurence D. Finston (LDF) Thu Jul 15 11:11:20 CEST 2010
 
-$Id:$
+$Id$
+
+%% * (1) Top
+
+%% ** (2)
+
+
+%% ** (2)
+
+
+
+%% * (1) Local Variables for Emacs 
+
+%% Local Variables: 
+%% eval:(display-time) 
+%% eval:(read-abbrev-file) 
+%% indent-tabs-mode:nil 
+%% eval:(outline-minor-mode) 
+%% outline-regexp:"%% *\\*+" 
+%% End: 
+
+%% * (1) End of 00INFO
 
