@@ -65,6 +65,9 @@ Documentation License''.
 [\ref\] (@pxref{Bibliography})
 @end macro
 
+@c Added.  LDF 2010.07.15.
+@shortcontents
+
 @contents
 
 @ifnottex
