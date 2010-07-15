@@ -49,6 +49,8 @@ Declared in @file{auth_cert.h}:
 
 @c /home/lfinsto/gnutls_dev/gnutls/lib/auth_cert.h
 
+@dtindex gnutls_certificate_credentials_st, struct
+
 @c typedef struct gnutls_certificate_credentials_st
 
 
