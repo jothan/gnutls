@@ -12,12 +12,18 @@
 @node X.509 Certificate Data Types
 @section X.509 Certificate Data Types
 
-!! START HERE:  This list may not be complete.  LDF 2010.07.15.
+!! START HERE:  This list isn't complete.  LDF 2010.07.15.
 
 Data types for X.509 certificates are declared in the following files
 in the directory @file{[...]/gnutls/lib/}:
 
+@c 
+
 @itemize @w{}
+
+@item
+@file{auth_cert.h}
+
 @item 
 @file{gnutls_cert.h}
 
@@ -37,7 +43,13 @@ in the directory @file{[...]/gnutls/lib/}:
 @file{openpgp/openpgp_int.h}
 @end itemize
 
+Declared in @file{auth_cert.h}:
 
+!! START HERE:  LDF 2010.07.15.
+
+@c /home/lfinsto/gnutls_dev/gnutls/lib/auth_cert.h
+
+@c typedef struct gnutls_certificate_credentials_st
 
 
 
