@@ -1335,6 +1335,7 @@ _gnutls_version_has_extensions (gnutls_protocol_t version)
     case GNUTLS_TLS1_0:
     case GNUTLS_TLS1_1:
     case GNUTLS_TLS1_2:
+    case GNUTLS_DTLS1_0:
       return 1;
     default:
       return 0;
@@ -1350,6 +1351,7 @@ _gnutls_version_has_explicit_iv (gnutls_protocol_t version)
     {
     case GNUTLS_TLS1_1:
     case GNUTLS_TLS1_2:
+    case GNUTLS_DTLS1_0:
       return 1;
     default:
       return 0;
@@ -1366,6 +1368,7 @@ _gnutls_version_has_variable_padding (gnutls_protocol_t version)
     case GNUTLS_TLS1_0:
     case GNUTLS_TLS1_1:
     case GNUTLS_TLS1_2:
+    case GNUTLS_DTLS1_0:
       return 1;
     default:
       return 0;
