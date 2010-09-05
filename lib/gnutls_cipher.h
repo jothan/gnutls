@@ -31,7 +31,7 @@ int _gnutls_encrypt (gnutls_session_t session, const opaque * headers,
 
 int _gnutls_decrypt (gnutls_session_t session, opaque * ciphertext,
 		     size_t ciphertext_size, uint8_t * data, size_t data_size,
-		     content_type_t type, record_parameters_st *params);
+		     content_type_t type, record_parameters_st *params, uint64 *sequence);
 int _gnutls_compressed2ciphertext (gnutls_session_t session,
 				   opaque * cipher_data, int cipher_size,
 				   gnutls_datum_t compressed,
@@ -41,4 +41,4 @@ int _gnutls_ciphertext2compressed (gnutls_session_t session,
 				   opaque * compress_data,
 				   int compress_size,
 				   gnutls_datum_t ciphertext, uint8_t type,
-				   record_parameters_st *params);
+				   record_parameters_st *params, uint64 *sequence);

@@ -138,7 +138,7 @@ int
 _gnutls_decrypt (gnutls_session_t session, opaque * ciphertext,
 		 size_t ciphertext_size, uint8_t * data,
 		 size_t max_data_size, content_type_t type,
-		 record_parameters_st *params)
+		 record_parameters_st *params,  uint64 *sequence)
 {
   gnutls_datum_t gtxt;
   gnutls_datum_t gcipher;
@@ -152,7 +152,7 @@ _gnutls_decrypt (gnutls_session_t session, opaque * ciphertext,
 
   ret =
     _gnutls_ciphertext2compressed (session, data, max_data_size,
-				   gcipher, type, params);
+				   gcipher, type, params, sequence);
   if (ret < 0)
     {
       return ret;
@@ -465,7 +465,7 @@ _gnutls_ciphertext2compressed (gnutls_session_t session,
 			       opaque * compress_data,
 			       int compress_size,
 			       gnutls_datum_t ciphertext, uint8_t type,
-			       record_parameters_st *params)
+			       record_parameters_st *params, uint64 *sequence)
 {
   uint8_t MAC[MAX_HASH_SIZE];
   uint16_t c_length;
@@ -582,8 +582,7 @@ _gnutls_ciphertext2compressed (gnutls_session_t session,
 	}
 
       preamble_size =
-	make_preamble (UINT64DATA
-		       (params->read.sequence_number), type,
+	make_preamble (UINT64DATA(*sequence), type,
 		       c_length, ver, preamble);
       mac_hash (&td, preamble, preamble_size, ver);
       if (length > 0)
