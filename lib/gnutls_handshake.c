@@ -2930,6 +2930,7 @@ _gnutls_handshake_client (gnutls_session_t session)
 	  _gnutls_send_client_certificate_verify (session, AGAIN (STATE9));
       STATE = STATE9;
       IMED_RET ("send client certificate verify", ret, 1);
+      _gnutls_dtls_transmit(session);
 
       STATE = STATE0;
     default:
@@ -3003,6 +3004,7 @@ _gnutls_send_handshake_final (gnutls_session_t session, int init)
 	  return ret;
 	}
 
+      _gnutls_dtls_transmit(session);
       STATE = STATE0;
     default:
       break;
