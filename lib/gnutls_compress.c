@@ -312,7 +312,9 @@ _gnutls_supported_compression_methods (gnutls_session_t session,
 #  include <lzo1x.h>
 # endif
 
-typedef int (*LZO_FUNC) ();
+typedef int (*LZO_FUNC) (const lzo_bytep src, lzo_uint  src_len,
+			 lzo_bytep dst, lzo_uintp dst_len,
+			 lzo_voidp wrkmem);
 
 LZO_FUNC _gnutls_lzo1x_decompress_safe = NULL;
 LZO_FUNC _gnutls_lzo1x_1_compress = NULL;
