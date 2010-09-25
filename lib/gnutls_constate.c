@@ -295,7 +295,7 @@ _gnutls_set_keys (gnutls_session_t session, record_parameters_st *params, int ha
 }
 
 static int
-_gnutls_init_record_state (record_parameters_st *params, int read,
+_gnutls_init_record_state (record_parameters_st *params, int d,
 			   record_state_st *state)
 {
   int ret;
@@ -308,7 +308,7 @@ _gnutls_init_record_state (record_parameters_st *params, int read,
     return gnutls_assert_val (ret);
 
   state->compression_state =
-    _gnutls_comp_init (params->compression_algorithm, read);
+    _gnutls_comp_init (params->compression_algorithm, d);
 
   if (state->compression_state == GNUTLS_COMP_FAILED)
     return gnutls_assert_val (GNUTLS_E_UNKNOWN_COMPRESSION_ALGORITHM);
@@ -782,7 +782,7 @@ _gnutls_epoch_gc (gnutls_session_t session)
 }
 
 static inline void
-free_record_state (record_state_st *state, int read)
+free_record_state (record_state_st *state, int d)
 {
   _gnutls_free_datum (&state->mac_secret);
   _gnutls_free_datum (&state->IV);
@@ -791,7 +791,7 @@ free_record_state (record_state_st *state, int read)
   _gnutls_cipher_deinit (&state->cipher_state);
 
   if (state->compression_state != NULL)
-    _gnutls_comp_deinit (state->compression_state, read);
+    _gnutls_comp_deinit (state->compression_state, d);
 }
 
 void
